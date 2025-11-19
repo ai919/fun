@@ -3,23 +3,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once __DIR__ . '/../backup_config.php';
-$backupConfig = require __DIR__ . '/../backup_config.php';
-
-function admin_auth_pdo(): PDO
-{
-    static $pdo = null;
-    global $backupConfig;
-    if ($pdo === null) {
-        $dbConf = $backupConfig['db'];
-        $pdo = new PDO(
-            'mysql:host=' . $dbConf['host'] . ';port=' . $dbConf['port'] . ';dbname=' . $dbConf['name'] . ';charset=utf8mb4',
-            $dbConf['user'],
-            $dbConf['password'],
-            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-        );
-    }
-    return $pdo;
+if (!isset($pdo) || !($pdo instanceof PDO)) {
+    require __DIR__ . '/../lib/db_connect.php';
 }
 
 function current_admin(): ?array
@@ -31,7 +16,7 @@ function current_admin(): ?array
     if (empty($_SESSION['admin_id'])) {
         return null;
     }
-    $pdo = admin_auth_pdo();
+    global $pdo;
     $stmt = $pdo->prepare("SELECT * FROM admin_users WHERE id = :id AND is_active = 1 LIMIT 1");
     $stmt->execute([':id' => (int)$_SESSION['admin_id']]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
