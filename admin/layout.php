@@ -10,6 +10,8 @@ $activeMenu   = $activeMenu   ?? '';
 $flashSuccess = $flashSuccess ?? null;
 $flashError   = $flashError   ?? null;
 $currentAdmin = $currentAdmin ?? (function_exists('current_admin') ? current_admin() : null);
+$scriptName   = $_SERVER['SCRIPT_NAME'] ?? '';
+$isTestsNavActive = (strpos($scriptName, 'tests.php') !== false) || ($activeMenu === 'tests');
 
 $capturedContent = null;
 $hasContentFile  = !empty($contentFile) && file_exists($contentFile);
@@ -41,7 +43,7 @@ if ($hasContentFile) {
                 <span class="nav-icon">🏠</span>
                 <span class="nav-label">控制台</span>
             </a>
-            <a href="/admin/tests.php" class="nav-item <?= $activeMenu === 'tests' ? 'is-active' : '' ?>">
+            <a href="/admin/tests.php" class="nav-item <?= $isTestsNavActive ? 'is-active' : '' ?>">
                 <span class="nav-icon">📋</span>
                 <span class="nav-label">测试列表</span>
             </a>
@@ -102,3 +104,13 @@ if ($hasContentFile) {
                 echo $capturedContent;
             }
             ?>
+        </section>
+    </main>
+</div>
+
+</body>
+</html>
+<?php
+if (!defined('ADMIN_LAYOUT_CLOSED')) {
+    define('ADMIN_LAYOUT_CLOSED', true);
+}

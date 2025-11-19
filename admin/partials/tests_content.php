@@ -1,97 +1,247 @@
+<?php
+$errors      = [];
+$successMsg  = null;
+$statusLabel = [
+    'draft'     => ['label' => '�׸�', 'class' => 'badge-muted'],
+    'published' => ['label' => '�ѷ���', 'class' => 'badge-success'],
+    'archived'  => ['label' => '�ѹǼ�', 'class' => 'badge-warning'],
+];
+$statusFilterOptions = [
+    ''           => 'ȫ��״̬',
+    'draft'      => '�׸�',
+    'published'  => '�ѷ���',
+    'archived'   => '�ѹǼ�',
+];
+$orderOptions = [
+    'updated_desc' => '������ʱ������',
+    'created_desc' => '��������ʱ������',
+    'order_asc'    => '����ֵ����С��',
+];
+
+$msgKey = $_GET['msg'] ?? '';
+if ($msgKey === 'deleted') {
+    $successMsg = '����ɾ���ɹ���';
+} elseif ($msgKey === 'saved') {
+    $successMsg = '�����ѱ��浽���顣';
+}
+
+if (($_GET['action'] ?? '') === 'delete') {
+    $deleteId = (int)($_GET['id'] ?? 0);
+    if ($deleteId <= 0) {
+        $errors[] = '����ȷ��Ĳ��� ID��';
+    } else {
+        $delStmt = $pdo->prepare('DELETE FROM tests WHERE id = :id LIMIT 1');
+        $delStmt->execute([':id' => $deleteId]);
+        header('Location: /admin/tests.php?msg=deleted');
+        exit;
+    }
+}
+
+$keyword = trim($_GET['q'] ?? '');
+$statusFilter = $_GET['status'] ?? '';
+$orderKey = $_GET['order'] ?? 'updated_desc';
+$page = max(1, (int)($_GET['page'] ?? 1));
+$perPage = 20;
+
+$validOrders = [
+    'updated_desc' => 't.updated_at DESC',
+    'created_desc' => 't.created_at DESC',
+    'order_asc'    => 't.sort_order ASC, t.id DESC',
+];
+if (!isset($validOrders[$orderKey])) {
+    $orderKey = 'updated_desc';
+}
+$orderSql = ' ORDER BY ' . $validOrders[$orderKey];
+
+$conditions = [];
+$params = [];
+if ($keyword !== '') {
+    $conditions[] = '(t.title LIKE :keyword OR t.slug LIKE :keyword)';
+    $params[':keyword'] = '%' . $keyword . '%';
+}
+if ($statusFilter !== '' && isset($statusFilterOptions[$statusFilter])) {
+    $conditions[] = 't.status = :status';
+    $params[':status'] = $statusFilter;
+}
+$whereSql = $conditions ? ' WHERE ' . implode(' AND ', $conditions) : '';
+
+$countStmt = $pdo->prepare("SELECT COUNT(*) FROM tests t{$whereSql}");
+foreach ($params as $name => $value) {
+    $countStmt->bindValue($name, $value);
+}
+$countStmt->execute();
+$totalRows = (int)$countStmt->fetchColumn();
+$totalPages = max(1, (int)ceil($totalRows / $perPage));
+if ($page > $totalPages) {
+    $page = $totalPages;
+}
+$offset = ($page - 1) * $perPage;
+
+$listSql = "SELECT t.id, t.title, t.slug, t.status, t.tags, t.sort_order, t.created_at, t.updated_at
+            FROM tests t{$whereSql}{$orderSql} LIMIT :limit OFFSET :offset";
+$listStmt = $pdo->prepare($listSql);
+foreach ($params as $name => $value) {
+    $listStmt->bindValue($name, $value);
+}
+$listStmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+$listStmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+$listStmt->execute();
+$tests = $listStmt->fetchAll(PDO::FETCH_ASSOC);
+
+$baseQuery = [
+    'q'      => $keyword,
+    'status' => $statusFilter,
+    'order'  => $orderKey,
+];
+$filterQuery = array_filter($baseQuery, function ($value) {
+    return $value !== '' && $value !== null;
+});
+$pageQuery = $filterQuery;
+$pageQuery['page'] = $page;
+?>
+
 <?php if ($errors): ?>
     <div class="alert alert-danger">
-        <?php foreach ($errors as $e): ?>
-            <div><?= htmlspecialchars($e) ?></div>
+        <?php foreach ($errors as $error): ?>
+            <div><?= htmlspecialchars($error) ?></div>
         <?php endforeach; ?>
     </div>
 <?php endif; ?>
 
-<?php if ($success): ?>
-    <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
+<?php if ($successMsg): ?>
+    <div class="alert alert-success"><?= htmlspecialchars($successMsg) ?></div>
 <?php endif; ?>
 
-<form method="get" class="form-inline" style="margin-bottom:16px;">
-    <input type="text" name="q" placeholder="搜索 slug 或标题"
-           value="<?= htmlspecialchars($keyword) ?>">
-    <button type="submit" class="btn btn-primary">搜索</button>
-    <?php if ($keyword !== ''): ?>
-        <a href="/admin/tests.php" class="btn btn-ghost btn-xs">清除搜索</a>
-    <?php endif; ?>
-</form>
+<div class="card">
+    <form method="get" class="filter-row">
+        <div class="filter-item">
+            <label>����</label>
+            <input type="text" name="q" value="<?= htmlspecialchars($keyword) ?>" placeholder="������ title �� slug">
+        </div>
+        <div class="filter-item">
+            <label>״̬</label>
+            <select name="status">
+                <?php foreach ($statusFilterOptions as $value => $label): ?>
+                    <option value="<?= htmlspecialchars($value) ?>"<?= $statusFilter === $value ? ' selected' : '' ?>>
+                        <?= htmlspecialchars($label) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="filter-item">
+            <label>����</label>
+            <select name="order">
+                <?php foreach ($orderOptions as $value => $label): ?>
+                    <option value="<?= htmlspecialchars($value) ?>"<?= $orderKey === $value ? ' selected' : '' ?>>
+                        <?= htmlspecialchars($label) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">��������</button>
+            <a href="/admin/tests.php" class="btn btn-ghost btn-xs">�������</a>
+        </div>
+        <div class="filter-actions">
+            <a href="/admin/test_edit.php" class="btn btn-success">+ �½�����</a>
+        </div>
+    </form>
+</div>
 
 <?php if (!$tests): ?>
-    <p class="hint">当前还没有测试，可以先去“新增测试”创建一个。</p>
+    <p class="hint">��ǰû�пɹ����Ĳ��ԣ�����Ԥ�����½�����ʹ��Ӱ����</p>
 <?php else: ?>
-    <table class="table-admin">
+    <table class="table-admin" style="margin-top:16px;">
         <thead>
         <tr>
-            <th style="width:50px;">ID</th>
-            <th style="width:150px;">Slug</th>
-            <th style="width:120px;">封面</th>
-            <th>标题</th>
-            <th style="width:80px;">题目数</th>
-            <th style="width:80px;">结果数</th>
-            <th style="width:360px;">操作</th>
+            <th style="width:60px;">ID</th>
+            <th>����</th>
+            <th style="width:160px;">Slug</th>
+            <th style="width:120px;">״̬</th>
+            <th style="width:200px;">��ǩ</th>
+            <th style="width:150px;">ʱ��</th>
+            <th style="width:120px;">����</th>
         </tr>
         </thead>
         <tbody>
-        <?php foreach ($tests as $t): ?>
+        <?php foreach ($tests as $test): ?>
             <?php
-            $coverSrc   = !empty($t['cover_image']) ? $t['cover_image'] : '/assets/images/default.png';
-            $titleEmoji = trim($t['title_emoji'] ?? '');
-            $titleColor = trim($t['title_color'] ?? '');
-            $tagItems   = array_filter(array_map('trim', explode(',', $t['tags'] ?? '')));
+            $statusValue = (string)$test['status'];
+            if (!isset($statusLabel[$statusValue]) && in_array($statusValue, ['0', '1', '2'], true)) {
+                $map = ['0' => 'draft', '1' => 'published', '2' => 'archived'];
+                $statusValue = $map[$statusValue];
+            }
+            $badgeInfo = $statusLabel[$statusValue] ?? ['label' => 'δ֪', 'class' => 'badge-muted'];
+            $tags = array_filter(array_map('trim', explode(',', (string)$test['tags'])));
+            $tags = array_slice($tags, 0, 3);
+            $updatedAt = $test['updated_at'] ?? null;
+            $createdAt = $test['created_at'] ?? null;
+            $timeToShow = $updatedAt && $updatedAt !== '0000-00-00 00:00:00' ? $updatedAt : $createdAt;
+            $timeDisplay = null;
+            if ($timeToShow && $timeToShow !== '0000-00-00 00:00:00') {
+                $timestamp = strtotime($timeToShow);
+                if ($timestamp) {
+                    $timeDisplay = date('Y-m-d H:i', $timestamp);
+                }
+            }
             ?>
             <tr>
-                <td><?= (int)$t['id'] ?></td>
-                <td><code><?= htmlspecialchars($t['slug']) ?></code></td>
-                <td style="width:120px;">
-                    <a href="<?= htmlspecialchars($coverSrc) ?>" target="_blank">
-                        <img src="<?= htmlspecialchars($coverSrc) ?>" alt="封面"
-                             style="width:120px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;">
-                    </a>
+                <td><?= (int)$test['id'] ?></td>
+                <td>
+                    <div class="test-title-text"><?= htmlspecialchars($test['title']) ?></div>
+                    <div class="muted">����ֵ: <?= (int)$test['sort_order'] ?></div>
+                </td>
+                <td><code><?= htmlspecialchars($test['slug']) ?></code></td>
+                <td>
+                    <span class="badge <?= $badgeInfo['class'] ?>">
+                        <?= htmlspecialchars($badgeInfo['label']) ?>
+                    </span>
                 </td>
                 <td>
-                    <div class="test-title-row">
-                        <?php if ($titleEmoji !== ''): ?>
-                            <span class="test-title-emoji"><?= htmlspecialchars($titleEmoji) ?></span>
-                        <?php endif; ?>
-                        <span class="test-title-text"<?= $titleColor !== '' ? ' style="color:' . htmlspecialchars($titleColor) . ';"' : '' ?>>
-                            <?= htmlspecialchars($t['title']) ?>
-                        </span>
-                    </div>
-                    <?php if ($tagItems): ?>
+                    <?php if ($tags): ?>
                         <div class="tag-list">
-                            <?php foreach ($tagItems as $tag): ?>
+                            <?php foreach ($tags as $tag): ?>
                                 <span class="badge badge-muted"><?= htmlspecialchars($tag) ?></span>
                             <?php endforeach; ?>
                         </div>
+                    <?php else: ?>
+                        <span class="muted">--</span>
                     <?php endif; ?>
                 </td>
-                <td><?= (int)($t['question_count'] ?? 0) ?></td>
-                <td><?= (int)($t['result_count'] ?? 0) ?></td>
+                <td>
+                    <?php if ($timeDisplay): ?>
+                        <?= htmlspecialchars($timeDisplay) ?>
+                    <?php else: ?>
+                        <span class="muted">--</span>
+                    <?php endif; ?>
+                </td>
                 <td class="actions">
-                    <a class="btn-mini" href="/admin/edit_test.php?id=<?= (int)$t['id'] ?>">编辑</a>
-                    <a class="btn-mini" href="/admin/questions.php?test_id=<?= (int)$t['id'] ?>">题目 & 选项</a>
-                    <div class="actions-menu">
-                        <details>
-                            <summary>更多操作</summary>
-                            <div class="actions-menu-body">
-                                <a class="btn-mini" href="/<?= htmlspecialchars($t['slug']) ?>" target="_blank">前台查看</a>
-                                <a class="btn-mini" href="/admin/results.php?test_id=<?= (int)$t['id'] ?>">结果区间</a>
-                                <a class="btn-mini" href="/admin/clone_test.php">克隆</a>
-                                <a class="btn-mini" href="/admin/stats.php?test_id=<?= (int)$t['id'] ?>">统计</a>
-                                <form method="post" onsubmit="return confirm('确定要删除这个测试及其所有题目、选项和结果吗？该操作不可恢复。');">
-                                    <input type="hidden" name="action" value="delete_test">
-                                    <input type="hidden" name="test_id" value="<?= (int)$t['id'] ?>">
-                                    <button type="submit" class="danger-btn">删除</button>
-                                </form>
-                            </div>
-                        </details>
-                    </div>
+                    <a class="btn-mini" href="/admin/test_edit.php?id=<?= (int)$test['id'] ?>">�༭</a>
+                    <a class="btn-mini danger-btn" href="/admin/tests.php?action=delete&id=<?= (int)$test['id'] ?>"
+                       onclick="return confirm('ȷ��ɾ�������Բ��ԣ���غ����޷��ָ���');">ɾ��</a>
                 </td>
             </tr>
         <?php endforeach; ?>
         </tbody>
     </table>
+
+    <?php if ($totalRows > $perPage): ?>
+        <div class="pagination">
+            <span>�� <?= $page ?> / <?= $totalPages ?> ҳ��</span>
+            <?php if ($page > 1): ?>
+                <?php
+                $prevQuery = $filterQuery;
+                $prevQuery['page'] = $page - 1;
+                ?>
+                <a class="btn btn-ghost btn-xs" href="/admin/tests.php?<?= http_build_query($prevQuery) ?>">��һҳ</a>
+            <?php endif; ?>
+            <?php if ($page < $totalPages): ?>
+                <?php
+                $nextQuery = $filterQuery;
+                $nextQuery['page'] = $page + 1;
+                ?>
+                <a class="btn btn-ghost btn-xs" href="/admin/tests.php?<?= http_build_query($nextQuery) ?>">��һҳ</a>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
 <?php endif; ?>

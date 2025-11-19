@@ -22,9 +22,11 @@ CREATE TABLE tests (
   cover_image VARCHAR(255) DEFAULT NULL,
   tags VARCHAR(255) DEFAULT NULL,
   title_emoji VARCHAR(16) DEFAULT NULL,
-  title_color VARCHAR(20) DEFAULT NULL,
-  status TINYINT(1) NOT NULL DEFAULT 1,
+  title_color VARCHAR(7) DEFAULT NULL,
+  status ENUM('draft','published','archived') NOT NULL DEFAULT 'draft',
+  sort_order INT NOT NULL DEFAULT 0,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY uk_tests_slug (slug)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
