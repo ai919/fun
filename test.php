@@ -1,6 +1,7 @@
 <?php
 // test.php：显示单个测试 + 处理提交 + 记录日志（线性计分模式）
 require __DIR__ . '/lib/db_connect.php';
+require_once __DIR__ . '/seo_helper.php';
 
 // 从请求路径获取 slug，例如 /love /animal
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -24,6 +25,7 @@ if (!$test) {
 }
 
 $testId = (int)$test['id'];
+$seo    = df_seo_for_test($test);
 
 // 获取题目
 $qStmt = $pdo->prepare(
@@ -217,7 +219,14 @@ try {
 <html lang="zh-CN">
 <head>
     <meta charset="utf-8">
-    <title><?= htmlspecialchars($test['title']) ?> · 趣味测试</title>
+    <title><?= htmlspecialchars($seo['title']) ?></title>
+    <meta name="description" content="<?= htmlspecialchars($seo['description']) ?>">
+    <link rel="canonical" href="<?= htmlspecialchars($seo['url']) ?>">
+    <meta property="og:title" content="<?= htmlspecialchars($seo['title']) ?>">
+    <meta property="og:description" content="<?= htmlspecialchars($seo['description']) ?>">
+    <meta property="og:image" content="<?= htmlspecialchars($seo['image']) ?>">
+    <meta property="og:url" content="<?= htmlspecialchars($seo['url']) ?>">
+    <meta property="og:type" content="website">
     <link rel="stylesheet" href="/assets/css/style.css">
     <style>
         body {

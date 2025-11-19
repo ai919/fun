@@ -3,22 +3,33 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$adminConfig = require __DIR__ . '/../config/admin.php';
+require __DIR__ . '/../lib/db_connect.php';
 
-$errors  = [];
-$success = null;
+$errors   = [];
+$username = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
 
-    if ($password === '') {
-        $errors[] = '密码不能为空。';
-    } elseif ($password !== $adminConfig['password']) {
-        $errors[] = '密码错误，请重试。';
+    if ($username === '' || $password === '') {
+        $errors[] = '请输入用户名和密码。';
     } else {
-        $_SESSION['admin_logged_in'] = true;
-        $success = '登录成功，正在跳转到后台首页…';
-        header('Refresh: 1; url=/admin/new_test.php');
+        $stmt = $pdo->prepare("SELECT * FROM admin_users WHERE username = ? AND is_active = 1 LIMIT 1");
+        $stmt->execute([$username]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user || !password_verify($password, $user['password_hash'])) {
+            $errors[] = '用户名或密码错误。';
+        } else {
+            $_SESSION['admin_user'] = [
+                'id'           => (int)$user['id'],
+                'username'     => $user['username'],
+                'display_name' => $user['display_name'] ?: $user['username'],
+            ];
+            header('Location: /admin/index.php');
+            exit;
+        }
     }
 }
 ?>
@@ -82,13 +93,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     <?php endif; ?>
 
-    <?php if ($success): ?>
-        <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
-    <?php endif; ?>
-
     <form method="post" class="login-form">
         <div class="field">
-            <label for="password">后台密码</label>
+            <label for="username">用户名</label>
+            <input type="text" id="username" name="username" required value="<?= htmlspecialchars($username) ?>">
+        </div>
+        <div class="field">
+            <label for="password">密码</label>
             <input type="password" id="password" name="password" required>
         </div>
         <button type="submit" class="btn btn-primary">登录</button>

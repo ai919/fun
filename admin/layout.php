@@ -9,6 +9,7 @@ $pageSubtitle = $pageSubtitle ?? '';
 $activeMenu   = $activeMenu   ?? '';
 $flashSuccess = $flashSuccess ?? null;
 $flashError   = $flashError   ?? null;
+$currentAdmin = $_SESSION['admin_user'] ?? null;
 ?>
 <!doctype html>
 <html lang="zh-CN">
@@ -28,25 +29,29 @@ $flashError   = $flashError   ?? null;
             <div class="brand-subtitle">DoFun Admin Panel</div>
         </div>
         <nav class="admin-nav">
-            <a href="/admin/tests.php"
-               class="nav-item <?= $activeMenu === 'tests' ? 'is-active' : '' ?>">
+            <a href="/admin/index.php" class="nav-item <?= $activeMenu === 'dashboard' ? 'is-active' : '' ?>">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">控制台</span>
+            </a>
+            <a href="/admin/tests.php" class="nav-item <?= $activeMenu === 'tests' ? 'is-active' : '' ?>">
                 <span class="nav-icon">📋</span>
                 <span class="nav-label">测试列表</span>
             </a>
-            <a href="/admin/new_test.php"
-               class="nav-item <?= $activeMenu === 'new' ? 'is-active' : '' ?>">
+            <a href="/admin/new_test.php" class="nav-item <?= $activeMenu === 'new' ? 'is-active' : '' ?>">
                 <span class="nav-icon">➕</span>
                 <span class="nav-label">新增测试</span>
             </a>
-            <a href="/admin/clone_test.php"
-               class="nav-item <?= $activeMenu === 'clone' ? 'is-active' : '' ?>">
-                <span class="nav-icon">⭐</span>
+            <a href="/admin/clone_test.php" class="nav-item <?= $activeMenu === 'clone' ? 'is-active' : '' ?>">
+                <span class="nav-icon">✨</span>
                 <span class="nav-label">克隆测试</span>
             </a>
-            <a href="/admin/stats.php"
-               class="nav-item <?= $activeMenu === 'stats' ? 'is-active' : '' ?>">
+            <a href="/admin/stats.php" class="nav-item <?= $activeMenu === 'stats' ? 'is-active' : '' ?>">
                 <span class="nav-icon">📈</span>
                 <span class="nav-label">数据统计</span>
+            </a>
+            <a href="/admin/backup_logs.php" class="nav-item <?= $activeMenu === 'backups' ? 'is-active' : '' ?>">
+                <span class="nav-icon">💾</span>
+                <span class="nav-label">备份记录</span>
             </a>
         </nav>
         <div class="admin-sidebar-footer">
@@ -61,7 +66,7 @@ $flashError   = $flashError   ?? null;
                 <div class="topbar-breadcrumb"><?= htmlspecialchars($pageTitle) ?></div>
             </div>
             <div class="topbar-right">
-                <span class="topbar-user">已登录</span>
+                <span class="topbar-user"><?= htmlspecialchars($currentAdmin['display_name'] ?? '管理员') ?></span>
                 <a href="/admin/logout.php" class="btn btn-ghost btn-xs">退出</a>
             </div>
         </header>

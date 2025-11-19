@@ -3,11 +3,14 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$adminConfig = require __DIR__ . '/../config/admin.php';
+function current_admin(): ?array
+{
+    return $_SESSION['admin_user'] ?? null;
+}
 
 function is_admin_logged_in(): bool
 {
-    return !empty($_SESSION['admin_logged_in']);
+    return current_admin() !== null;
 }
 
 function require_admin_login(): void
