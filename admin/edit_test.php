@@ -31,7 +31,10 @@ $description = $test['description'];
 $cover       = $test['cover_image'];
 $tags        = $test['tags'] ?? '';
 $titleEmoji  = $test['title_emoji'] ?? '';
-$titleColor  = $test['title_color'] ?? '';
+$titleColor  = $test['title_color'] ?? '#111827';
+if ($titleColor === '') {
+    $titleColor = '#111827';
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $slug        = trim($_POST['slug'] ?? '');
@@ -40,7 +43,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $cover       = trim($_POST['cover_image'] ?? '');
     $tags        = trim($_POST['tags'] ?? '');
     $titleEmoji  = trim($_POST['title_emoji'] ?? '');
-    $titleColor  = trim($_POST['title_color'] ?? '');
+    $colorPicker = trim($_POST['title_color'] ?? '');
+    $colorText   = trim($_POST['title_color_text'] ?? '');
+    $titleColor  = $colorText !== '' ? $colorText : $colorPicker;
+    if ($titleColor === '') {
+        $titleColor = '#111827';
+    }
 
     if ($slug === '' || !preg_match('/^[a-z0-9_-]+$/', $slug)) {
         $errors[] = 'Slug 只能使用小写字母、数字、下划线、短横线，并且不能为空。';
@@ -127,10 +135,14 @@ require __DIR__ . '/layout.php';
     </div>
 
     <div class="field">
-        <label for="title_color">标题颜色（可选）</label>
-        <input type="text" id="title_color" name="title_color" class="input-text"
-               placeholder="例如：#111827 或 #ef4444"
-               value="<?= htmlspecialchars($titleColor) ?>">
+        <label>标题颜色（可选）</label>
+        <div style="display:flex; gap:8px; align-items:center;">
+            <input type="color" name="title_color"
+                   value="<?= htmlspecialchars($titleColor ?? '#111827') ?>">
+            <input type="text" name="title_color_text" class="input-text"
+                   style="max-width:130px;"
+                   value="<?= htmlspecialchars($titleColor ?? '#111827') ?>">
+        </div>
         <div class="field-hint">留空则使用默认颜色。</div>
     </div>
 

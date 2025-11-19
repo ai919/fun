@@ -80,7 +80,7 @@ $tests = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <?php endif; ?>
 
                 <div class="card-stats">
-                    <span>
+                    <span class="stats-pill">
                         已有 <?= number_format($runCount) ?> 人参加测验
                     </span>
                 </div>
