@@ -5,14 +5,14 @@ require_admin_login();
 require __DIR__ . '/../lib/db_connect.php';
 $backupConfig = require __DIR__ . '/../backup_config.php';
 
-$pageTitle    = '备份记录 · DoFun';
+$pageTitle    = '备份记录';
 $pageHeading  = '备份记录';
 $pageSubtitle = '查看近期备份、下载或删除旧备份。系统最多保留 ' . (int)($backupConfig['max_keep'] ?? 5) . ' 个备份。';
-$activeMenu   = 'tests';
+$activeMenu   = 'backups';
 
 $stmt = $pdo->query("SELECT * FROM backup_logs ORDER BY created_at DESC LIMIT 20");
 $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
-$token = $backupConfig['token'];
+$token     = $backupConfig['token'];
 $backupUrl = '/backup.php?token=' . urlencode($token);
 
 require __DIR__ . '/layout.php';

@@ -3,33 +3,42 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-require __DIR__ . '/../lib/db_connect.php';
+$config = require __DIR__ . '/../backup_config.php';
+$dbConf = $config['db'];
 
-$errors   = [];
+try {
+    $pdo = new PDO(
+        'mysql:host=' . $dbConf['host'] . ';port=' . $dbConf['port'] . ';dbname=' . $dbConf['name'] . ';charset=utf8mb4',
+        $dbConf['user'],
+        $dbConf['password'],
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+    );
+} catch (PDOException $e) {
+    die('数据库连接失败');
+}
+
+if (!empty($_SESSION['admin_id'])) {
+    header('Location: /admin/index.php');
+    exit;
+}
+
+$error    = '';
 $username = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
+    $password = trim($_POST['password'] ?? '');
 
-    if ($username === '' || $password === '') {
-        $errors[] = '请输入用户名和密码。';
+    $stmt = $pdo->prepare("SELECT * FROM admin_users WHERE username = :u AND is_active = 1 LIMIT 1");
+    $stmt->execute([':u' => $username]);
+    $admin = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($admin && password_verify($password, $admin['password_hash'])) {
+        $_SESSION['admin_id'] = (int)$admin['id'];
+        header('Location: /admin/index.php');
+        exit;
     } else {
-        $stmt = $pdo->prepare("SELECT * FROM admin_users WHERE username = ? AND is_active = 1 LIMIT 1");
-        $stmt->execute([$username]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$user || !password_verify($password, $user['password_hash'])) {
-            $errors[] = '用户名或密码错误。';
-        } else {
-            $_SESSION['admin_user'] = [
-                'id'           => (int)$user['id'],
-                'username'     => $user['username'],
-                'display_name' => $user['display_name'] ?: $user['username'],
-            ];
-            header('Location: /admin/index.php');
-            exit;
-        }
+        $error = '账号或密码错误';
     }
 }
 ?>
@@ -85,24 +94,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <h1 class="login-title">DoFun 空间 · 后台</h1>
     <p class="login-subtitle">DoFun Admin Panel</p>
 
-    <?php if ($errors): ?>
-        <div class="alert alert-danger">
-            <?php foreach ($errors as $error): ?>
-                <div><?= htmlspecialchars($error) ?></div>
-            <?php endforeach; ?>
+    <form method="post">
+        <div style="margin-bottom:10px;">
+            <label>账号</label>
+            <input type="text" name="username" value="<?= htmlspecialchars($username) ?>" required>
         </div>
-    <?php endif; ?>
-
-    <form method="post" class="login-form">
-        <div class="field">
-            <label for="username">用户名</label>
-            <input type="text" id="username" name="username" required value="<?= htmlspecialchars($username) ?>">
+        <div style="margin-bottom:4px;">
+            <label>密码</label>
+            <input type="password" name="password" required>
         </div>
-        <div class="field">
-            <label for="password">密码</label>
-            <input type="password" id="password" name="password" required>
-        </div>
-        <button type="submit" class="btn btn-primary">登录</button>
+        <button class="btn" type="submit">登录</button>
+        <?php if ($error): ?>
+            <div class="error"><?= htmlspecialchars($error) ?></div>
+        <?php endif; ?>
     </form>
 </div>
 </body>

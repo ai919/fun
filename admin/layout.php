@@ -3,13 +3,21 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$pageTitle    = $pageTitle    ?? 'DoFun 空间 · 后台';
+$pageTitle    = $pageTitle    ?? 'DoFun 管理后台';
 $pageHeading  = $pageHeading  ?? '';
 $pageSubtitle = $pageSubtitle ?? '';
 $activeMenu   = $activeMenu   ?? '';
 $flashSuccess = $flashSuccess ?? null;
 $flashError   = $flashError   ?? null;
-$currentAdmin = $_SESSION['admin_user'] ?? null;
+$currentAdmin = $currentAdmin ?? (function_exists('current_admin') ? current_admin() : null);
+
+$capturedContent = null;
+$hasContentFile  = !empty($contentFile) && file_exists($contentFile);
+if ($hasContentFile) {
+    ob_start();
+    include $contentFile;
+    $capturedContent = ob_get_clean();
+}
 ?>
 <!doctype html>
 <html lang="zh-CN">
@@ -66,7 +74,7 @@ $currentAdmin = $_SESSION['admin_user'] ?? null;
                 <div class="topbar-breadcrumb"><?= htmlspecialchars($pageTitle) ?></div>
             </div>
             <div class="topbar-right">
-                <span class="topbar-user"><?= htmlspecialchars($currentAdmin['display_name'] ?? '管理员') ?></span>
+                <span class="topbar-user"><?= htmlspecialchars($currentAdmin['display_name'] ?? $currentAdmin['username'] ?? '管理员') ?></span>
                 <a href="/admin/logout.php" class="btn btn-ghost btn-xs">退出</a>
             </div>
         </header>
@@ -88,3 +96,9 @@ $currentAdmin = $_SESSION['admin_user'] ?? null;
             <?php if ($flashError): ?>
                 <div class="alert alert-danger"><?= htmlspecialchars($flashError) ?></div>
             <?php endif; ?>
+
+            <?php
+            if ($hasContentFile && $capturedContent !== null) {
+                echo $capturedContent;
+            }
+            ?>
