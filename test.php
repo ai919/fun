@@ -74,10 +74,19 @@ if ($qIds) {
     }
 }
 
-$errors       = [];
-$scoresByDim  = [];
-$resultsByDim = [];
-$hasPosted    = ($_SERVER['REQUEST_METHOD'] === 'POST');
+$dimMetaStmt = $pdo->prepare("SELECT key_name, title FROM dimensions WHERE test_id = ?");
+$dimMetaStmt->execute([$testId]);
+$dimensionMeta = [];
+while ($row = $dimMetaStmt->fetch(PDO::FETCH_ASSOC)) {
+    $dimensionMeta[$row['key_name']] = $row;
+}
+
+$errors          = [];
+$scoresByDim     = [];
+$resultsByDim    = [];
+$dimensionScores = [];
+$primaryResult   = null;
+$hasPosted       = ($_SERVER['REQUEST_METHOD'] === 'POST');
 
 if ($hasPosted) {
     $answers = $_POST['answers'] ?? [];
@@ -135,9 +144,17 @@ if ($hasPosted) {
                         $row = $resultStmt->fetch(PDO::FETCH_ASSOC);
                         if ($row) {
                             $resultsByDim[$dimKey] = $row;
+                            if (!$primaryResult) {
+                                $primaryResult = $row;
+                            }
                         } else {
                             $resultsByDim[$dimKey] = null; // 没有匹配也记录一下
                         }
+                        $dimensionScores[] = [
+                            'key'   => $dimKey,
+                            'title' => $dimensionMeta[$dimKey]['title'] ?? strtoupper($dimKey),
+                            'score' => $score,
+                        ];
                     }
                 }
 
@@ -216,11 +233,122 @@ try {
         .question-title { font-weight: 600; margin-bottom: 6px; }
         .option-list { margin:0; padding-left:18px; font-size:14px; }
         .errors { background:#ffecec; border:1px solid #ffb4b4; padding:8px 10px; border-radius:6px; margin-bottom:12px; font-size:14px; }
-        .result-block { margin-top:20px; padding:12px 14px; border-radius:8px; background:#f0fdf4; border:1px solid #bbf7d0; }
-        .result-block h2 { font-size:18px; margin:0 0 6px; }
-        .result-block .dim-title { font-size:15px; font-weight:600; margin-top:8px; }
-        .hint { font-size:13px; color:#666; }
-        .back-link { margin-top:16px; font-size:13px; }
+        .result-page {
+            margin-top: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .result-header {
+            text-align: left;
+        }
+        .result-label {
+            display: inline-flex;
+            align-items: center;
+            font-size: 12px;
+            padding: 2px 10px;
+            border-radius: 999px;
+            background: #eef2ff;
+            color: #4338ca;
+            margin-bottom: 10px;
+        }
+        .result-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 0 8px;
+        }
+        .result-emoji {
+            font-size: 28px;
+            margin-right: 8px;
+        }
+        .result-subtitle {
+            font-size: 14px;
+            color: #4b5563;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .result-card {
+            background: #ffffff;
+            border-radius: 18px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 20px 45px rgba(15,23,42,0.08);
+            padding: 18px 20px;
+        }
+        .result-card-heading {
+            font-size: 16px;
+            color: #4f46e5;
+            margin: 0 0 8px;
+        }
+        .result-card-body {
+            font-size: 15px;
+            color: #1f2937;
+            line-height: 1.8;
+        }
+        .result-dimensions {
+            background: #f9fafb;
+            border-radius: 16px;
+            padding: 16px;
+        }
+        .result-dim-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin: 0 0 12px;
+            color: #1f2937;
+        }
+        .result-dim-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .result-dim-chip {
+            flex: 1 1 140px;
+            min-width: 140px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: inset 0 0 0 1px rgba(226,232,240,0.6);
+        }
+        .result-dim-chip .dim-name {
+            font-size: 13px;
+            color: #475569;
+        }
+        .result-dim-chip .dim-score {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+        }
+        .result-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .result-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 18px;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .result-btn-primary {
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            color: #fff;
+            box-shadow: 0 12px 30px rgba(79,70,229,0.35);
+        }
+        .result-btn-ghost {
+            background: #fff;
+            color: #4f46e5;
+            border: 1px solid #c7d2fe;
+        }
         button { padding: 8px 16px; border-radius: 999px; border:none; background:#4f46e5; color:#fff; cursor:pointer; }
         button:hover { filter:brightness(1.05); }
         a { color:#2563eb; text-decoration:none; }
@@ -247,35 +375,69 @@ try {
     </div>
 <?php endif; ?>
 
-<?php if ($hasPosted && !$errors && $scoresByDim): ?>
-    <div class="result-block">
-        <h2>测试结果</h2>
-        <?php foreach ($scoresByDim as $dimKey => $score): ?>
-            <?php $res = $resultsByDim[$dimKey] ?? null; ?>
-            <div class="dim-result">
-                <div class="dim-title">
-                    维度 <code><?= htmlspecialchars($dimKey) ?></code> 总分：<?= (int)$score ?>
-                </div>
-                <?php if ($res): ?>
-                    <div><strong><?= htmlspecialchars($res['title']) ?></strong></div>
-                    <?php if (!empty($res['description'])): ?>
-                        <div style="font-size:14px; margin-top:4px;">
-                            <?= nl2br(htmlspecialchars($res['description'])) ?>
-                        </div>
-                    <?php endif; ?>
-                <?php else: ?>
-                    <div class="hint">（当前分数没有匹配到任何结果区间。）</div>
+<?php if ($hasPosted && !$errors): ?>
+    <?php $result = $primaryResult; ?>
+    <?php
+        $resultSummary = $result['summary'] ?? ($result['description'] ?? '');
+        $resultDetail  = $result['detail_text'] ?? ($result['description'] ?? '');
+    ?>
+    <?php if ($result): ?>
+        <div class="result-page">
+            <header class="result-header">
+                <div class="result-label">测验结果</div>
+                <h1 class="result-title">
+                    <span class="result-emoji"><?= htmlspecialchars($test['title_emoji'] ?? '✨', ENT_QUOTES, 'UTF-8') ?></span>
+                    <?= htmlspecialchars($result['title'], ENT_QUOTES, 'UTF-8') ?>
+                </h1>
+                <?php if (!empty($resultSummary)): ?>
+                    <p class="result-subtitle">
+                        <?= nl2br(htmlspecialchars($resultSummary, ENT_QUOTES, 'UTF-8')) ?>
+                    </p>
                 <?php endif; ?>
-            </div>
-        <?php endforeach; ?>
-        <p class="hint" style="margin-top:10px;">
-            * 本次结果已匿名记录，用于后续统计分析。
-        </p>
-    </div>
+            </header>
 
-    <div class="back-link">
-        <a href="/">← 返回测试首页</a>
-    </div>
+            <section class="result-card">
+                <h2 class="result-card-heading">你的状态解读</h2>
+                <div class="result-card-body">
+                    <?= nl2br(htmlspecialchars($resultDetail, ENT_QUOTES, 'UTF-8')) ?>
+                </div>
+            </section>
+
+            <?php if (!empty($dimensionScores)): ?>
+                <section class="result-dimensions">
+                    <h3 class="result-dim-title">各维度评分</h3>
+                    <div class="result-dim-list">
+                        <?php foreach ($dimensionScores as $dim): ?>
+                            <div class="result-dim-chip">
+                                <div class="dim-name"><?= htmlspecialchars($dim['title'] ?? strtoupper($dim['key']), ENT_QUOTES, 'UTF-8') ?></div>
+                                <div class="dim-score"><?= (float)$dim['score'] ?></div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </section>
+            <?php endif; ?>
+
+            <footer class="result-actions">
+                <a href="/<?= urlencode($test['slug']) ?>" class="result-btn result-btn-primary">再测一次</a>
+                <a href="/" class="result-btn result-btn-ghost">看看其他测验</a>
+            </footer>
+        </div>
+    <?php else: ?>
+        <div class="result-page">
+            <header class="result-header">
+                <div class="result-label">测验结果</div>
+                <h1 class="result-title">
+                    <span class="result-emoji">🤔</span>
+                    暂未匹配到结果
+                </h1>
+                <p class="result-subtitle">这并不代表你“没有问题”，只是当前规则还不够细致。</p>
+            </header>
+            <footer class="result-actions">
+                <a href="/<?= urlencode($test['slug']) ?>" class="result-btn result-btn-primary">换个答案再试试</a>
+                <a href="/" class="result-btn result-btn-ghost">回到测验列表</a>
+            </footer>
+        </div>
+    <?php endif; ?>
 <?php else: ?>
 
     <form method="post">

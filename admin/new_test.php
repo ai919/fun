@@ -19,7 +19,7 @@ $description = '';
 $cover       = '/assets/images/default.png';
 $tags        = '';
 $titleEmoji  = '';
-$titleColor  = '#111827';
+$titleColor  = '#4f46e5';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $slug        = trim($_POST['slug'] ?? '');
@@ -28,11 +28,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $cover       = trim($_POST['cover_image'] ?? '');
     $tags        = trim($_POST['tags'] ?? '');
     $titleEmoji  = trim($_POST['title_emoji'] ?? '');
-    $colorPicker = trim($_POST['title_color'] ?? '');
-    $colorText   = trim($_POST['title_color_text'] ?? '');
-    $titleColor  = $colorText !== '' ? $colorText : $colorPicker;
+    $titleColor  = trim($_POST['title_color'] ?? '');
     if ($titleColor === '') {
-        $titleColor = '#111827';
+        $titleColor = '#4f46e5';
     }
 
     if ($slug === '' || !preg_match('/^[a-z0-9_-]+$/', $slug)) {
@@ -71,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $cover       = '/assets/images/default.png';
         $tags        = '';
         $titleEmoji  = '';
-        $titleColor  = '#111827';
+        $titleColor  = '#4f46e5';
     }
 }
 
@@ -125,11 +123,17 @@ require __DIR__ . '/layout.php';
     </div>
 
     <div class="field">
-        <label for="tags">测验标签（多标签）</label>
-        <input type="text" id="tags" name="tags" class="input-text"
-               placeholder="例如：情感,亲密关系,自我探索"
-               value="<?= htmlspecialchars($tags) ?>">
-        <div class="field-hint">多个标签用逗号分隔，将显示在卡片上的类型标签。</div>
+        <label>测验标签（可选）</label>
+        <div class="tags-input" data-tags-target="tags_hidden">
+            <div class="tags-chips" id="tags_chips"></div>
+            <input type="text" id="tags_input" class="input-text tags-input-field"
+                   placeholder="输入后回车添加，例如：情感、自我探索、亲密关系">
+        </div>
+        <input type="hidden"
+               name="tags"
+               id="tags_hidden"
+               value="<?= htmlspecialchars($tags ?? '', ENT_QUOTES, 'UTF-8') ?>">
+        <div class="field-hint">多个标签会显示在前台卡片上作为“测验类型标签”。</div>
     </div>
 
     <div class="field">
@@ -141,17 +145,95 @@ require __DIR__ . '/layout.php';
 
     <div class="field">
         <label>标题颜色（可选）</label>
-        <div style="display:flex; gap:8px; align-items:center;">
-            <input type="color" name="title_color"
-                   value="<?= htmlspecialchars($titleColor ?? '#111827') ?>">
-            <input type="text" name="title_color_text" class="input-text"
-                   style="max-width:130px;"
-                   value="<?= htmlspecialchars($titleColor ?? '#111827') ?>">
+        <div class="color-input-row">
+            <input
+                type="color"
+                name="title_color_picker"
+                id="title_color_picker"
+                value="<?= htmlspecialchars($titleColor ?? '#4f46e5', ENT_QUOTES, 'UTF-8') ?>"
+            >
+            <input
+                type="text"
+                name="title_color"
+                id="title_color_text"
+                class="input-text"
+                style="max-width: 140px;"
+                placeholder="#4f46e5"
+                value="<?= htmlspecialchars($titleColor ?? '#4f46e5', ENT_QUOTES, 'UTF-8') ?>"
+            >
         </div>
-        <div class="field-hint">如果留空，将使用默认颜色。</div>
+        <div class="field-hint">可选。留空则使用默认颜色。</div>
     </div>
 
     <button type="submit" class="btn btn-primary">创建测试</button>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var picker = document.getElementById('title_color_picker');
+    var text = document.getElementById('title_color_text');
+    if (picker && text) {
+        picker.addEventListener('input', function () {
+            text.value = picker.value;
+        });
+
+        text.addEventListener('input', function () {
+            var v = text.value.trim();
+            if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+                picker.value = v;
+            }
+        });
+    }
+
+    var hidden = document.getElementById('tags_hidden');
+    var input = document.getElementById('tags_input');
+    var chips = document.getElementById('tags_chips');
+    if (!hidden || !input || !chips) return;
+
+    function parseTags(str) {
+        if (!str) return [];
+        return str.split(',').map(function (t) {
+            return t.trim();
+        }).filter(function (t) { return t.length > 0; });
+    }
+
+    var tags = parseTags(hidden.value);
+
+    function renderChips() {
+        chips.innerHTML = '';
+        tags.forEach(function (tag, index) {
+            var chip = document.createElement('span');
+            chip.className = 'tag-chip';
+            chip.innerHTML = '<span class="tag-label">' + tag + '</span><button type="button" class="tag-remove" data-index="' + index + '">×</button>';
+            chips.appendChild(chip);
+        });
+        hidden.value = tags.join(',');
+    }
+
+    chips.addEventListener('click', function (e) {
+        if (e.target.classList.contains('tag-remove')) {
+            var idx = parseInt(e.target.getAttribute('data-index'), 10);
+            if (!isNaN(idx)) {
+                tags.splice(idx, 1);
+                renderChips();
+            }
+        }
+    });
+
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.keyCode === 13) {
+            e.preventDefault();
+            var v = input.value.trim();
+            if (v.length > 0 && tags.indexOf(v) === -1) {
+                tags.push(v);
+                renderChips();
+            }
+            input.value = '';
+        }
+    });
+
+    renderChips();
+});
+</script>
 
 <?php require __DIR__ . '/layout_footer.php'; ?>

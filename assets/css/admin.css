@@ -331,6 +331,64 @@ select:focus {
     margin-top: 4px;
 }
 
+.color-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tags-input {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 6px 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    background: #ffffff;
+}
+
+.tags-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.tags-input-field {
+    border: none;
+    outline: none;
+    flex: 1 1 auto;
+    min-width: 120px;
+    font-size: 13px;
+}
+
+.tags-input-field:focus {
+    box-shadow: none;
+}
+
+.tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid rgba(59, 130, 246, 0.5);
+}
+
+.tag-remove {
+    border: none;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1;
+    color: #64748b;
+}
+
 .form-actions {
     display: flex;
     gap: 8px;
