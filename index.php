@@ -15,79 +15,69 @@ $tests = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </head>
 <body>
 <main class="home">
-    <h1 class="site-title"><a href="/">DoFun空间</a></h1>
-    <p class="site-subtitle">在趣味中更好地发现自己</p>
+    <header class="site-header">
+        <div class="site-title-wrap">
+            <a href="/" class="site-title">DoFun空间</a>
+        </div>
+        <p class="site-subtitle">在趣味中更好地发现自己。</p>
+    </header>
 
-    <div class="test-grid">
+    <div class="quiz-grid">
         <?php foreach ($tests as $test): ?>
             <?php
-            $description = trim($test['description'] ?? '');
-            if ($description === '' && !empty($test['subtitle'])) {
-                $description = trim($test['subtitle']);
-            }
-            if ($description !== '') {
-                if (function_exists('mb_substr')) {
-                    $descFull = $description;
-                    $description = mb_substr($descFull, 0, 90, 'UTF-8');
-                    if (mb_strlen($descFull, 'UTF-8') > 90) {
-                        $description .= '…';
-                    }
-                } else {
-                    $descFull   = $description;
-                    $description = substr($descFull, 0, 90);
-                    if (strlen($descFull) > 90) {
-                        $description .= '…';
-                    }
-                }
+            $tags = [];
+            if (!empty($test['tags'])) {
+                $tags = array_filter(array_map('trim', explode(',', $test['tags'])));
             }
 
-            $stmtRuns = $pdo->prepare("SELECT COUNT(*) FROM test_runs WHERE test_id = ?");
-            $stmtRuns->execute([$test['id']]);
-            $runCount = (int)$stmtRuns->fetchColumn();
+            $titleStyle = '';
+            if (!empty($test['title_color'])) {
+                $color = htmlspecialchars($test['title_color'], ENT_QUOTES, 'UTF-8');
+                $titleStyle = "color: {$color};";
+            }
 
-            $emoji      = trim($test['title_emoji'] ?? '');
-            $titleColor = trim($test['title_color'] ?? '');
-            $tagsRaw    = trim($test['tags'] ?? '');
-            $tagsArr    = $tagsRaw !== '' ? array_filter(array_map('trim', explode(',', $tagsRaw))) : [];
+            $emoji = !empty($test['title_emoji'])
+                ? htmlspecialchars($test['title_emoji'], ENT_QUOTES, 'UTF-8')
+                : '🧩';
+
+            $runCount = isset($test['run_count']) ? (int)$test['run_count'] : 0;
             ?>
-            <article class="test-card">
-                <div class="card-tags">
-                    <?php if ($tagsArr): ?>
-                        <?php foreach (array_slice($tagsArr, 0, 3) as $tag): ?>
-                            <span class="badge badge-primary"><?= htmlspecialchars($tag) ?></span>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <span class="badge badge-muted">通用测验</span>
-                    <?php endif; ?>
+            <article class="quiz-card">
+                <div class="quiz-card-top">
+                    <div class="quiz-tag-list">
+                        <?php if ($tags): ?>
+                            <?php foreach ($tags as $tag): ?>
+                                <span class="quiz-tag"><?= htmlspecialchars($tag, ENT_QUOTES, 'UTF-8') ?></span>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <span class="quiz-tag">测验</span>
+                        <?php endif; ?>
+                    </div>
+                    <span class="quiz-emoji"><?= $emoji ?></span>
                 </div>
 
-                <h2 class="card-title">
-                    <a href="/<?= htmlspecialchars($test['slug']) ?>">
-                        <?php if ($emoji !== ''): ?>
-                            <span class="card-emoji"><?= htmlspecialchars($emoji) ?></span>
-                        <?php endif; ?>
-                        <span class="card-title-text"
-                              style="<?= $titleColor !== '' ? 'color:' . htmlspecialchars($titleColor) . ';' : '' ?>">
-                            <?= htmlspecialchars($test['title']) ?>
-                        </span>
-                    </a>
+                <h2 class="quiz-card-title" style="<?= $titleStyle ?>">
+                    <?= htmlspecialchars($test['title'], ENT_QUOTES, 'UTF-8') ?>
                 </h2>
 
-                <?php if ($description !== ''): ?>
-                    <p class="card-desc">
-                        <?= htmlspecialchars($description) ?>
+                <?php if (!empty($test['subtitle'])): ?>
+                    <p class="quiz-card-desc">
+                        <?= htmlspecialchars($test['subtitle'], ENT_QUOTES, 'UTF-8') ?>
+                    </p>
+                <?php elseif (!empty($test['description'])): ?>
+                    <p class="quiz-card-desc">
+                        <?= htmlspecialchars(mb_substr($test['description'], 0, 48), ENT_QUOTES, 'UTF-8') ?>…
                     </p>
                 <?php endif; ?>
 
-                <div class="card-stats">
-                    <span class="stats-pill">
-                        已有 <?= number_format($runCount) ?> 人参加测验
-                    </span>
+                <div class="quiz-card-meta">
+                    <div class="quiz-meta-count">
+                        已有 <?= $runCount ?> 人测试
+                    </div>
                 </div>
 
-                <div class="card-footer">
-                    <a class="btn btn-primary btn-lg"
-                       href="/<?= htmlspecialchars($test['slug']) ?>">
+                <div class="quiz-card-footer">
+                    <a class="quiz-btn" href="/<?= urlencode($test['slug']) ?>">
                         开始测验
                     </a>
                 </div>
