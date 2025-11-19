@@ -1,9 +1,6 @@
 <?php
-// admin/layout.php
-// 提供 admin_header() / admin_footer() 两个函数给后台页面使用
-
 if (!function_exists('admin_header')) {
-    function admin_header(string $title = '后台 · fun_quiz'): void
+    function admin_header(string $title = 'DoFun 空间 · 后台'): void
     {
         ?>
         <!doctype html>
@@ -15,7 +12,6 @@ if (!function_exists('admin_header')) {
             <link rel="icon" type="image/x-icon" href="/favicon.ico">
             <link rel="shortcut icon" href="/favicon.ico">
             <style>
-                /* 通用后台布局样式，尽量简单一点 */
                 * { box-sizing: border-box; }
                 html, body {
                     margin: 0;
@@ -27,9 +23,10 @@ if (!function_exists('admin_header')) {
                 a { color: #2563eb; text-decoration: none; }
                 a:hover { text-decoration: underline; }
 
-                .admin-wrap {
+                .admin-wrapper {
                     display: flex;
                     min-height: 100vh;
+                    width: 100%;
                 }
 
                 .admin-sidebar {
@@ -87,20 +84,20 @@ if (!function_exists('admin_header')) {
                     flex: 1;
                     display: flex;
                     flex-direction: column;
+                    padding: 40px;
                     min-width: 0;
                 }
 
                 .admin-topbar {
                     height: 50px;
                     background: #ffffff;
-                    border-bottom: 1px solid #e5e7eb;
+                    border: 1px solid #e5e7eb;
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
                     padding: 0 20px;
-                    position: sticky;
-                    top: 0;
-                    z-index: 10;
+                    border-radius: 10px;
+                    margin-bottom: 20px;
                 }
 
                 .admin-topbar-title {
@@ -127,11 +124,11 @@ if (!function_exists('admin_header')) {
             </style>
         </head>
         <body>
-        <div class="admin-wrap">
+        <div class="admin-wrapper">
             <aside class="admin-sidebar">
                 <div class="admin-logo">
-                    fun_quiz 后台
-                    <small>Fun Tests Admin</small>
+                    DoFun 空间 · 后台
+                    <small>DoFun Admin Panel</small>
                 </div>
                 <nav class="admin-menu">
                     <?php
@@ -166,9 +163,9 @@ if (!function_exists('admin_header')) {
     function admin_footer(): void
     {
         ?>
-                </div> <!-- admin-content -->
+                </div>
             </main>
-        </div> <!-- admin-wrap -->
+        </div>
         </body>
         </html>
         <?php

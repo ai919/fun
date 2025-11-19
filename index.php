@@ -16,7 +16,7 @@ $tests = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </head>
 <body>
 <main class="home">
-    <h1>DoFun空间</h1>
+    <h1>DoFun 空间</h1>
     <p class="home-subtitle">挑一个你感兴趣的测试，开始玩一玩。</p>
 
     <div class="test-grid">
