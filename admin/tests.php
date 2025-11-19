@@ -189,6 +189,9 @@ admin_header('测试列表 · fun_quiz');
                        href="/admin/stats.php?test_id=<?= (int)$t['id'] ?>">
                         统计
                     </a>
+                    <a class="btn-mini" href="/admin/edit_test.php?id=<?= (int)$t['id'] ?>">
+                        编辑
+                    </a>
                     <a class="btn-mini" href="/admin/clone_test.php">
                         用作模板克隆
                     </a>
