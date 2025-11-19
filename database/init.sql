@@ -24,7 +24,7 @@ INSERT INTO `tests` (`slug`, `title`, `description`, `cover_image`)
 VALUES (
   'love',
   '你在亲密关系中的隐藏模式',
-  '一个洞察你在关系中情感反应、依恋模式、亲密冲突的心理测试。',
+  '一个洞察你在关系中情感反应、依恋模式、亲密冲突的心理测试�?,
   'default.png'
 );
 
@@ -45,8 +45,8 @@ CREATE TABLE `dimensions` (
 
 -- Insert LOVE test dimensions
 INSERT INTO `dimensions` (`test_id`, `key_name`, `title`, `description`) VALUES
-((SELECT id FROM tests WHERE slug='love'), 'anxiety', '情感焦虑度', '你在关系中对爱是否稳定、有安全感的衡量。'),
-((SELECT id FROM tests WHERE slug='love'), 'avoidance', '亲密回避度', '你在情感中的独立需求与距离感倾向。');
+((SELECT id FROM tests WHERE slug='love'), 'anxiety', '情感焦虑�?, '你在关系中对爱是否稳定、有安全感的衡量�?),
+((SELECT id FROM tests WHERE slug='love'), 'avoidance', '亲密回避�?, '你在情感中的独立需求与距离感倾向�?);
 
 
 -- ----------------------------
@@ -89,18 +89,18 @@ CREATE TABLE `options` (
 -- Q1
 INSERT INTO `options` (`question_id`, `content`, `dimension_key`, `score`) VALUES
 ((SELECT id FROM questions WHERE test_id=(SELECT id FROM tests WHERE slug='love') AND order_number=1),
- '开始焦躁，疯狂想对方是不是不爱了', 'anxiety', 3),
+ '开始焦躁，疯狂想对方是不是不爱�?, 'anxiety', 3),
 ((SELECT id FROM questions WHERE test_id=(SELECT id FROM tests WHERE slug='love') AND order_number=1),
  '会有点不安，但仍能做自己的事', 'anxiety', 2),
 ((SELECT id FROM questions WHERE test_id=(SELECT id FROM tests WHERE slug='love') AND order_number=1),
- '完全不会在意，觉得对方应该有自己的事情', 'avoidance', 3),
+ '完全不会在意，觉得对方应该有自己的事�?, 'avoidance', 3),
 ((SELECT id FROM questions WHERE test_id=(SELECT id FROM tests WHERE slug='love') AND order_number=1),
- '理智分析情况，等待回复', 'avoidance', 1);
+ '理智分析情况，等待回�?, 'avoidance', 1);
 
 -- Q2
 INSERT INTO `options` (`question_id`, `content`, `dimension_key`, `score`) VALUES
 ((SELECT id FROM questions WHERE order_number=2 AND test_id=(SELECT id FROM tests WHERE slug='love')),
- '立刻解释并试图确认关系', 'anxiety', 3),
+ '立刻解释并试图确认关�?, 'anxiety', 3),
 ((SELECT id FROM questions WHERE order_number=2 AND test_id=(SELECT id FROM tests WHERE slug='love')),
  '会焦虑但努力假装没事', 'anxiety', 2),
 ((SELECT id FROM questions WHERE order_number=2 AND test_id=(SELECT id FROM tests WHERE slug='love')),
@@ -115,7 +115,7 @@ INSERT INTO `options` VALUES
 (NULL, (SELECT id FROM questions WHERE order_number=3 AND test_id=(SELECT id FROM tests WHERE slug='love')),
  '对方突然靠太近、需要你很多陪伴', 'avoidance', 3),
 (NULL, (SELECT id FROM questions WHERE order_number=3 AND test_id=(SELECT id FROM tests WHERE slug='love')),
- '互相对对方失望', 'anxiety', 2),
+ '互相对对方失�?, 'anxiety', 2),
 (NULL, (SELECT id FROM questions WHERE order_number=3 AND test_id=(SELECT id FROM tests WHERE slug='love')),
  '对方太依赖你', 'avoidance', 2);
 
@@ -128,7 +128,7 @@ INSERT INTO `options` VALUES
 (NULL, (SELECT id FROM questions WHERE order_number=4 AND test_id=(SELECT id FROM tests WHERE slug='love')),
  '保持距离，避免太深的情感卷入', 'avoidance', 3),
 (NULL, (SELECT id FROM questions WHERE order_number=4 AND test_id=(SELECT id FROM tests WHERE slug='love')),
- '理性稳定，有时会略显冷淡', 'avoidance', 1);
+ '理性稳定，有时会略显冷�?, 'avoidance', 1);
 
 -- Q5
 INSERT INTO `options` VALUES
@@ -163,27 +163,27 @@ INSERT INTO `results`
 (`test_id`, `dimension_key`, `range_min`, `range_max`, `title`, `description`) VALUES
 ((SELECT id FROM tests WHERE slug='love'), 'anxiety', 0, 3,
  '情绪稳定依恋',
- '你在亲密关系中相对稳定，不易陷入过度焦虑，你拥有平衡的依赖与信任感。'),
+ '你在亲密关系中相对稳定，不易陷入过度焦虑，你拥有平衡的依赖与信任感�?),
 
 ((SELECT id FROM tests WHERE slug='love'), 'anxiety', 4, 7,
  '轻度焦虑依恋',
- '你对关系需要一定的安全感验证，但仍能维持基本的亲密与稳定。'),
+ '你对关系需要一定的安全感验证，但仍能维持基本的亲密与稳定�?),
 
 ((SELECT id FROM tests WHERE slug='love'), 'anxiety', 8, 20,
- '高焦虑依恋',
- '你非常需要确认爱，对亲密细节敏感，容易陷入患得患失的循环。'),
+ '高焦虑依�?,
+ '你非常需要确认爱，对亲密细节敏感，容易陷入患得患失的循环�?),
 
 ((SELECT id FROM tests WHERE slug='love'), 'avoidance', 0, 3,
  '亲密舒适型',
- '你愿意靠近别人，也能保持自己的独立，是成熟亲密关系的典型特征。'),
+ '你愿意靠近别人，也能保持自己的独立，是成熟亲密关系的典型特征�?),
 
 ((SELECT id FROM tests WHERE slug='love'), 'avoidance', 4, 7,
- '轻度回避型',
- '你有时会不自觉后退一步，渴望亲密但习惯保持距离。'),
+ '轻度回避�?,
+ '你有时会不自觉后退一步，渴望亲密但习惯保持距离�?),
 
 ((SELECT id FROM tests WHERE slug='love'), 'avoidance', 8, 20,
- '高回避依恋',
- '你强烈需要空间，害怕束缚，更像一个“情感上的孤独行者”。');
+ '高回避依�?,
+ '你强烈需要空间，害怕束缚，更像一个“情感上的孤独行者”�?);
 
 
 -- ----------------------------
