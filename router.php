@@ -20,7 +20,7 @@ if ($slug === '' || $slug === 'index.php') {
 }
 
 // 根据 slug 找测试
-$stmt = $pdo->prepare("SELECT id FROM tests WHERE slug = ? LIMIT 1");
+$stmt = $pdo->prepare("SELECT id FROM tests WHERE slug = ? AND (status = 'published' OR status = 1) LIMIT 1");
 $stmt->execute([$slug]);
 $test = $stmt->fetch(PDO::FETCH_ASSOC);
 

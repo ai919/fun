@@ -18,7 +18,13 @@ if (!$optionIds) {
     die('你还没有选择任何选项。');
 }
 
-$scores = calculateDimensionScores($pdo, $optionIds);
+$optionIds = array_values(array_unique($optionIds));
+try {
+    $scores = calculateDimensionScores($pdo, $optionIds, $testId);
+} catch (InvalidArgumentException $e) {
+    http_response_code(400);
+    die('提交的数据无效，请刷新页面后重试。');
+}
 
 $dimensionResults = [];
 foreach ($scores as $dim => $score) {
@@ -31,9 +37,13 @@ foreach ($scores as $dim => $score) {
     }
 }
 
-$testStmt = $pdo->prepare("SELECT * FROM tests WHERE id = ? LIMIT 1");
+$testStmt = $pdo->prepare("SELECT * FROM tests WHERE id = ? AND (status = 'published' OR status = 1) LIMIT 1");
 $testStmt->execute([$testId]);
 $test = $testStmt->fetch(PDO::FETCH_ASSOC);
+if (!$test) {
+    http_response_code(404);
+    die('测试不存在或已下线。');
+}
 
 $finalTest            = $test;
 $finalScores          = $scores;

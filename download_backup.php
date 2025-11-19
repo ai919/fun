@@ -1,12 +1,8 @@
 <?php
 $config = require __DIR__ . '/backup_config.php';
+require __DIR__ . '/lib/backup_helpers.php';
 $userToken = $_GET['token'] ?? '';
-
-if ($userToken !== $config['token']) {
-    http_response_code(403);
-    echo 'Forbidden';
-    exit;
-}
+backup_require_token($config, $userToken);
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($id <= 0) {

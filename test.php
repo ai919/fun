@@ -14,7 +14,7 @@ if ($slug === '') {
 }
 
 // 获取测试基本信息
-$stmt = $pdo->prepare("SELECT * FROM tests WHERE slug = ? LIMIT 1");
+$stmt = $pdo->prepare("SELECT * FROM tests WHERE slug = ? AND (status = 'published' OR status = 1) LIMIT 1");
 $stmt->execute([$slug]);
 $test = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -57,6 +57,7 @@ if (!$questions) {
 // 获取所有题目的选项（按 question_id 分组）
 $qIds = array_column($questions, 'id');
 $optionsByQuestion = [];
+$optionsById       = [];
 
 if ($qIds) {
     $place = implode(',', array_fill(0, count($qIds), '?'));
@@ -73,6 +74,7 @@ if ($qIds) {
             $optionsByQuestion[$qid] = [];
         }
         $optionsByQuestion[$qid][] = $row;
+        $optionsById[(int)$row['id']] = $row;
     }
 }
 
@@ -94,115 +96,33 @@ if ($hasPosted) {
     $answers = $_POST['answers'] ?? [];
 
     // 1. 检查每道题是否都有答案
+    $selectedOptions = [];
     foreach ($questions as $q) {
         $qid = (int)$q['id'];
         if (empty($answers[$qid])) {
-            $errors[] = "有题目还没有选择答案。";
+            $errors[] = "第 {$q['order_number']} 题尚未选择答案。";
             break;
         }
+        $selectedId = (int)$answers[$qid];
+        if (!isset($optionsById[$selectedId]) || (int)$optionsById[$selectedId]['question_id'] !== $qid) {
+            $errors[] = "提交的数据无效，请刷新页面后重试。";
+            break;
+        }
+        $selectedOptions[] = $optionsById[$selectedId];
     }
 
     if (!$errors) {
-        // 2. 取出所选选项信息（防止 HY093）
-        $selectedOptionIds = $answers ? array_map('intval', $answers) : [];
-        $selectedOptionIds = array_values(array_unique($selectedOptionIds));
+        foreach ($selectedOptions as $op) {
+            $dimKey = $op['dimension_key'] ?: 'default';
+            $score  = (int)$op['score'];
 
-        if (!$selectedOptionIds) {
-            $errors[] = "没有有效的选项被提交，请重试。";
-        } else {
-            $placeholders = implode(',', array_fill(0, count($selectedOptionIds), '?'));
-            $sql          = "SELECT * FROM options WHERE id IN ($placeholders)";
-            $optStmt      = $pdo->prepare($sql);
-            $optStmt->execute($selectedOptionIds);
-            $opts = $optStmt->fetchAll(PDO::FETCH_ASSOC);
-
-            if (!$opts || count($opts) !== count($selectedOptionIds)) {
-                $errors[] = "部分选项无效，请重试。";
-            } else {
-                // 3. 计算各维度得分
-                foreach ($opts as $op) {
-                    $dimKey = $op['dimension_key'] ?: 'default';
-                    $score  = (int)$op['score'];
-
-                    if (!isset($scoresByDim[$dimKey])) {
-                        $scoresByDim[$dimKey] = 0;
-                    }
-                    $scoresByDim[$dimKey] += $score;
-                }
-
-                // 4. 根据得分匹配结果
-                if ($scoresByDim) {
-                    $resultStmt = $pdo->prepare(
-                        "SELECT * FROM results
-                         WHERE test_id = ?
-                           AND dimension_key = ?
-                           AND range_min <= ?
-                           AND range_max >= ?
-                         LIMIT 1"
-                    );
-
-                    foreach ($scoresByDim as $dimKey => $score) {
-                        $resultStmt->execute([$testId, $dimKey, $score, $score]);
-                        $row = $resultStmt->fetch(PDO::FETCH_ASSOC);
-                        if ($row) {
-                            $resultsByDim[$dimKey] = $row;
-                            if (!$primaryResult) {
-                                $primaryResult = $row;
-                            }
-                        } else {
-                            $resultsByDim[$dimKey] = null; // 没有匹配也记录一下
-                        }
-                        $dimensionScores[] = [
-                            'key'   => $dimKey,
-                            'title' => $dimensionMeta[$dimKey]['title'] ?? strtoupper($dimKey),
-                            'score' => $score,
-                        ];
-                    }
-                }
-
-                // 5. 记录到 test_runs / test_run_scores（日志）
-                try {
-                    $pdo->beginTransaction();
-
-                    // 5.1 插入 test_runs
-                    $ip = $_SERVER['REMOTE_ADDR']     ?? null;
-                    $ua = $_SERVER['HTTP_USER_AGENT'] ?? null;
-                    if ($ua !== null && strlen($ua) > 255) {
-                        $ua = substr($ua, 0, 255);
-                    }
-
-                    $insRun = $pdo->prepare(
-                        "INSERT INTO test_runs (test_id, client_ip, user_agent)
-                         VALUES (?, ?, ?)"
-                    );
-                    $insRun->execute([$testId, $ip, $ua]);
-                    $runId = (int)$pdo->lastInsertId();
-
-                    // 5.2 插入每个维度得分
-                    if ($scoresByDim) {
-                        $insScore = $pdo->prepare(
-                            "INSERT INTO test_run_scores (run_id, dimension_key, score, result_id)
-                             VALUES (?, ?, ?, ?)"
-                        );
-                        foreach ($scoresByDim as $dimKey => $score) {
-                            $resRow   = $resultsByDim[$dimKey] ?? null;
-                            $resultId = ($resRow && !empty($resRow['id']))
-                                ? (int)$resRow['id']
-                                : null;
-                            $insScore->execute([$runId, $dimKey, $score, $resultId]);
-                        }
-                    }
-
-                    $pdo->commit();
-                } catch (Exception $e) {
-                    if ($pdo->inTransaction()) {
-                        $pdo->rollBack();
-                    }
-                    // 记录失败不影响用户看到结果，这里静默忽略或写日志
-                }
+            if (!isset($scoresByDim[$dimKey])) {
+                $scoresByDim[$dimKey] = 0;
             }
+            $scoresByDim[$dimKey] += $score;
         }
     }
+
 }
 
 // 统计总完成次数（用于前台显示“已有 X 人做过此测试”）

@@ -1,12 +1,9 @@
 <?php
 $config = require __DIR__ . '/backup_config.php';
+require __DIR__ . '/lib/backup_helpers.php';
 
 $userToken = $_GET['token'] ?? '';
-if ($userToken !== $config['token']) {
-    http_response_code(403);
-    echo 'Forbidden';
-    exit;
-}
+backup_require_token($config, $userToken);
 
 $dbConf = $config['db'];
 try {
@@ -60,8 +57,7 @@ exec($cmd, $output, $returnVar);
 
 if ($returnVar !== 0 || !file_exists($sqlFile)) {
     http_response_code(500);
-    echo "数据库备份失败，请检查 mysqldump 路径或权限。\n";
-    echo "命令：{$cmd}\n";
+    echo "数据库备份失败，请检查 mysqldump 配置。";
     exit;
 }
 
