@@ -1,3 +1,18 @@
+-- ----------------------------
+-- 0. admin_users
+-- ----------------------------
+DROP TABLE IF EXISTS `admin_users`;
+CREATE TABLE `admin_users` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `username` VARCHAR(50) NOT NULL UNIQUE,
+  `password_hash` VARCHAR(255) NOT NULL,
+  `is_active` TINYINT(1) DEFAULT 1,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Default admin account: admin / admin123 (please change after login)
+INSERT INTO `admin_users` (`username`, `password_hash`, `is_active`) VALUES
+('admin', '$2y$10$EYLV6iPPoScUpQeFs0m6JOiF2/di1fd17vJdaH69cSLK6HqXXrH0G', 1);
 -- --------------------------------------------------------
 -- Database initialization for fun_quiz system
 -- Author: ChatGPT
