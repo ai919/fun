@@ -2,41 +2,44 @@
 require __DIR__ . '/auth.php';
 require_admin_login();
 
-// admin/clone_test.php
 require __DIR__ . '/../lib/db_connect.php';
-require __DIR__ . '/layout.php';
 
-$errors  = [];
-$success = null;
-$newSlug = '';
-$newId   = null;
+$pageTitle    = '克隆测试 · DoFun';
+$pageHeading  = '克隆一个现有测试';
+$pageSubtitle = '复制模板测试的维度、题目、选项和结果，生成一个新的可编辑测试。';
+$activeMenu   = 'clone';
 
-// 先把所有已有测试列出来，供选择模板
+$errors   = [];
+$success  = null;
+$newSlug  = '';
+$newId    = null;
+
 $testsStmt = $pdo->query("SELECT id, slug, title FROM tests ORDER BY id ASC");
 $tests     = $testsStmt->fetchAll(PDO::FETCH_ASSOC);
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $sourceId    = (int)($_POST['source_test_id'] ?? 0);
-    $slug        = trim($_POST['slug'] ?? '');
-    $title       = trim($_POST['title'] ?? '');
-    $description = trim($_POST['description'] ?? '');
-    $cover       = trim($_POST['cover_image'] ?? '');
+$sourceId        = 0;
+$slugInput       = '';
+$titleInput      = '';
+$descriptionInput = '';
+$coverInput      = '';
 
-    // 校验
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $sourceId        = (int)($_POST['source_test_id'] ?? 0);
+    $slugInput       = trim($_POST['slug'] ?? '');
+    $titleInput      = trim($_POST['title'] ?? '');
+    $descriptionInput = trim($_POST['description'] ?? '');
+    $coverInput      = trim($_POST['cover_image'] ?? '');
+
     if (!$sourceId) {
         $errors[] = '请选择一个要克隆的模板测试。';
     }
-    if ($slug === '' || !preg_match('/^[a-z0-9_-]+$/', $slug)) {
+    if ($slugInput === '' || !preg_match('/^[a-z0-9_-]+$/', $slugInput)) {
         $errors[] = '新测试的 slug 不能为空，只能使用小写字母、数字、下划线和短横线。';
     }
-    if ($title === '') {
+    if ($titleInput === '') {
         $errors[] = '新测试的标题不能为空。';
     }
-    if ($cover === '') {
-        $cover = '/assets/images/default.png';
-    }
 
-    // 检查源测试是否存在
     $srcTest = null;
     if (!$errors) {
         $srcStmt = $pdo->prepare("SELECT * FROM tests WHERE id = ? LIMIT 1");
@@ -47,12 +50,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // 检查 slug 唯一
     if (!$errors) {
         $check = $pdo->prepare('SELECT COUNT(*) FROM tests WHERE slug = ?');
-        $check->execute([$slug]);
+        $check->execute([$slugInput]);
         if ($check->fetchColumn() > 0) {
-            $errors[] = '这个 slug 已存在，请换一个（比如后面加数字）。';
+            $errors[] = '这个 slug 已存在，请换一个（可在后面加数字）。';
         }
     }
 
@@ -60,24 +62,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $pdo->beginTransaction();
 
-            // 1）插入新 tests
+            $descriptionToSave = $descriptionInput !== ''
+                ? $descriptionInput
+                : ($srcTest['description'] ?? '');
+            $coverToSave = $coverInput !== ''
+                ? $coverInput
+                : ($srcTest['cover_image'] ?? '/assets/images/default.png');
+
             $insertTest = $pdo->prepare(
                 "INSERT INTO tests (slug, title, description, cover_image)
                  VALUES (?, ?, ?, ?)"
             );
             $insertTest->execute([
-                $slug,
-                $title,
-                $description !== '' ? $description : ($srcTest['description'] ?? ''),
-                $cover ?: ($srcTest['cover_image'] ?? '/assets/images/default.png'),
+                $slugInput,
+                $titleInput,
+                $descriptionToSave,
+                $coverToSave,
             ]);
             $newTestId = (int)$pdo->lastInsertId();
 
-            // 2）克隆 dimensions
             $dimStmt = $pdo->prepare("SELECT * FROM dimensions WHERE test_id = ?");
             $dimStmt->execute([$sourceId]);
             $dims = $dimStmt->fetchAll(PDO::FETCH_ASSOC);
-
             if ($dims) {
                 $insDim = $pdo->prepare(
                     "INSERT INTO dimensions (test_id, key_name, title, description)
@@ -93,201 +99,172 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            // 3）克隆 questions
-            $qStmt = $pdo->prepare("SELECT * FROM questions WHERE test_id = ? ORDER BY order_number, id");
+            $qStmt = $pdo->prepare(
+                "SELECT * FROM questions
+                 WHERE test_id = ?
+                 ORDER BY order_number, id"
+            );
             $qStmt->execute([$sourceId]);
-            $qs = $qStmt->fetchAll(PDO::FETCH_ASSOC);
+            $questions = $qStmt->fetchAll(PDO::FETCH_ASSOC);
 
-            $mapOldQToNewQ = [];
-            if ($qs) {
+            $questionMap = [];
+            if ($questions) {
                 $insQ = $pdo->prepare(
                     "INSERT INTO questions (test_id, order_number, content)
                      VALUES (?, ?, ?)"
                 );
-                foreach ($qs as $q) {
+                foreach ($questions as $question) {
                     $insQ->execute([
                         $newTestId,
-                        $q['order_number'],
-                        $q['content'],
+                        $question['order_number'],
+                        $question['content'],
                     ]);
-                    $newQId = (int)$pdo->lastInsertId();
-                    $mapOldQToNewQ[$q['id']] = $newQId;
+                    $questionMap[$question['id']] = (int)$pdo->lastInsertId();
                 }
             }
 
-            // 4）克隆 options
-            if ($mapOldQToNewQ) {
-                $oldQIds = array_keys($mapOldQToNewQ);
-                $place   = implode(',', array_fill(0, count($oldQIds), '?'));
-
+            if ($questionMap) {
+                $oldIds = array_keys($questionMap);
+                $placeholder = implode(',', array_fill(0, count($oldIds), '?'));
                 $oStmt = $pdo->prepare(
-                    "SELECT * FROM options WHERE question_id IN ($place) ORDER BY question_id, id"
+                    "SELECT * FROM options
+                     WHERE question_id IN ($placeholder)
+                     ORDER BY question_id, id"
                 );
-                $oStmt->execute($oldQIds);
-                $ops = $oStmt->fetchAll(PDO::FETCH_ASSOC);
+                $oStmt->execute($oldIds);
+                $options = $oStmt->fetchAll(PDO::FETCH_ASSOC);
 
-                if ($ops) {
-                    $insO = $pdo->prepare(
+                if ($options) {
+                    $insOpt = $pdo->prepare(
                         "INSERT INTO options (question_id, content, dimension_key, score)
                          VALUES (?, ?, ?, ?)"
                     );
-                    foreach ($ops as $o) {
-                        $oldQId = $o['question_id'];
-                        if (!isset($mapOldQToNewQ[$oldQId])) {
+                    foreach ($options as $option) {
+                        $oldQId = $option['question_id'];
+                        if (!isset($questionMap[$oldQId])) {
                             continue;
                         }
-                        $insO->execute([
-                            $mapOldQToNewQ[$oldQId],
-                            $o['content'],
-                            $o['dimension_key'],
-                            $o['score'],
+                        $insOpt->execute([
+                            $questionMap[$oldQId],
+                            $option['content'],
+                            $option['dimension_key'],
+                            $option['score'],
                         ]);
                     }
                 }
             }
 
-            // 5）克隆 results
             $rStmt = $pdo->prepare("SELECT * FROM results WHERE test_id = ?");
             $rStmt->execute([$sourceId]);
-            $rs = $rStmt->fetchAll(PDO::FETCH_ASSOC);
-
-            if ($rs) {
-                $insR = $pdo->prepare(
+            $results = $rStmt->fetchAll(PDO::FETCH_ASSOC);
+            if ($results) {
+                $insRes = $pdo->prepare(
                     "INSERT INTO results (test_id, dimension_key, range_min, range_max, title, description)
                      VALUES (?, ?, ?, ?, ?, ?)"
                 );
-                foreach ($rs as $r) {
-                    $insR->execute([
+                foreach ($results as $result) {
+                    $insRes->execute([
                         $newTestId,
-                        $r['dimension_key'],
-                        $r['range_min'],
-                        $r['range_max'],
-                        $r['title'],
-                        $r['description'],
+                        $result['dimension_key'],
+                        $result['range_min'],
+                        $result['range_max'],
+                        $result['title'],
+                        $result['description'],
                     ]);
                 }
             }
 
             $pdo->commit();
 
-            $success = '克隆成功！新测试已创建。';
-            $newSlug = $slug;
+            $success = '克隆成功，新测试已经创建。';
+            $newSlug = $slugInput;
             $newId   = $newTestId;
 
+            $sourceId = 0;
+            $slugInput = '';
+            $titleInput = '';
+            $descriptionInput = '';
+            $coverInput = '';
         } catch (Exception $e) {
-            $pdo->rollBack();
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             $errors[] = '克隆过程中出错：' . $e->getMessage();
         }
     }
 }
 
-admin_header('克隆测试 · fun_quiz');
+require __DIR__ . '/layout.php';
 ?>
-<style>
-    .errors, .success {
-        padding: 10px;
-        border-radius: 6px;
-        margin-bottom: 12px;
-    }
-    .errors {
-        background: #ffecec;
-        border: 1px solid #ffb4b4;
-    }
-    .success {
-        background: #e7f9ec;
-        border: 1px solid #9ad5aa;
-    }
-    .hint { font-size: 13px; color: #666; }
-    .field { margin-bottom: 12px; }
-    .field label { display: block; margin-bottom: 4px; }
-    .field input[type="text"],
-    .field textarea,
-    .field select {
-        width: 100%;
-        padding: 6px 8px;
-    }
-</style>
-
-<h1>克隆一个现有测试</h1>
-<p class="hint">
-    选择一个已有测试作为模板，它的维度、题目、选项、结果都会被完整复制。<br>
-    你只需要改 slug / 标题 / 简介，再去 <code>questions & options</code> 页面调整内容即可。
-</p>
 
 <?php if ($errors): ?>
-    <div class="errors">
-        <strong>有一些问题：</strong>
-        <ul>
-            <?php foreach ($errors as $e): ?>
-                <li><?= htmlspecialchars($e) ?></li>
-            <?php endforeach; ?>
-        </ul>
+    <div class="alert alert-danger">
+        <?php foreach ($errors as $error): ?>
+            <div><?= htmlspecialchars($error) ?></div>
+        <?php endforeach; ?>
     </div>
 <?php endif; ?>
 
 <?php if ($success): ?>
-    <div class="success">
-        <p><?= htmlspecialchars($success) ?></p>
+    <div class="alert alert-success">
+        <div><?= htmlspecialchars($success) ?></div>
         <?php if ($newSlug): ?>
-            <p>
-                👉 前台访问路径：
-                <a href="/<?= htmlspecialchars($newSlug) ?>" target="_blank">/<?= htmlspecialchars($newSlug) ?></a>
-            </p>
+            <div>前台访问：<a href="/<?= htmlspecialchars($newSlug) ?>" target="_blank">/<?= htmlspecialchars($newSlug) ?></a></div>
         <?php endif; ?>
         <?php if ($newId): ?>
-            <p>
-                👉 后台管理题目：
-                <a href="/admin/questions.php?test_id=<?= (int)$newId ?>" target="_blank">
-                    /admin/questions.php?test_id=<?= (int)$newId ?>
-                </a>
-            </p>
+            <div>管理题目：<a href="/admin/questions.php?test_id=<?= (int)$newId ?>" target="_blank">/admin/questions.php?test_id=<?= (int)$newId ?></a></div>
         <?php endif; ?>
     </div>
 <?php endif; ?>
 
-<form method="post">
+<p class="hint">
+    选择一个已有测试作为模板，它的维度、题目、选项、结果都会被完整复制。<br>
+    复制完成后可以前往“题目 &amp; 选项”页面继续调整内容。
+</p>
+
+<form method="post" class="admin-form">
     <div class="field">
-        <label for="source_test_id">选择一个测试作为模板（来源）</label>
-        <select name="source_test_id" id="source_test_id">
-            <option value="">请选择...</option>
-            <?php foreach ($tests as $t): ?>
-                <option value="<?= (int)$t['id'] ?>" <?= isset($_POST['source_test_id']) && (int)$_POST['source_test_id'] === (int)$t['id'] ? 'selected' : '' ?>>
-                    [<?= (int)$t['id'] ?>] <?= htmlspecialchars($t['slug']) ?> — <?= htmlspecialchars($t['title']) ?>
+        <label for="source_test_id">模板测试</label>
+        <select id="source_test_id" name="source_test_id" required>
+            <option value="">请选择要克隆的测试</option>
+            <?php foreach ($tests as $testItem): ?>
+                <option value="<?= (int)$testItem['id'] ?>" <?= $sourceId === (int)$testItem['id'] ? 'selected' : '' ?>>
+                    [<?= (int)$testItem['id'] ?>] <?= htmlspecialchars($testItem['slug']) ?> · <?= htmlspecialchars($testItem['title']) ?>
                 </option>
             <?php endforeach; ?>
         </select>
+        <div class="field-hint">会复制全部题目、选项、维度与结果。</div>
     </div>
 
     <div class="field">
         <label for="slug">新测试 slug（必填）</label>
-        <input type="text" id="slug" name="slug"
-               placeholder="例如：money_anxiety / attachment_style"
-               value="<?= htmlspecialchars($_POST['slug'] ?? '') ?>">
-        <div class="hint">只能使用小写字母、数字、下划线、短横线。访问路径为 <code>/slug</code>。</div>
+        <input type="text" id="slug" name="slug" value="<?= htmlspecialchars($slugInput) ?>"
+               placeholder="例如：love_language / finance_personality">
+        <div class="field-hint">仅限小写字母、数字、下划线、短横线。访问路径为 <code>/slug</code>。</div>
     </div>
 
     <div class="field">
         <label for="title">新测试标题（必填）</label>
-        <input type="text" id="title" name="title"
-               placeholder="例如：你的金钱焦虑体质有多严重？"
-               value="<?= htmlspecialchars($_POST['title'] ?? '') ?>">
+        <input type="text" id="title" name="title" value="<?= htmlspecialchars($titleInput) ?>"
+               placeholder="例如：你的金钱焦虑等级是多少？">
     </div>
 
     <div class="field">
-        <label for="description">新测试简介（可选）</label>
+        <label for="description">测试简介（可选）</label>
         <textarea id="description" name="description" rows="3"
-                  placeholder="不填则沿用模板的简介。"><?= htmlspecialchars($_POST['description'] ?? '') ?></textarea>
+                  placeholder="不填写则沿用模板测试的简介"><?= htmlspecialchars($descriptionInput) ?></textarea>
     </div>
 
     <div class="field">
-        <label for="cover_image">封面图片地址（可选）</label>
-        <input type="text" id="cover_image" name="cover_image"
-               placeholder="留空则默认 /assets/images/default.png 或模板封面"
-               value="<?= htmlspecialchars($_POST['cover_image'] ?? '') ?>">
+        <label for="cover_image">封面图 URL（可选）</label>
+        <input type="text" id="cover_image" name="cover_image" value="<?= htmlspecialchars($coverInput) ?>"
+               placeholder="留空则继续使用模板的封面">
+        <div class="field-hint">建议使用 4:3 或 16:9 的图片链接。</div>
     </div>
 
-    <button type="submit">克隆测试</button>
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">克隆测试</button>
+    </div>
 </form>
 
-<?php
-admin_footer();
+<?php require __DIR__ . '/layout_footer.php'; ?>

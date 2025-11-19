@@ -2,21 +2,34 @@
 require __DIR__ . '/auth.php';
 require_admin_login();
 
-// admin/new_test.php
 require __DIR__ . '/../lib/db_connect.php';
-require __DIR__ . '/layout.php';
+
+$pageTitle    = '新增测试 · DoFun';
+$pageHeading  = '新增测试';
+$pageSubtitle = '填写基础信息、封面与标签即可创建新测试。';
+$activeMenu   = 'new';
 
 $errors  = [];
 $success = null;
 $newSlug = '';
+
+$slug        = '';
+$title       = '';
+$description = '';
+$cover       = '/assets/images/default.png';
+$tags        = '';
+$titleEmoji  = '';
+$titleColor  = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $slug        = trim($_POST['slug'] ?? '');
     $title       = trim($_POST['title'] ?? '');
     $description = trim($_POST['description'] ?? '');
     $cover       = trim($_POST['cover_image'] ?? '');
+    $tags        = trim($_POST['tags'] ?? '');
+    $titleEmoji  = trim($_POST['title_emoji'] ?? '');
+    $titleColor  = trim($_POST['title_color'] ?? '');
 
-    // 基础校验
     if ($slug === '' || !preg_match('/^[a-z0-9_-]+$/', $slug)) {
         $errors[] = 'Slug 只能使用小写字母、数字、下划线、短横线，并且不能为空。';
     }
@@ -29,136 +42,107 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $cover = '/assets/images/default.png';
     }
 
-    // 检查 slug 是否已存在
     if (!$errors) {
         $check = $pdo->prepare('SELECT COUNT(*) FROM tests WHERE slug = ?');
         $check->execute([$slug]);
         if ($check->fetchColumn() > 0) {
-            $errors[] = '这个 slug 已经被占用了，请换一个（比如在后面加数字）。';
+            $errors[] = '这个 slug 已被占用，请换一个（例如后面加数字）。';
         }
     }
 
-    // 写入数据库
     if (!$errors) {
         $stmt = $pdo->prepare(
-            'INSERT INTO tests (slug, title, description, cover_image)
-             VALUES (?, ?, ?, ?)'
+            'INSERT INTO tests (slug, title, description, cover_image, tags, title_emoji, title_color)
+             VALUES (?, ?, ?, ?, ?, ?, ?)'
         );
-        $stmt->execute([$slug, $title, $description, $cover]);
+        $stmt->execute([$slug, $title, $description, $cover, $tags, $titleEmoji, $titleColor]);
 
-        $success = '测试已创建成功！现在可以访问 /' . htmlspecialchars($slug) . '（注意：题目和结果需要你在数据库里继续添加）。';
+        $success = '测试已创建成功！现在可以访问 /' . htmlspecialchars($slug) . '。';
         $newSlug = $slug;
 
-        // 清空表单（保留一份 slug 用来显示链接）
         $slug        = '';
         $title       = '';
         $description = '';
-        $cover       = '';
+        $cover       = '/assets/images/default.png';
+        $tags        = '';
+        $titleEmoji  = '';
+        $titleColor  = '';
     }
 }
 
-admin_header('新增测试 · fun_quiz');
+require __DIR__ . '/layout.php';
 ?>
-<style>
-    .field {
-        margin-bottom: 12px;
-    }
-    .field label {
-        display: block;
-        margin-bottom: 4px;
-    }
-    .field input[type="text"],
-    .field textarea {
-        width: 100%;
-        padding: 6px 8px;
-    }
-    .errors {
-        background: #ffecec;
-        border: 1px solid #ffb4b4;
-        padding: 10px;
-        border-radius: 6px;
-        margin-bottom: 12px;
-    }
-    .success {
-        background: #e7f9ec;
-        border: 1px solid #9ad5aa;
-        padding: 10px;
-        border-radius: 6px;
-        margin-bottom: 12px;
-    }
-    .hint {
-        font-size: 13px;
-        color: #666;
-    }
-</style>
-
-<h1>新增一个测试（只创建 tests 记录）</h1>
-<p class="hint">
-    这个页面只负责把测试的基本信息写入 <code>tests</code> 表。<br>
-    创建后会自动支持 <code>/slug</code> 访问，但题目、选项、结果需要你后面在数据库里继续添加（可以照 <code>love / animal / work</code> 的 SQL 模板复制改）。
-</p>
 
 <?php if ($errors): ?>
-    <div class="errors">
-        <strong>提交有一些问题：</strong>
-        <ul>
-            <?php foreach ($errors as $e): ?>
-                <li><?= htmlspecialchars($e) ?></li>
-            <?php endforeach; ?>
-        </ul>
+    <div class="alert alert-danger">
+        <?php foreach ($errors as $e): ?>
+            <div><?= htmlspecialchars($e) ?></div>
+        <?php endforeach; ?>
     </div>
 <?php endif; ?>
 
 <?php if ($success): ?>
-    <div class="success">
-        <p><?= $success ?></p>
-        <?php if ($newSlug): ?>
-            <p>
-                👉 现在可以先在浏览器里打开：
-                <a href="/<?= htmlspecialchars($newSlug) ?>" target="_blank">/<?= htmlspecialchars($newSlug) ?></a>
-            </p>
-            <p class="hint">
-                接下来，你可以在 phpMyAdmin 里：<br>
-                1）在 <code>questions</code> 表里为它添加题目（test_id = 新测试的 id）<br>
-                2）在 <code>options</code> 表里添加选项，并设置 <code>dimension_key</code> + <code>score</code><br>
-                3）在 <code>dimensions</code> 和 <code>results</code> 里为它设计维度和结果区间
-            </p>
-        <?php endif; ?>
-    </div>
+    <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
 <?php endif; ?>
 
-<form method="post">
+<form method="post" class="admin-form">
     <div class="field">
         <label for="slug">测试路径 slug（必填）</label>
         <input type="text" id="slug" name="slug"
                placeholder="例如：love / animal / work / money_anxiety"
-               value="<?= htmlspecialchars($slug ?? '') ?>">
-        <div class="hint">只允许小写字母、数字、下划线、短横线；用户访问路径将是 <code>/slug</code>。</div>
+               value="<?= htmlspecialchars($slug) ?>">
+        <div class="field-hint">
+            只允许小写字母、数字、下划线、短横线；用户访问路径将是 <code>/slug</code>。
+        </div>
     </div>
 
     <div class="field">
         <label for="title">测试标题（必填）</label>
         <input type="text" id="title" name="title"
                placeholder="例如：你的存钱焦虑等级是多少？"
-               value="<?= htmlspecialchars($title ?? '') ?>">
+               value="<?= htmlspecialchars($title) ?>">
     </div>
 
     <div class="field">
-        <label for="description">测试简介（可选，但建议填写）</label>
+        <label for="description">测试简介（可选）</label>
         <textarea id="description" name="description" rows="3"
-                  placeholder="一句话介绍这个测试的用途、风格、适合谁做。"><?= htmlspecialchars($description ?? '') ?></textarea>
+                  placeholder="一句话介绍这个测试的用途、风格、适合谁做"><?= htmlspecialchars($description) ?></textarea>
     </div>
 
     <div class="field">
-        <label for="cover_image">封面图片地址（可选）</label>
+        <label for="cover_image">封面图 URL</label>
         <input type="text" id="cover_image" name="cover_image"
                placeholder="/assets/images/default.png 或完整图片 URL"
-               value="<?= htmlspecialchars($cover ?? '') ?>">
-        <div class="hint">留空则使用默认封面 <code>/assets/images/default.png</code>。</div>
+               value="<?= htmlspecialchars($cover) ?>">
+        <div class="field-hint">
+            留空则使用默认封面 <code>/assets/images/default.png</code>。
+        </div>
     </div>
 
-    <button type="submit">创建测试</button>
+    <div class="field">
+        <label for="tags">测验标签（多标签）</label>
+        <input type="text" id="tags" name="tags" class="input-text"
+               placeholder="例如：情感,亲密关系,自我探索"
+               value="<?= htmlspecialchars($tags) ?>">
+        <div class="field-hint">多个标签用逗号分隔，将显示在卡片上的类型标签。</div>
+    </div>
+
+    <div class="field">
+        <label for="title_emoji">标题 Emoji（可选）</label>
+        <input type="text" id="title_emoji" name="title_emoji" class="input-text"
+               placeholder="例如：💰 或 🐱"
+               value="<?= htmlspecialchars($titleEmoji) ?>">
+    </div>
+
+    <div class="field">
+        <label for="title_color">标题颜色（可选）</label>
+        <input type="text" id="title_color" name="title_color" class="input-text"
+               placeholder="例如：#111827 或 #ef4444"
+               value="<?= htmlspecialchars($titleColor) ?>">
+        <div class="field-hint">留空则使用默认颜色。</div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">创建测试</button>
 </form>
 
-<?php
-admin_footer();
+<?php require __DIR__ . '/layout_footer.php'; ?>

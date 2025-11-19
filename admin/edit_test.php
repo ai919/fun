@@ -3,12 +3,8 @@ require __DIR__ . '/auth.php';
 require_admin_login();
 
 require __DIR__ . '/../lib/db_connect.php';
-require __DIR__ . '/layout.php';
 
-$errors = [];
-$success = null;
 $testId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-
 if (!$testId) {
     die('缺少测试 ID');
 }
@@ -21,16 +17,30 @@ if (!$test) {
     die('测试不存在');
 }
 
+$pageTitle    = '编辑测试 · DoFun';
+$pageHeading  = '编辑测试：' . ($test['title'] ?? '');
+$pageSubtitle = '当前 slug：' . ($test['slug'] ?? '') . ' · ID: ' . $testId;
+$activeMenu   = 'tests';
+
+$errors  = [];
+$success = null;
+
 $slug        = $test['slug'];
 $title       = $test['title'];
 $description = $test['description'];
 $cover       = $test['cover_image'];
+$tags        = $test['tags'] ?? '';
+$titleEmoji  = $test['title_emoji'] ?? '';
+$titleColor  = $test['title_color'] ?? '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $slug        = trim($_POST['slug'] ?? '');
     $title       = trim($_POST['title'] ?? '');
     $description = trim($_POST['description'] ?? '');
     $cover       = trim($_POST['cover_image'] ?? '');
+    $tags        = trim($_POST['tags'] ?? '');
+    $titleEmoji  = trim($_POST['title_emoji'] ?? '');
+    $titleColor  = trim($_POST['title_color'] ?? '');
 
     if ($slug === '' || !preg_match('/^[a-z0-9_-]+$/', $slug)) {
         $errors[] = 'Slug 只能使用小写字母、数字、下划线、短横线，并且不能为空。';
@@ -48,104 +58,86 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $check = $pdo->prepare('SELECT COUNT(*) FROM tests WHERE slug = ? AND id <> ?');
         $check->execute([$slug, $testId]);
         if ($check->fetchColumn() > 0) {
-            $errors[] = '这个 slug 已经被占用了，请换一个。';
+            $errors[] = '这个 slug 已经被占用，请换一个。';
         }
     }
 
     if (!$errors) {
         $update = $pdo->prepare(
             "UPDATE tests
-             SET slug = ?, title = ?, description = ?, cover_image = ?
+             SET slug = ?, title = ?, description = ?, cover_image = ?, tags = ?, title_emoji = ?, title_color = ?
              WHERE id = ?"
         );
-        $update->execute([$slug, $title, $description, $cover, $testId]);
+        $update->execute([$slug, $title, $description, $cover, $tags, $titleEmoji, $titleColor, $testId]);
         $success = '测试信息已更新。';
     }
 }
 
-admin_header('编辑测试 · fun_quiz');
+require __DIR__ . '/layout.php';
 ?>
-<style>
-    .field {
-        margin-bottom: 12px;
-    }
-    .field label {
-        display: block;
-        margin-bottom: 4px;
-    }
-    .field input[type="text"],
-    .field textarea {
-        width: 100%;
-        padding: 6px 8px;
-    }
-    .errors {
-        background: #ffecec;
-        border: 1px solid #ffb4b4;
-        padding: 10px;
-        border-radius: 6px;
-        margin-bottom: 12px;
-    }
-    .success {
-        background: #e7f9ec;
-        border: 1px solid #9ad5aa;
-        padding: 10px;
-        border-radius: 6px;
-        margin-bottom: 12px;
-    }
-    .hint {
-        font-size: 13px;
-        color: #666;
-    }
-</style>
-
-<h1>编辑测试：<?= htmlspecialchars($test['title'] ?? '') ?></h1>
 
 <?php if ($errors): ?>
-    <div class="errors">
-        <strong>有一些问题：</strong>
-        <ul>
-            <?php foreach ($errors as $e): ?>
-                <li><?= htmlspecialchars($e) ?></li>
-            <?php endforeach; ?>
-        </ul>
+    <div class="alert alert-danger">
+        <?php foreach ($errors as $error): ?>
+            <div><?= htmlspecialchars($error) ?></div>
+        <?php endforeach; ?>
     </div>
 <?php endif; ?>
 
 <?php if ($success): ?>
-    <div class="success">
-        <?= htmlspecialchars($success) ?>
-    </div>
+    <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
 <?php endif; ?>
 
-<form method="post">
+<form method="post" class="admin-form">
     <div class="field">
         <label for="slug">测试路径 slug（必填）</label>
-        <input type="text" id="slug" name="slug"
-               value="<?= htmlspecialchars($slug ?? '') ?>">
-        <div class="hint">只允许小写字母、数字、下划线、短横线。</div>
+        <input type="text" id="slug" name="slug" value="<?= htmlspecialchars($slug) ?>">
+        <div class="field-hint">用户访问路径为 <code>/<?= htmlspecialchars($slug) ?></code>，仅限小写字母、数字、下划线、短横线。</div>
     </div>
 
     <div class="field">
         <label for="title">测试标题（必填）</label>
-        <input type="text" id="title" name="title"
-               value="<?= htmlspecialchars($title ?? '') ?>">
+        <input type="text" id="title" name="title" value="<?= htmlspecialchars($title) ?>">
     </div>
 
     <div class="field">
-        <label for="description">测试简介</label>
-        <textarea id="description" name="description" rows="3"><?= htmlspecialchars($description ?? '') ?></textarea>
+        <label for="description">测试简介（可选）</label>
+        <textarea id="description" name="description" rows="3"><?= htmlspecialchars($description) ?></textarea>
     </div>
 
     <div class="field">
         <label for="cover_image">封面图 URL</label>
-        <input type="text" id="cover_image" name="cover_image"
-               placeholder="/assets/images/default.png 或完整图片 URL"
-               value="<?= htmlspecialchars($cover ?? '') ?>">
-        <div class="hint">留空则使用默认封面 <code>/assets/images/default.png</code>。</div>
+        <input type="text" id="cover_image" name="cover_image" value="<?= htmlspecialchars($cover) ?>">
+        <div class="field-hint">留空将自动使用 <code>/assets/images/default.png</code>。</div>
     </div>
 
-    <button type="submit">保存测试</button>
+    <div class="field">
+        <label for="tags">测验标签（多标签）</label>
+        <input type="text" id="tags" name="tags" class="input-text"
+               placeholder="例如：情感,亲密关系,自我探索"
+               value="<?= htmlspecialchars($tags) ?>">
+        <div class="field-hint">多个标签用逗号分隔，将显示在卡片上的类型标签。</div>
+    </div>
+
+    <div class="field">
+        <label for="title_emoji">标题 Emoji（可选）</label>
+        <input type="text" id="title_emoji" name="title_emoji" class="input-text"
+               placeholder="例如：💰 或 🐱"
+               value="<?= htmlspecialchars($titleEmoji) ?>">
+    </div>
+
+    <div class="field">
+        <label for="title_color">标题颜色（可选）</label>
+        <input type="text" id="title_color" name="title_color" class="input-text"
+               placeholder="例如：#111827 或 #ef4444"
+               value="<?= htmlspecialchars($titleColor) ?>">
+        <div class="field-hint">留空则使用默认颜色。</div>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">保存测试</button>
+        <a class="btn btn-ghost" href="/admin/tests.php">返回列表</a>
+    </div>
 </form>
 
-<?php
-admin_footer();
+<?php require __DIR__ . '/layout_footer.php'; ?>

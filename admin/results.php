@@ -1,15 +1,12 @@
 <?php
-// admin/results.php
 require __DIR__ . '/auth.php';
 require_admin_login();
 
 require __DIR__ . '/../lib/db_connect.php';
-require __DIR__ . '/layout.php';
 
 $errors  = [];
 $success = null;
 
-// 获取 test_id（支持 ?test_id= 或 ?slug=）
 $testId = null;
 if (isset($_GET['test_id'])) {
     $testId = (int)$_GET['test_id'];
@@ -26,7 +23,6 @@ if (!$testId) {
     die('缺少 test_id 或 slug 参数，例如：/admin/results.php?test_id=1');
 }
 
-// 获取测试信息
 $testStmt = $pdo->prepare("SELECT * FROM tests WHERE id = ? LIMIT 1");
 $testStmt->execute([$testId]);
 $test = $testStmt->fetch(PDO::FETCH_ASSOC);
@@ -34,12 +30,10 @@ if (!$test) {
     die('测试不存在');
 }
 
-// 获取该测试的维度（方便填写 dimension_key）
 $dimStmt = $pdo->prepare("SELECT * FROM dimensions WHERE test_id = ? ORDER BY id ASC");
 $dimStmt->execute([$testId]);
 $dimensions = $dimStmt->fetchAll(PDO::FETCH_ASSOC);
 
-// 处理表单提交（add / edit / delete）
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
@@ -114,7 +108,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// 取出该测试的所有结果
 $rStmt = $pdo->prepare(
     "SELECT * FROM results
      WHERE test_id = ?
@@ -123,7 +116,6 @@ $rStmt = $pdo->prepare(
 $rStmt->execute([$testId]);
 $results = $rStmt->fetchAll(PDO::FETCH_ASSOC);
 
-// 取出最近 20 次测试记录 + 维度得分
 $runStmt = $pdo->prepare(
     "SELECT * FROM test_runs
      WHERE test_id = ?
@@ -154,199 +146,195 @@ if ($runs) {
     }
 }
 
-admin_header('结果管理 · ' . ($test['title'] ?? ''));
+$pageTitle    = '结果管理 · ' . ($test['title'] ?? '');
+$pageHeading  = '结果区间管理';
+$pageSubtitle = '当前测试：' . ($test['title'] ?? '') . ' · slug：' . ($test['slug'] ?? '');
+$activeMenu   = 'tests';
+
+require __DIR__ . '/layout.php';
 ?>
-<h1>结果管理：<?= htmlspecialchars($test['title'] ?? '') ?></h1>
-<p class="hint">
-    当前测试 slug：<code><?= htmlspecialchars($test['slug'] ?? '') ?></code>，
-    前台访问：<code>/<?= htmlspecialchars($test['slug'] ?? '') ?></code>
-</p>
 
 <?php if ($dimensions): ?>
-    <p class="hint">
-        该测试的维度列表：
-        <?php foreach ($dimensions as $d): ?>
-            <code><?= htmlspecialchars($d['key_name']) ?></code>
-        <?php endforeach; ?>
-    </p>
+    <div class="section-card">
+        <h2>维度参考</h2>
+        <p class="hint">配置结果时可以参考下列 dimension_key：</p>
+        <div class="tag-list">
+            <?php foreach ($dimensions as $dimension): ?>
+                <code><?= htmlspecialchars($dimension['key_name']) ?></code>
+            <?php endforeach; ?>
+        </div>
+    </div>
 <?php endif; ?>
 
 <?php if ($errors): ?>
-    <div class="errors">
-        <?php foreach ($errors as $e): ?>
-            <div><?= htmlspecialchars($e) ?></div>
+    <div class="alert alert-danger">
+        <?php foreach ($errors as $error): ?>
+            <div><?= htmlspecialchars($error) ?></div>
         <?php endforeach; ?>
     </div>
 <?php endif; ?>
 
 <?php if ($success): ?>
-    <div class="success"><?= htmlspecialchars($success) ?></div>
+    <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
 <?php endif; ?>
 
-<h2>结果区间列表</h2>
-
-<?php if (!$results): ?>
-    <p class="hint">当前还没有结果区间，可以在下方添加。</p>
-<?php else: ?>
-    <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:16px;">
-        <thead>
-        <tr style="background:#fafafa;">
-            <th style="border-bottom:1px solid #eee; padding:6px 8px;">ID</th>
-            <th style="border-bottom:1px solid #eee; padding:6px 8px;">维度键</th>
-            <th style="border-bottom:1px solid #eee; padding:6px 8px;">分数范围</th>
-            <th style="border-bottom:1px solid #eee; padding:6px 8px;">标题</th>
-            <th style="border-bottom:1px solid #eee; padding:6px 8px;">说明</th>
-            <th style="border-bottom:1px solid #eee; padding:6px 8px;">操作</th>
-        </tr>
-        </thead>
-        <tbody>
-        <?php foreach ($results as $res): ?>
+<div class="section-card">
+    <h2>结果区间列表</h2>
+    <?php if (!$results): ?>
+        <p class="hint">当前还没有任何结果区间，可以在下方添加。</p>
+    <?php else: ?>
+        <table class="table-admin">
+            <thead>
             <tr>
-                <td style="border-bottom:1px solid #eee; padding:6px 8px; vertical-align:top;">
-                    <?= (int)$res['id'] ?>
-                </td>
-                <td style="border-bottom:1px solid #eee; padding:6px 8px; vertical-align:top;">
-                    <?= htmlspecialchars($res['dimension_key']) ?>
-                </td>
-                <td style="border-bottom:1px solid #eee; padding:6px 8px; vertical-align:top;">
-                    <?= (int)$res['range_min'] ?> - <?= (int)$res['range_max'] ?>
-                </td>
-                <td style="border-bottom:1px solid #eee; padding:6px 8px; vertical-align:top;">
-                    <?= htmlspecialchars($res['title']) ?>
-                </td>
-                <td style="border-bottom:1px solid #eee; padding:6px 8px; vertical-align:top;">
-                    <div style="max-height:80px; overflow:auto; font-size:13px;">
-                        <?= nl2br(htmlspecialchars($res['description'])) ?>
-                    </div>
-                </td>
-                <td style="border-bottom:1px solid #eee; padding:6px 8px; vertical-align:top;">
-                    <!-- 编辑结果 -->
-                    <form method="post" style="font-size:12px; margin-bottom:4px;">
-                        <input type="hidden" name="action" value="edit_result">
-                        <input type="hidden" name="result_id" value="<?= (int)$res['id'] ?>">
-                        维度：
-                        <input type="text" name="dimension_key" size="8"
-                               value="<?= htmlspecialchars($res['dimension_key']) ?>">
-                        范围：
-                        <input type="number" name="range_min" style="width:60px;"
-                               value="<?= (int)$res['range_min'] ?>"> -
-                        <input type="number" name="range_max" style="width:60px;"
-                               value="<?= (int)$res['range_max'] ?>"><br>
-                        标题：<br>
-                        <input type="text" name="title" style="width:100%;"
-                               value="<?= htmlspecialchars($res['title']) ?>"><br>
-                        说明：<br>
-                        <textarea name="description" rows="3" style="width:100%;"><?= htmlspecialchars($res['description']) ?></textarea><br>
-                        <button type="submit">保存结果</button>
-                    </form>
-
-                    <!-- 删除结果 -->
-                    <form method="post"
-                          onsubmit="return confirm('确定删除这个结果区间吗？已记录的测试结果仍会保留，只是 result_id 可能变为空。');">
-                        <input type="hidden" name="action" value="delete_result">
-                        <input type="hidden" name="result_id" value="<?= (int)$res['id'] ?>">
-                        <button type="submit" style="background:#f87171; color:#fff; border:none; border-radius:4px; padding:2px 8px; font-size:12px;">
-                            删除
-                        </button>
-                    </form>
-                </td>
+                <th style="width:60px;">ID</th>
+                <th style="width:120px;">维度</th>
+                <th style="width:120px;">分数范围</th>
+                <th style="width:160px;">标题</th>
+                <th>说明</th>
+                <th style="width:320px;">操作</th>
             </tr>
-        <?php endforeach; ?>
-        </tbody>
-    </table>
-<?php endif; ?>
+            </thead>
+            <tbody>
+            <?php foreach ($results as $res): ?>
+                <tr>
+                    <td><?= (int)$res['id'] ?></td>
+                    <td><code><?= htmlspecialchars($res['dimension_key']) ?></code></td>
+                    <td><?= (int)$res['range_min'] ?> - <?= (int)$res['range_max'] ?></td>
+                    <td><?= htmlspecialchars($res['title']) ?></td>
+                    <td><?= nl2br(htmlspecialchars($res['description'])) ?></td>
+                    <td>
+                        <div class="result-actions">
+                            <form method="post" class="inline-form">
+                                <input type="hidden" name="action" value="edit_result">
+                                <input type="hidden" name="result_id" value="<?= (int)$res['id'] ?>">
+                                <div class="inline-form-row">
+                                    <div class="field-inline">
+                                        <label>维度</label>
+                                        <input type="text" name="dimension_key" value="<?= htmlspecialchars($res['dimension_key']) ?>">
+                                    </div>
+                                    <div class="field-inline">
+                                        <label>最小分</label>
+                                        <input type="number" name="range_min" value="<?= (int)$res['range_min'] ?>">
+                                    </div>
+                                    <div class="field-inline">
+                                        <label>最大分</label>
+                                        <input type="number" name="range_max" value="<?= (int)$res['range_max'] ?>">
+                                    </div>
+                                </div>
+                                <div class="inline-form-row">
+                                    <div class="field-inline">
+                                        <label>标题</label>
+                                        <input type="text" name="title" value="<?= htmlspecialchars($res['title']) ?>">
+                                    </div>
+                                </div>
+                                <div class="inline-form-row">
+                                    <div class="field-inline" style="flex:1;">
+                                        <label>说明</label>
+                                        <textarea name="description" rows="2"><?= htmlspecialchars($res['description']) ?></textarea>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm">保存</button>
+                            </form>
+                            <form method="post"
+                                  onsubmit="return confirm('确定删除这个结果区间吗？已记录的数据不会被删除，但 result_id 会变为空。');">
+                                <input type="hidden" name="action" value="delete_result">
+                                <input type="hidden" name="result_id" value="<?= (int)$res['id'] ?>">
+                                <button type="submit" class="btn btn-danger btn-sm">删除</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php endif; ?>
+</div>
 
-<h3>新增结果区间</h3>
-<form method="post" style="font-size:14px; max-width:640px;">
+<form method="post" class="admin-form">
     <input type="hidden" name="action" value="add_result">
-    <p>
-        维度键（dimension_key）：
-        <input type="text" name="dimension_key" required placeholder="例如：love / animal / work">
-    </p>
-    <p>
-        分数范围：
-        <input type="number" name="range_min" style="width:80px;" required> -
-        <input type="number" name="range_max" style="width:80px;" required>
-    </p>
-    <p>
-        标题：<br>
-        <input type="text" name="title" style="width:100%;" required>
-    </p>
-    <p>
-        说明：<br>
-        <textarea name="description" rows="3" style="width:100%;"></textarea>
-    </p>
-    <button type="submit">添加结果区间</button>
+    <div class="field">
+        <label for="dimension_key">维度键（dimension_key）</label>
+        <input type="text" id="dimension_key" name="dimension_key" required placeholder="例如：love / animal / work">
+    </div>
+    <div class="field">
+        <label>分数范围</label>
+        <div class="inline-form-row">
+            <div class="field-inline">
+                <label>最小分</label>
+                <input type="number" name="range_min" required>
+            </div>
+            <div class="field-inline">
+                <label>最大分</label>
+                <input type="number" name="range_max" required>
+            </div>
+        </div>
+    </div>
+    <div class="field">
+        <label for="title">标题</label>
+        <input type="text" id="title" name="title" required>
+    </div>
+    <div class="field">
+        <label for="description">说明</label>
+        <textarea id="description" name="description" rows="3"></textarea>
+    </div>
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">添加结果区间</button>
+    </div>
 </form>
 
-<hr style="margin:24px 0;">
-
-<h2>最近测试记录（仅本测试）</h2>
-<p class="hint">
-    以下是最近 20 次这个测试的匿名提交，每一行是一位用户（或一轮作答）的维度得分和命中结果。
-</p>
-
-<?php if (!$runs): ?>
-    <p class="hint">目前还没有测试记录。</p>
-<?php else: ?>
-    <table style="width:100%; border-collapse:collapse; font-size:13px;">
-        <thead>
-        <tr style="background:#fafafa;">
-            <th style="border-bottom:1px solid #eee; padding:6px 8px;">Run ID</th>
-            <th style="border-bottom:1px solid #eee; padding:6px 8px;">时间</th>
-            <th style="border-bottom:1px solid #eee; padding:6px 8px;">维度得分 & 结果</th>
-            <th style="border-bottom:1px solid #eee; padding:6px 8px;">IP（简略）</th>
-            <th style="border-bottom:1px solid #eee; padding:6px 8px;">User-Agent（截断）</th>
-        </tr>
-        </thead>
-        <tbody>
-        <?php foreach ($runs as $run): ?>
-            <?php
-            $rid   = $run['id'];
-            $scores = $runScores[$rid] ?? [];
-            ?>
+<div class="section-card">
+    <h2>最近测试记录（仅本测试）</h2>
+    <p class="hint">以下为最近 20 次匿名提交的维度得分和命中结果，用于快速排查配置问题。</p>
+    <?php if (!$runs): ?>
+        <p class="hint">目前还没有测试记录。</p>
+    <?php else: ?>
+        <table class="table-admin table-compact">
+            <thead>
             <tr>
-                <td style="border-bottom:1px solid #eee; padding:6px 8px;">
-                    <?= (int)$rid ?>
-                </td>
-                <td style="border-bottom:1px solid #eee; padding:6px 8px;">
-                    <?= htmlspecialchars($run['created_at']) ?>
-                </td>
-                <td style="border-bottom:1px solid #eee; padding:6px 8px;">
-                    <?php if (!$scores): ?>
-                        <span class="hint">（无记录）</span>
-                    <?php else: ?>
-                        <?php foreach ($scores as $s): ?>
-                            <div>
-                                <code><?= htmlspecialchars($s['dimension_key']) ?></code>
-                                ：<?= (int)$s['score'] ?>
-                                <?php if (!empty($s['result_title'])): ?>
-                                    <span class="hint">（<?= htmlspecialchars($s['result_title']) ?>）</span>
-                                <?php endif; ?>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </td>
-                <td style="border-bottom:1px solid #eee; padding:6px 8px;">
-                    <?php
-                    $ip = $run['client_ip'] ?? '';
-                    echo $ip ? htmlspecialchars($ip) : '-';
-                    ?>
-                </td>
-                <td style="border-bottom:1px solid #eee; padding:6px 8px;">
-                    <?php
-                    $ua = $run['user_agent'] ?? '';
-                    if (strlen($ua) > 60) {
-                        $ua = substr($ua, 0, 57) . '...';
-                    }
-                    echo $ua ? htmlspecialchars($ua) : '-';
-                    ?>
-                </td>
+                <th style="width:80px;">Run ID</th>
+                <th style="width:160px;">时间</th>
+                <th>维度得分 &amp; 结果</th>
+                <th style="width:140px;">IP</th>
+                <th style="width:220px;">User-Agent</th>
             </tr>
-        <?php endforeach; ?>
-        </tbody>
-    </table>
-<?php endif; ?>
+            </thead>
+            <tbody>
+            <?php foreach ($runs as $run): ?>
+                <?php $rid = $run['id']; ?>
+                <tr>
+                    <td><?= (int)$rid ?></td>
+                    <td><?= htmlspecialchars($run['created_at']) ?></td>
+                    <td>
+                        <?php $scores = $runScores[$rid] ?? []; ?>
+                        <?php if (!$scores): ?>
+                            <span class="hint">（无记录）</span>
+                        <?php else: ?>
+                            <?php foreach ($scores as $score): ?>
+                                <div>
+                                    <code><?= htmlspecialchars($score['dimension_key']) ?></code>
+                                    ：<?= (int)$score['score'] ?>
+                                    <?php if (!empty($score['result_title'])): ?>
+                                        <span class="hint">（<?= htmlspecialchars($score['result_title']) ?>）</span>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </td>
+                    <td><?= $run['client_ip'] ? htmlspecialchars($run['client_ip']) : '-' ?></td>
+                    <td>
+                        <?php
+                        $ua = $run['user_agent'] ?? '';
+                        if (strlen($ua) > 80) {
+                            $ua = substr($ua, 0, 77) . '...';
+                        }
+                        echo $ua ? htmlspecialchars($ua) : '-';
+                        ?>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php endif; ?>
+</div>
 
-<?php
-admin_footer();
+<?php require __DIR__ . '/layout_footer.php'; ?>
