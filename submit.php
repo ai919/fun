@@ -39,11 +39,23 @@ $resStmt->execute([$testId, $resultCode]);
 $resultRow = $resStmt->fetch(PDO::FETCH_ASSOC);
 $resultId  = $resultRow ? (int)$resultRow['id'] : null;
 
+// 生成分享用 token（16位十六进制字符串）
+$shareToken = null;
+try {
+    if (function_exists('random_bytes')) {
+        $shareToken = bin2hex(random_bytes(8));
+    } else {
+        $shareToken = substr(md5(uniqid(mt_rand(), true)), 0, 16);
+    }
+} catch (Exception $e) {
+    $shareToken = substr(md5(uniqid(mt_rand(), true)), 0, 16);
+}
+
 $ipAddress = $_SERVER['REMOTE_ADDR'] ?? null;
 $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
 $runStmt = $pdo->prepare(
-    "INSERT INTO test_runs (test_id, result_id, user_identifier, ip_address, user_agent, total_score)
-     VALUES (:test_id, :result_id, NULL, :ip, :ua, :score)"
+    "INSERT INTO test_runs (test_id, result_id, user_identifier, ip_address, user_agent, total_score, share_token)
+     VALUES (:test_id, :result_id, NULL, :ip, :ua, :score, :share_token)"
 );
 $runStmt->execute([
     ':test_id'  => $testId,
@@ -51,6 +63,7 @@ $runStmt->execute([
     ':ip'       => $ipAddress,
     ':ua'       => $userAgent,
     ':score'    => $totalScore,
+    ':share_token' => $shareToken,
 ]);
 $testRunId = (int)$pdo->lastInsertId();
 
@@ -68,5 +81,5 @@ if (strtolower($test['scoring_mode'] ?? 'simple') === 'dimensions' && $testRunId
     }
 }
 
-header('Location: /result.php?test_id=' . $testId . '&code=' . urlencode($resultCode));
+header('Location: /result.php?token=' . urlencode($shareToken));
 exit;

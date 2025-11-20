@@ -4,9 +4,40 @@ require_once __DIR__ . '/seo_helper.php';
 $finalTest   = $finalTest ?? null;
 $finalResult = $finalResult ?? null;
 $codeCounts  = $codeCounts ?? [];
+$shareTokenParam = isset($_GET['token']) ? trim((string)$_GET['token']) : '';
+$shareRun    = null;
+$pdoLoaded   = false;
+
+if ($shareTokenParam !== '') {
+    require __DIR__ . '/lib/db_connect.php';
+    $pdoLoaded = true;
+    $runStmt = $pdo->prepare("SELECT * FROM test_runs WHERE share_token = :token LIMIT 1");
+    $runStmt->execute([':token' => $shareTokenParam]);
+    $shareRun = $runStmt->fetch(PDO::FETCH_ASSOC);
+    if (!$shareRun) {
+        http_response_code(404);
+        echo '结果链接已失效或不存在。';
+        exit;
+    }
+    $testId   = (int)$shareRun['test_id'];
+    $resultId = isset($shareRun['result_id']) ? (int)$shareRun['result_id'] : 0;
+
+    $testStmt = $pdo->prepare("SELECT * FROM tests WHERE id = ? LIMIT 1");
+    $testStmt->execute([$testId]);
+    $finalTest = $testStmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($resultId > 0) {
+        $resStmt = $pdo->prepare("SELECT * FROM results WHERE id = ? AND test_id = ? LIMIT 1");
+        $resStmt->execute([$resultId, $testId]);
+        $finalResult = $resStmt->fetch(PDO::FETCH_ASSOC);
+    }
+}
 
 if ((!$finalTest || !$finalResult) && isset($_GET['test_id'], $_GET['code'])) {
-    require __DIR__ . '/lib/db_connect.php';
+    if (!$pdoLoaded) {
+        require __DIR__ . '/lib/db_connect.php';
+        $pdoLoaded = true;
+    }
     $testId = (int)$_GET['test_id'];
     $code   = trim($_GET['code']);
     if ($testId > 0 && $code !== '') {
@@ -19,6 +50,27 @@ if ((!$finalTest || !$finalResult) && isset($_GET['test_id'], $_GET['code'])) {
         $finalResult = $resStmt->fetch(PDO::FETCH_ASSOC);
     }
 }
+
+if (!$finalTest || !$finalResult) {
+    http_response_code(404);
+    echo '结果已失效或未找到。';
+    exit;
+}
+
+$shareToken = $shareTokenParam;
+if ($shareToken === '' && $shareRun && !empty($shareRun['share_token'])) {
+    $shareToken = $shareRun['share_token'];
+}
+if ($shareToken === '' && $pdoLoaded && isset($finalTest['id'], $finalResult['id'])) {
+    $tokenStmt = $pdo->prepare("SELECT share_token FROM test_runs WHERE test_id = ? AND result_id = ? AND share_token IS NOT NULL ORDER BY id DESC LIMIT 1");
+    $tokenStmt->execute([(int)$finalTest['id'], (int)$finalResult['id']]);
+    $existingToken = $tokenStmt->fetchColumn();
+    if ($existingToken) {
+        $shareToken = $existingToken;
+    }
+}
+
+$shareUrl = $shareToken !== '' ? (df_base_url() . '/result.php?token=' . urlencode($shareToken)) : df_current_url();
 
  $seo = [
     'title'       => 'DoFun 性格实验室 - 测验结果',
@@ -84,6 +136,11 @@ $emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
         </section>
     <?php endif; ?>
 
+    <div class="result-share-actions">
+        <button type="button" class="btn-secondary" id="copy-link-btn">复制结果链接</button>
+        <button type="button" class="btn-secondary" id="copy-text-btn">复制分享文案</button>
+    </div>
+
     <footer class="result-actions">
         <?php if ($finalTest): ?>
             <a href="/test.php?slug=<?= urlencode($finalTest['slug'] ?? '') ?>" class="btn-secondary">再测一次</a>
@@ -91,5 +148,43 @@ $emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
         <a href="/index.php" class="btn-primary">返回全部测验</a>
     </footer>
 </div>
+
+<script>
+(function () {
+    var copyLinkBtn = document.getElementById('copy-link-btn');
+    var copyTextBtn = document.getElementById('copy-text-btn');
+    if (!copyLinkBtn && !copyTextBtn) return;
+
+    var shareUrl = <?php echo json_encode($shareUrl); ?> || window.location.href;
+
+    function copyText(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () {
+                alert('已复制到剪贴板');
+            }).catch(function () {
+                window.prompt('复制失败，请手动复制：', text);
+            });
+        } else {
+            window.prompt('请手动复制以下内容：', text);
+        }
+    }
+
+    if (copyLinkBtn) {
+        copyLinkBtn.addEventListener('click', function () {
+            copyText(shareUrl);
+        });
+    }
+
+    if (copyTextBtn) {
+        var shareText = <?php
+            $shareTemplate = '我在「DoFun空间」做了《' . ($finalTest['title'] ?? '') . '》测验，结果是：' . ($finalResult['title'] ?? '') . '。你也可以来测测看：';
+            echo json_encode($shareTemplate);
+        ?> + shareUrl;
+        copyTextBtn.addEventListener('click', function () {
+            copyText(shareText);
+        });
+    }
+})();
+</script>
 </body>
 </html>
