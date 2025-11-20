@@ -103,6 +103,8 @@ $seo = [
                         <p class="card-description">
                             <?= htmlspecialchars(mb_substr($test['description'], 0, 80), ENT_QUOTES, 'UTF-8') ?>
                         </p>
+                    <?php else: ?>
+                        <p class="card-description">&nbsp;</p>
                     <?php endif; ?>
                 </div>
 
