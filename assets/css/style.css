@@ -839,10 +839,15 @@ a:active {
 }
 
 .card-title {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 600;
     color: #111827;
     margin: 0;
+}
+
+.card-title a,
+.card-title-link {
+    color: #111827;
 }
 
 .card-title-link {
