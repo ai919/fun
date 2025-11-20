@@ -6,16 +6,24 @@ $statuses = [
     'published' => '已发布',
     'archived'  => '已归档',
 ];
+$scoringModes = [
+    'simple'     => 'Simple（单结果）',
+    'dimensions' => 'Dimensions（维度组合）',
+    'range'      => 'Range（区间）',
+    'custom'     => 'Custom（自定义）',
+];
 
 $formData = [
-    'title'       => '',
-    'slug'        => '',
-    'subtitle'    => '',
-    'description' => '',
-    'title_color' => '#4f46e5',
-    'tags'        => '',
-    'status'      => 'draft',
-    'sort_order'  => 0,
+    'title'          => '',
+    'slug'           => '',
+    'subtitle'       => '',
+    'description'    => '',
+    'title_color'    => '#4f46e5',
+    'tags'           => '',
+    'status'         => 'draft',
+    'sort_order'     => 0,
+    'scoring_mode'   => 'simple',
+    'scoring_config' => '',
 ];
 
 $existingTest = null;
@@ -38,14 +46,16 @@ if ($testId) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingTest))) {
-    $formData['title']       = trim($_POST['title'] ?? '');
-    $formData['slug']        = strtolower(trim($_POST['slug'] ?? ''));
-    $formData['subtitle']    = trim($_POST['subtitle'] ?? '');
-    $formData['description'] = trim($_POST['description'] ?? '');
-    $formData['title_color'] = trim($_POST['title_color'] ?? '#4f46e5');
-    $formData['tags']        = trim($_POST['tags'] ?? '');
-    $formData['status']      = $_POST['status'] ?? 'draft';
-    $formData['sort_order']  = (int)($_POST['sort_order'] ?? 0);
+    $formData['title']          = trim($_POST['title'] ?? '');
+    $formData['slug']           = strtolower(trim($_POST['slug'] ?? ''));
+    $formData['subtitle']       = trim($_POST['subtitle'] ?? '');
+    $formData['description']    = trim($_POST['description'] ?? '');
+    $formData['title_color']    = trim($_POST['title_color'] ?? '#4f46e5');
+    $formData['tags']           = trim($_POST['tags'] ?? '');
+    $formData['status']         = $_POST['status'] ?? 'draft';
+    $formData['sort_order']     = (int)($_POST['sort_order'] ?? 0);
+    $formData['scoring_mode']   = $_POST['scoring_mode'] ?? 'simple';
+    $formData['scoring_config'] = trim($_POST['scoring_config'] ?? '');
 
     if ($formData['title'] === '') {
         $errors[] = '测试标题不能为空。';
@@ -57,6 +67,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
     }
     if (!isset($statuses[$formData['status']])) {
         $errors[] = '请选择有效的状态。';
+    }
+    if (!array_key_exists($formData['scoring_mode'], $scoringModes)) {
+        $errors[] = '请选择有效的评分模式。';
     }
     if ($formData['title_color'] === '') {
         $formData['title_color'] = '#4f46e5';
@@ -70,6 +83,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
         $tagsNormalized = implode(', ', $tagPieces);
     }
     $formData['tags'] = $tagsNormalized;
+
+    if ($formData['scoring_config'] !== '') {
+        json_decode($formData['scoring_config'], true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $errors[] = '评分配置不是合法的 JSON。';
+        }
+    }
 
     if ($formData['slug'] !== '') {
         if ($testId) {
@@ -86,14 +106,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
 
     if (!$errors) {
         $payload = [
-            ':title'       => $formData['title'],
-            ':slug'        => $formData['slug'],
-            ':subtitle'    => $formData['subtitle'] !== '' ? $formData['subtitle'] : null,
-            ':description' => $formData['description'] !== '' ? $formData['description'] : null,
-            ':title_color' => $formData['title_color'] ?: '#4f46e5',
-            ':tags'        => $formData['tags'] !== '' ? $formData['tags'] : null,
-            ':status'      => $formData['status'],
-            ':sort_order'  => $formData['sort_order'],
+            ':title'          => $formData['title'],
+            ':slug'           => $formData['slug'],
+            ':subtitle'       => $formData['subtitle'] !== '' ? $formData['subtitle'] : null,
+            ':description'    => $formData['description'] !== '' ? $formData['description'] : null,
+            ':title_color'    => $formData['title_color'] ?: '#4f46e5',
+            ':tags'           => $formData['tags'] !== '' ? $formData['tags'] : null,
+            ':status'         => $formData['status'],
+            ':sort_order'     => $formData['sort_order'],
+            ':scoring_mode'   => $formData['scoring_mode'],
+            ':scoring_config' => $formData['scoring_config'] !== '' ? $formData['scoring_config'] : null,
         ];
 
         if ($testId) {
@@ -107,15 +129,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
                 tags = :tags,
                 status = :status,
                 sort_order = :sort_order,
+                scoring_mode = :scoring_mode,
+                scoring_config = :scoring_config,
                 updated_at = NOW()
             WHERE id = :id";
             $updateStmt = $pdo->prepare($updateSql);
             $updateStmt->execute($payload);
         } else {
             $insertSql = "INSERT INTO tests
-                (title, slug, subtitle, description, title_color, tags, status, sort_order)
+                (title, slug, subtitle, description, title_color, tags, status, sort_order, scoring_mode, scoring_config)
                 VALUES
-                (:title, :slug, :subtitle, :description, :title_color, :tags, :status, :sort_order)";
+                (:title, :slug, :subtitle, :description, :title_color, :tags, :status, :sort_order, :scoring_mode, :scoring_config)";
             $insertStmt = $pdo->prepare($insertSql);
             $insertStmt->execute($payload);
         }
@@ -191,6 +215,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
                 <input type="number" name="sort_order" value="<?= (int)$formData['sort_order'] ?>" step="1">
             </label>
         </div>
+
+        <div class="form-grid">
+            <label>
+                <span>评分模式 *</span>
+                <select name="scoring_mode">
+                    <?php foreach ($scoringModes as $value => $label): ?>
+                        <option value="<?= htmlspecialchars($value) ?>"<?= $formData['scoring_mode'] === $value ? ' selected' : '' ?>>
+                            <?= htmlspecialchars($label) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+        </div>
+
+        <label>
+            <span>评分配置（JSON，可选）</span>
+            <textarea name="scoring_config" rows="5" placeholder='例如：{"dimensions":["I","E","R","F"]}'><?= htmlspecialchars($formData['scoring_config']) ?></textarea>
+            <small class="muted">仅在部分评分模式下有效，请输入合法的 JSON。</small>
+        </label>
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">保存</button>

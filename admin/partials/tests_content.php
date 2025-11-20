@@ -80,7 +80,7 @@ if ($page > $totalPages) {
 }
 $offset = ($page - 1) * $perPage;
 
-$listSql = "SELECT t.id, t.title, t.slug, t.status, t.tags, t.sort_order, t.created_at, t.updated_at
+$listSql = "SELECT t.id, t.title, t.slug, t.status, t.tags, t.sort_order, t.created_at, t.updated_at, t.scoring_mode
             FROM tests t{$whereSql}{$orderSql} LIMIT :limit OFFSET :offset";
 $listStmt = $pdo->prepare($listSql);
 foreach ($params as $name => $value) {
@@ -154,7 +154,8 @@ $filterQuery = array_filter([
             <th style="width:60px;">ID</th>
             <th>标题</th>
             <th style="width:160px;">Slug</th>
-            <th style="width:120px;">状态</th>
+            <th style="width:110px;">状态</th>
+            <th style="width:120px;">评分模式</th>
             <th style="width:200px;">标签</th>
             <th style="width:150px;">更新时间</th>
             <th style="width:140px;">操作</th>
@@ -187,6 +188,7 @@ $filterQuery = array_filter([
                         <?= htmlspecialchars($badgeInfo['label']) ?>
                     </span>
                 </td>
+                <td><?= htmlspecialchars($test['scoring_mode'] ?? 'simple') ?></td>
                 <td>
                     <?php if ($tags): ?>
                         <div class="tag-list">

@@ -8,7 +8,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS test_run_scores;
 DROP TABLE IF EXISTS test_runs;
 DROP TABLE IF EXISTS results;
-DROP TABLE IF EXISTS options;
+DROP TABLE IF EXISTS question_options;
 DROP TABLE IF EXISTS questions;
 DROP TABLE IF EXISTS dimensions;
 DROP TABLE IF EXISTS tests;
@@ -36,6 +36,8 @@ CREATE TABLE tests (
   tags VARCHAR(255) DEFAULT NULL,
   status ENUM('draft','published','archived') NOT NULL DEFAULT 'draft',
   sort_order INT NOT NULL DEFAULT 0,
+  scoring_mode ENUM('simple','dimensions','range','custom') NOT NULL DEFAULT 'simple',
+  scoring_config JSON DEFAULT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY uk_tests_slug (slug)
@@ -54,18 +56,21 @@ CREATE TABLE dimensions (
 CREATE TABLE questions (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   test_id INT UNSIGNED NOT NULL,
-  order_number INT UNSIGNED NOT NULL DEFAULT 1,
-  content TEXT NOT NULL,
-  KEY idx_questions_test (test_id, order_number),
+  question_text TEXT NOT NULL,
+  sort_order INT UNSIGNED NOT NULL DEFAULT 1,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_questions_test (test_id, sort_order),
   CONSTRAINT fk_questions_test FOREIGN KEY (test_id) REFERENCES tests(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE options (
+CREATE TABLE question_options (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   question_id INT UNSIGNED NOT NULL,
-  content TEXT NOT NULL,
-  dimension_key VARCHAR(64) DEFAULT NULL,
-  score INT NOT NULL DEFAULT 0,
+  option_key VARCHAR(10) DEFAULT NULL,
+  option_text TEXT NOT NULL,
+  map_result_code VARCHAR(255) DEFAULT NULL,
+  score_value DECIMAL(10,2) NOT NULL DEFAULT 1.00,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY idx_options_question (question_id),
   CONSTRAINT fk_options_question FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -93,7 +98,7 @@ CREATE TABLE test_runs (
   user_identifier VARCHAR(64) DEFAULT NULL,
   ip_address VARCHAR(45) DEFAULT NULL,
   user_agent VARCHAR(255) DEFAULT NULL,
-  total_score INT NOT NULL DEFAULT 0,
+  total_score DECIMAL(10,2) NOT NULL DEFAULT 0,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY idx_test_runs_test (test_id, created_at),
   CONSTRAINT fk_runs_test FOREIGN KEY (test_id) REFERENCES tests(id) ON DELETE CASCADE,

@@ -1,8 +1,10 @@
 <?php
 require __DIR__ . '/lib/db_connect.php';
+require __DIR__ . '/lib/ScoreEngine.php';
 
-$testId = (int)($_POST['test_id'] ?? 0);
-if (!$testId) {
+$testId = isset($_POST['test_id']) ? (int)$_POST['test_id'] : 0;
+if ($testId <= 0) {
+    http_response_code(400);
     die('缺少 test_id');
 }
 
@@ -15,69 +17,56 @@ if (!$test) {
 }
 
 $answers = $_POST['q'] ?? [];
-$optionIds = [];
-foreach ($answers as $questionId => $optionId) {
-    if (!is_scalar($optionId)) {
-        continue;
-    }
-    $optionIds[] = (int)$optionId;
+if (!$answers || !is_array($answers)) {
+    $target = $test['slug'] ? '/test.php?slug=' . urlencode($test['slug']) : '/test.php?id=' . $testId;
+    header('Location: ' . $target);
+    exit;
 }
 
-if (!$optionIds) {
-    die('你还没有选择任何选项。');
+$resultCode = ScoreEngine::score($test, $answers, $pdo);
+if (!$resultCode) {
+    $target = $test['slug'] ? '/test.php?slug=' . urlencode($test['slug']) : '/test.php?id=' . $testId;
+    header('Location: ' . $target);
+    exit;
 }
 
-$optionIds = array_values(array_unique($optionIds));
-$placeholders = implode(',', array_fill(0, count($optionIds), '?'));
-$optStmt = $pdo->prepare(
-    "SELECT qo.*, q.test_id
-     FROM question_options qo
-     JOIN questions q ON q.id = qo.question_id
-     WHERE qo.id IN ($placeholders)"
+$detail      = ScoreEngine::getLastDetail();
+$totalScore  = isset($detail['total_score']) ? (float)$detail['total_score'] : 0.0;
+$dimScores   = $detail['dimension_scores'] ?? [];
+
+$resStmt = $pdo->prepare("SELECT * FROM results WHERE test_id = ? AND code = ? LIMIT 1");
+$resStmt->execute([$testId, $resultCode]);
+$resultRow = $resStmt->fetch(PDO::FETCH_ASSOC);
+$resultId  = $resultRow ? (int)$resultRow['id'] : null;
+
+$ipAddress = $_SERVER['REMOTE_ADDR'] ?? null;
+$userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
+$runStmt = $pdo->prepare(
+    "INSERT INTO test_runs (test_id, result_id, user_identifier, ip_address, user_agent, total_score)
+     VALUES (:test_id, :result_id, NULL, :ip, :ua, :score)"
 );
-$optStmt->execute($optionIds);
-$found = $optStmt->fetchAll(PDO::FETCH_ASSOC);
+$runStmt->execute([
+    ':test_id'  => $testId,
+    ':result_id'=> $resultId,
+    ':ip'       => $ipAddress,
+    ':ua'       => $userAgent,
+    ':score'    => $totalScore,
+]);
+$testRunId = (int)$pdo->lastInsertId();
 
-if (!$found || count($found) !== count($optionIds)) {
-    http_response_code(400);
-    die('提交的数据无效，请刷新页面后重试。');
-}
-
-$codeCounts = [];
-foreach ($found as $row) {
-    if ((int)$row['test_id'] !== $testId) {
-        http_response_code(400);
-        die('提交的数据无效，请刷新页面后重试。');
-    }
-    $code = strtoupper(trim($row['map_result_code'] ?? ''));
-    if ($code === '') {
-        continue;
-    }
-    if (!isset($codeCounts[$code])) {
-        $codeCounts[$code] = 0;
-    }
-    $codeCounts[$code]++;
-}
-
-$finalResult = null;
-if ($codeCounts) {
-    ksort($codeCounts);
-    $winningCode  = null;
-    $winningCount = -1;
-    foreach ($codeCounts as $code => $count) {
-        if ($count > $winningCount) {
-            $winningCode  = $code;
-            $winningCount = $count;
-        }
-    }
-    if ($winningCode !== null) {
-        $resStmt = $pdo->prepare("SELECT * FROM results WHERE test_id = ? AND code = ? LIMIT 1");
-        $resStmt->execute([$testId, $winningCode]);
-        $finalResult = $resStmt->fetch(PDO::FETCH_ASSOC);
+if (strtolower($test['scoring_mode'] ?? 'simple') === 'dimensions' && $testRunId > 0 && !empty($dimScores)) {
+    $insDim = $pdo->prepare(
+        "INSERT INTO test_run_scores (test_run_id, dimension_key, score_value)
+         VALUES (:run_id, :dim, :score)"
+    );
+    foreach ($dimScores as $dim => $score) {
+        $insDim->execute([
+            ':run_id' => $testRunId,
+            ':dim'    => $dim,
+            ':score'  => $score,
+        ]);
     }
 }
 
-$finalTest   = $test;
-$codeCounts  = $codeCounts;
-
-require __DIR__ . '/result.php';
+header('Location: /result.php?test_id=' . $testId . '&code=' . urlencode($resultCode));
+exit;
