@@ -845,6 +845,23 @@ a:active {
     background-color: #e5e7eb;
 }
 
+.btn-ghost-soft-red {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 14px;
+    border-radius: 10px;
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: none;
+}
+.btn-ghost-soft-red:hover {
+    background-color: #fecdd3;
+}
+
 .copy-toast {
     position: fixed;
     left: 50%;
