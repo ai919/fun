@@ -127,11 +127,13 @@ $emoji = trim($test['emoji'] ?? ($test['title_emoji'] ?? ''));
 <div class="test-page">
     <header class="test-hero">
         <div class="test-hero-meta">
-            <?php if ($emoji !== ''): ?>
-                <div class="test-emoji"><?= htmlspecialchars($emoji) ?></div>
-            <?php endif; ?>
             <div class="test-hero-text">
-                <h1 class="test-title"><?= htmlspecialchars($test['title']) ?></h1>
+                <h1 class="test-title">
+                    <?php if ($emoji !== ''): ?>
+                        <span class="test-title-emoji"><?= htmlspecialchars($emoji) ?></span>
+                    <?php endif; ?>
+                    <?= htmlspecialchars($test['title']) ?>
+                </h1>
                 <?php if ($heroSubtitle !== ''): ?>
                     <p class="test-subtitle"><?= htmlspecialchars($heroSubtitle) ?></p>
                 <?php endif; ?>
