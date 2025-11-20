@@ -71,6 +71,7 @@ a:hover {
     background: linear-gradient(90deg, #4f46e5, #ec4899, #f97316);
     -webkit-background-clip: text;
     background-clip: text;
+    -webkit-text-fill-color: transparent;
     color: transparent;
 }
 .site-title a {
@@ -315,6 +316,7 @@ a:active {
         0 0 0 1px rgba(148, 163, 184, 0.15);
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     gap: 10px;
     transition: transform 0.18s ease, box-shadow 0.18s ease, translate 0.18s ease;
 }
@@ -375,13 +377,7 @@ a:active {
     display: flex;
     flex-direction: column;
     gap: 4px;
-}
-
-.quiz-card-desc {
-    font-size: 14px;
-    color: #6b7280;
-    line-height: 1.6;
-    margin: 2px 0 0;
+    flex: 1 1 auto;
 }
 
 .quiz-card-meta {
@@ -667,8 +663,8 @@ a:active {
 .test-actions {
     margin-top: 24px;
     display: flex;
-    justify-content: flex-end;
-    gap: 12px;
+    justify-content: center;
+    gap: 16px;
 }
 
 .btn-primary,
@@ -676,9 +672,9 @@ a:active {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 8px 16px;
+    padding: 10px 24px;
     border-radius: 999px;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 500;
     cursor: pointer;
     border: 1px solid transparent;
@@ -827,3 +823,76 @@ a:active {
     }
 }
 
+.card-header {
+    margin-bottom: 8px;
+}
+
+.card-title-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.card-title-emoji {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+}
+
+.card-title-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.card-description {
+    flex-grow: 1;
+    margin-top: 6px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #4b5563;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.card-play-count {
+    font-size: 12px;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.card-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid #4f46e5;
+    background-color: #4f46e5;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.card-button:hover {
+    opacity: 0.95;
+}
