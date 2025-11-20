@@ -173,6 +173,7 @@ $emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
 </div>
 
 <div class="copy-toast" id="copy-toast">已复制到剪贴板</div>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <script>
 (function () {
