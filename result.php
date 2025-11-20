@@ -139,7 +139,7 @@ $emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
     <div class="result-share-actions">
         <button type="button" class="btn-ghost-muted" id="copy-link-btn">复制结果链接</button>
         <button type="button" class="btn-ghost-muted" id="copy-text-btn">复制分享文案</button>
-        <button type="button" class="btn-secondary" id="save-poster-btn">保存结果海报</button>
+        <button type="button" class="btn-ghost-soft-red" id="save-poster-btn">保存结果海报</button>
     </div>
 
     <footer class="result-actions">
