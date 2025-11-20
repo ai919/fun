@@ -880,6 +880,59 @@ a:active {
     opacity: 1;
 }
 
+@media (max-width: 640px) {
+    .test-actions {
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .test-actions .btn-primary,
+    .test-actions .btn-secondary {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+        padding: 12px 16px;
+        font-size: 15px;
+        border-radius: 999px;
+    }
+
+    .result-share-actions {
+        margin-top: 18px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .result-share-actions .btn-secondary,
+    .result-share-actions .btn-ghost-muted,
+    .result-share-actions .btn-ghost-soft-red {
+        flex: 1 1 100%;
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+        padding: 10px 14px;
+        font-size: 14px;
+    }
+
+    .result-actions {
+        margin-top: 24px;
+        display: flex;
+        flex-direction: column-reverse;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .result-actions .btn-primary,
+    .result-actions .btn-secondary {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+        padding: 12px 16px;
+        font-size: 15px;
+        border-radius: 999px;
+    }
+}
+
 /* ===== 测验结果海报 ===== */
 .result-poster {
     width: 900px;
