@@ -900,9 +900,11 @@ a:active {
 
     .result-share-actions {
         margin-top: 18px;
+        margin-bottom: 12px;
         display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
     }
     .result-share-actions .btn-secondary,
     .result-share-actions .btn-ghost-muted,
@@ -911,7 +913,7 @@ a:active {
         width: 100%;
         justify-content: center;
         text-align: center;
-        padding: 10px 14px;
+        padding: 12px 14px;
         font-size: 14px;
     }
 
