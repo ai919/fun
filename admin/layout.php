@@ -101,6 +101,8 @@ if (!isset($activeMenu)) {
             // 2）页面直接 echo 出内容（layout 只做外壳）
             if (isset($content)) {
                 echo $content;
+            } elseif (isset($contentFile) && file_exists($contentFile)) {
+                include $contentFile;
             }
             ?>
         </main>
