@@ -2,6 +2,28 @@
 $errors      = [];
 $successMsg  = null;
 
+/**
+ * Check if a column exists in current DB schema.
+ */
+function admin_column_exists(PDO $pdo, string $table, string $column): bool
+{
+    static $cache = [];
+    $dbName = (string)$pdo->query('SELECT DATABASE()')->fetchColumn();
+    $key = "{$dbName}.{$table}.{$column}";
+    if (array_key_exists($key, $cache)) {
+        return $cache[$key];
+    }
+    $stmt = $pdo->prepare("
+        SELECT 1
+        FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?
+        LIMIT 1
+    ");
+    $stmt->execute([$dbName, $table, $column]);
+    $cache[$key] = (bool)$stmt->fetchColumn();
+    return $cache[$key];
+}
+
 $statusLabel = [
     'draft'     => ['label' => '草稿', 'class' => 'badge-muted'],
     'published' => ['label' => '已发布', 'class' => 'badge-success'],
@@ -80,7 +102,13 @@ if ($page > $totalPages) {
 }
 $offset = ($page - 1) * $perPage;
 
-$listSql = "SELECT t.id, t.title, t.slug, t.status, t.tags, t.sort_order, t.created_at, t.updated_at, t.scoring_mode, t.emoji, t.title_color
+$hasEmojiCol = admin_column_exists($pdo, 'tests', 'emoji');
+$hasTitleColorCol = admin_column_exists($pdo, 'tests', 'title_color');
+$selectCols = "t.id, t.title, t.slug, t.status, t.tags, t.sort_order, t.created_at, t.updated_at, t.scoring_mode";
+$selectCols .= $hasEmojiCol ? ", t.emoji" : ", NULL AS emoji";
+$selectCols .= $hasTitleColorCol ? ", t.title_color" : ", NULL AS title_color";
+
+$listSql = "SELECT {$selectCols}
             FROM tests t{$whereSql}{$orderSql} LIMIT :limit OFFSET :offset";
 $listStmt = $pdo->prepare($listSql);
 foreach ($params as $name => $value) {

@@ -1,8 +1,10 @@
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
     margin: 0;
     padding: 0;
     line-height: 1.6;
+    background: linear-gradient(135deg, #f9fafb 0%, #eef2ff 40%, #e0f2fe 100%);
+    min-height: 100vh;
 }
 
 a {
@@ -55,25 +57,30 @@ a:hover {
 
 /* 首页整体 */
 .home {
-    max-width: 1120px;
-    margin: 0 auto;
     padding: 24px 16px 40px;
 }
 .site-title {
-    font-size: 28px;
+    font-size: clamp(28px, 5vw, 40px);
     font-weight: 700;
-    margin: 0 0 4px;
+    margin: 0;
+    letter-spacing: 0.02em;
+    color: #0f172a;
 }
 .site-title a {
-    color: #4f46e5;
+    color: inherit;
 }
 .site-title a:hover {
-    color: #4338ca;
+    color: inherit;
 }
 .site-subtitle {
     font-size: 14px;
     color: #6b7280;
-    margin-bottom: 18px;
+    margin: 4px 0 18px;
+}
+
+.subtitle {
+    color: #6b7280;
+    margin: 4px 0 12px;
 }
 
 /* 网格布局 */
@@ -241,13 +248,10 @@ a:hover {
 }
 
 .site-title {
-    font-size: 28px;
+    font-size: clamp(28px, 5vw, 40px);
     font-weight: 800;
     letter-spacing: 0.05em;
-    background: linear-gradient(120deg, #4f46e5, #ec4899);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: #0f172a;
 }
 
 .site-subtitle {
@@ -263,20 +267,33 @@ a:active {
 }
 
 /* ===== 卡片网格：3 列布局，移动端自适应 ===== */
-.quiz-grid {
+.page-container {
+    max-width: 1040px;
+    margin: 24px auto 40px;
+    padding: 24px 24px 32px;
+    background-color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+.quiz-grid,
+.tests-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
 }
 
 @media (max-width: 1024px) {
-    .quiz-grid {
+    .quiz-grid,
+    .tests-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 768px) {
-    .quiz-grid {
+    .quiz-grid,
+    .tests-grid {
         grid-template-columns: 1fr;
     }
 }
@@ -285,7 +302,7 @@ a:active {
 .quiz-card {
     background: #ffffff;
     border-radius: 18px;
-    padding: 20px 20px 18px;
+    padding: 18px 18px 16px;
     box-shadow:
         0 18px 45px rgba(15, 23, 42, 0.1),
         0 0 0 1px rgba(148, 163, 184, 0.15);
@@ -329,7 +346,7 @@ a:active {
 }
 
 .quiz-card-title {
-    font-size: 18px;
+    font-size: 19px;
     font-weight: 700;
     line-height: 1.4;
     margin: 0;
@@ -406,6 +423,18 @@ a:active {
 }
 
 @media (max-width: 640px) {
+    .page-container {
+        margin: 12px auto 24px;
+        padding: 16px 12px 24px;
+        border-radius: 12px;
+    }
+
+    .quiz-grid,
+    .tests-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
     .site-header {
         margin: 20px 0 16px;
     }
@@ -415,6 +444,12 @@ a:active {
     .quiz-card {
         padding: 16px 16px 14px;
         border-radius: 16px;
+    }
+    .quiz-card-title {
+        font-size: 18px;
+    }
+    .quiz-card-desc {
+        font-size: 14px;
     }
 }
 

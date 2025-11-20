@@ -24,6 +24,7 @@ $seo = [
 <html lang="zh-CN">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= htmlspecialchars($seo['title']) ?></title>
     <meta name="description" content="<?= htmlspecialchars($seo['description']) ?>">
     <link rel="canonical" href="<?= htmlspecialchars($seo['url']) ?>">
@@ -38,14 +39,15 @@ $seo = [
 </head>
 <body>
 <main class="home">
-    <header class="site-header">
-        <div class="site-title-wrap">
-            <a href="/" class="site-title">DoFun空间</a>
-        </div>
-        <p class="site-subtitle">在趣味中更好地发现自己。</p>
-    </header>
+    <div class="page-container">
+        <header class="site-header">
+            <div class="site-title-wrap">
+                <h1 class="site-title">DoFun空间</h1>
+            </div>
+            <p class="site-subtitle">在线人格与情感测验空间</p>
+        </header>
 
-    <div class="quiz-grid">
+        <div class="quiz-grid tests-grid">
         <?php foreach ($tests as $test): ?>
             <?php
             $tags = [];
@@ -64,7 +66,7 @@ $seo = [
             $emoji = $emojiRaw !== '' ? htmlspecialchars($emojiRaw, ENT_QUOTES, 'UTF-8') : '';
 
             $playCount = isset($test['play_count']) ? (int)$test['play_count'] : 0;
-            $playText = $playCount > 0 ? "已有 {$playCount} 人测试" : '等待第一个测试者';
+            $playText = $playCount > 0 ? "已有 {$playCount} 人测验" : '等待第一位测验者';
             ?>
             <article class="quiz-card">
                 <div class="quiz-card-top">
@@ -115,6 +117,7 @@ $seo = [
                 </div>
             </article>
         <?php endforeach; ?>
+        </div>
     </div>
 </main>
 </body>

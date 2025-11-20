@@ -53,15 +53,15 @@ if ($hasContentFile) {
             </a>
             <a href="/admin/tests.php" class="nav-item <?= $isTestsNavActive ? 'is-active' : '' ?>">
                 <span class="nav-icon">📋</span>
-                <span class="nav-label">测试列表</span>
+                <span class="nav-label">测验列表</span>
             </a>
             <a href="/admin/test_edit.php" class="nav-item <?= strpos($scriptName, 'test_edit.php') !== false ? 'is-active' : '' ?>">
                 <span class="nav-icon">➕</span>
-                <span class="nav-label">新增测试</span>
+                <span class="nav-label">新增测验</span>
             </a>
             <a href="/admin/clone_test.php" class="nav-item <?= $activeMenu === 'clone' ? 'is-active' : '' ?>">
                 <span class="nav-icon">✨</span>
-                <span class="nav-label">克隆测试</span>
+                <span class="nav-label">克隆测验</span>
             </a>
             <a href="/admin/stats.php" class="nav-item <?= $activeMenu === 'stats' ? 'is-active' : '' ?>">
                 <span class="nav-icon">📈</span>

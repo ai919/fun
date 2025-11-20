@@ -66,7 +66,7 @@ $testStmt->execute([$testId]);
 $test = $testStmt->fetch(PDO::FETCH_ASSOC);
 if (!$test) {
     http_response_code(404);
-    echo '测试不存在。';
+    echo '测验不存在。';
     exit;
 }
 
@@ -99,70 +99,63 @@ if ($questionIds) {
 <html lang="zh-CN">
 <head>
     <meta charset="utf-8">
-    <title><?= htmlspecialchars($test['title'] ?? '测试') ?></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><?= htmlspecialchars($test['title'] ?? '测验') ?></title>
     <link rel="stylesheet" href="/assets/css/style.css">
-    <style>
-        body { max-width: 720px; margin: 0 auto; padding: 24px 18px; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif; }
-        h1 { font-size: 24px; margin-bottom: 8px; }
-        p.subtitle { color: #6b7280; margin-bottom: 12px; }
-        .question { margin-bottom: 20px; padding: 14px 16px; background:#f9fafb; border-radius:10px; }
-        .question-title { font-weight: 600; margin-bottom: 8px; }
-        .option { margin-bottom:6px; }
-        .option label { display:flex; gap:8px; cursor:pointer; }
-        .option span.badge { min-width:28px; display:inline-flex; justify-content:center; align-items:center; border-radius:50%; background:#e0e7ff; color:#312e81; font-weight:600; }
-    </style>
 </head>
 <body>
 
-<h1><?= htmlspecialchars($test['title']) ?></h1>
-<?php if (!empty($test['subtitle'])): ?>
-    <p class="subtitle"><?= htmlspecialchars($test['subtitle']) ?></p>
-<?php endif; ?>
-<?php if (!empty($test['description'])): ?>
-    <p><?= nl2br(htmlspecialchars($test['description'])) ?></p>
-<?php endif; ?>
+<div class="page-container">
+    <h1><?= htmlspecialchars($test['title']) ?></h1>
+    <?php if (!empty($test['subtitle'])): ?>
+        <p class="subtitle"><?= htmlspecialchars($test['subtitle']) ?></p>
+    <?php endif; ?>
+    <?php if (!empty($test['description'])): ?>
+        <p><?= nl2br(htmlspecialchars($test['description'])) ?></p>
+    <?php endif; ?>
 
-<?php if (!$questions): ?>
-    <p>该测试还没有题目，请稍后再试。</p>
-<?php else: ?>
-    <form method="post" action="/submit.php">
-        <input type="hidden" name="test_id" value="<?= (int)$testId ?>">
-        <?php foreach ($questions as $idx => $question): ?>
-            <?php
-            $qid        = (int)$question['id'];
-            $questionNo = $question['sort_order'] ?? ($idx + 1);
-            $text       = pick_field($question, ['content', 'question_text', 'title', 'body'], '未命名问题');
-            $options    = $optionsByQuestion[$qid] ?? [];
-            ?>
-            <div class="question">
-                <div class="question-title">Q<?= htmlspecialchars($questionNo) ?>. <?= htmlspecialchars($text) ?></div>
-                <?php if (!$options): ?>
-                    <p style="color:#ef4444;">该题暂无可选项。</p>
-                <?php else: ?>
-                    <?php foreach ($options as $optionIndex => $option): ?>
-                        <?php
-                        $optionId    = (int)$option['id'];
-                        $label       = pick_field($option, ['option_label', 'label', 'letter'], null);
-                        $optionText  = pick_field($option, ['text', 'content', 'option_text', 'body', 'description'], '选项');
-                        if ($label === null) {
-                            $label = chr(ord('A') + $optionIndex);
-                        }
-                        ?>
-                        <div class="option">
-                            <label>
-                                <span class="badge"><?= htmlspecialchars($label) ?></span>
-                                <input type="radio" name="q[<?= $qid ?>]" value="<?= $optionId ?>" required>
-                                <span><?= htmlspecialchars($optionText) ?></span>
-                            </label>
-                        </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
-        <?php endforeach; ?>
+    <?php if (!$questions): ?>
+        <p>该测验还没有题目，请稍后再试。</p>
+    <?php else: ?>
+        <form method="post" action="/submit.php">
+            <input type="hidden" name="test_id" value="<?= (int)$testId ?>">
+            <?php foreach ($questions as $idx => $question): ?>
+                <?php
+                $qid        = (int)$question['id'];
+                $questionNo = $question['sort_order'] ?? ($idx + 1);
+                $text       = pick_field($question, ['content', 'question_text', 'title', 'body'], '未命名问题');
+                $options    = $optionsByQuestion[$qid] ?? [];
+                ?>
+                <div class="question">
+                    <div class="question-title">Q<?= htmlspecialchars($questionNo) ?>. <?= htmlspecialchars($text) ?></div>
+                    <?php if (!$options): ?>
+                        <p style="color:#ef4444;">该题暂无可选项。</p>
+                    <?php else: ?>
+                        <?php foreach ($options as $optionIndex => $option): ?>
+                            <?php
+                            $optionId    = (int)$option['id'];
+                            $label       = pick_field($option, ['option_label', 'label', 'letter'], null);
+                            $optionText  = pick_field($option, ['text', 'content', 'option_text', 'body', 'description'], '选项');
+                            if ($label === null) {
+                                $label = chr(ord('A') + $optionIndex);
+                            }
+                            ?>
+                            <div class="option">
+                                <label>
+                                    <span class="badge"><?= htmlspecialchars($label) ?></span>
+                                    <input type="radio" name="q[<?= $qid ?>]" value="<?= $optionId ?>" required>
+                                    <span><?= htmlspecialchars($optionText) ?></span>
+                                </label>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
 
-        <button type="submit">提交答案</button>
-    </form>
-<?php endif; ?>
+            <button type="submit">提交测验</button>
+        </form>
+    <?php endif; ?>
+</div>
 
 </body>
 </html>

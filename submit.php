@@ -13,7 +13,7 @@ $testStmt->execute([$testId]);
 $test = $testStmt->fetch(PDO::FETCH_ASSOC);
 if (!$test) {
     http_response_code(404);
-    die('测试不存在或已下线。');
+    die('测验不存在或已下线。');
 }
 
 $answers = $_POST['q'] ?? [];
