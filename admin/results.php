@@ -30,6 +30,8 @@ if (!$test) {
 $errors  = [];
 $success = null;
 
+ob_start();
+
 function normalize_result_payload(array $data): array
 {
     $code        = strtolower(trim($data['code'] ?? ''));
@@ -321,4 +323,6 @@ require __DIR__ . '/layout.php';
     <?php endif; ?>
 </div>
 
-<?php require __DIR__ . '/layout_footer.php'; ?>
+<?php
+$content = ob_get_clean();
+include __DIR__ . '/layout.php';

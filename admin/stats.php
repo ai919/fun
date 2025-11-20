@@ -24,18 +24,18 @@ if (!$testId) {
     $pageSubtitle = '选择一个测验查看运行数据。';
     $activeMenu   = 'stats';
 
-    require __DIR__ . '/layout.php';
+    ob_start();
     ?>
-    <div class="section-card">
+    <div class="admin-card">
         <?php if (!$statsTests): ?>
-            <p class="hint">目前还没有可统计的测验，先去创建一个吧。</p>
+            <p class="admin-table__muted">目前还没有可统计的测验，先去创建一个吧。</p>
         <?php else: ?>
             <ul>
                 <?php foreach ($statsTests as $row): ?>
                     <li style="margin-bottom:6px;">
                         <a href="/admin/stats.php?test_id=<?= (int)$row['id'] ?>">
                             [#<?= (int)$row['id'] ?>] <?= htmlspecialchars($row['title']) ?>
-                            <span class="hint">(<?= htmlspecialchars($row['slug']) ?>)</span>
+                            <span class="admin-table__muted">(<?= htmlspecialchars($row['slug']) ?>)</span>
                         </a>
                     </li>
                 <?php endforeach; ?>
@@ -43,7 +43,8 @@ if (!$testId) {
         <?php endif; ?>
     </div>
     <?php
-    require __DIR__ . '/layout_footer.php';
+    $content = ob_get_clean();
+    include __DIR__ . '/layout.php';
     exit;
 }
 
@@ -99,12 +100,12 @@ $pageHeading  = '测验统计：' . ($test['title'] ?? '');
 $pageSubtitle = 'slug: ' . ($test['slug'] ?? '');
 $activeMenu   = 'stats';
 
-require __DIR__ . '/layout.php';
+ob_start();
 ?>
 
-<div class="section-card">
+<div class="admin-card" style="margin-bottom:16px;">
     <?php if ($totalRuns === 0): ?>
-        <p class="hint">还没有任何完成记录，先在前台跑一次吧。</p>
+        <p class="admin-table__muted">还没有任何完成记录，先在前台跑一次吧。</p>
     <?php else: ?>
         <div class="stat-cards">
             <div class="stat-card">
@@ -130,10 +131,10 @@ require __DIR__ . '/layout.php';
     <?php endif; ?>
 </div>
 
-<div class="section-card">
+<div class="admin-card">
     <h2>结果命中分布</h2>
     <?php if (!$resultStats): ?>
-        <p class="hint">暂无结果数据，先在上方添加结果区间吧。</p>
+        <p class="admin-table__muted">暂无结果数据，先在上方添加结果区间吧。</p>
     <?php else: ?>
         <table class="table-admin">
             <thead>
@@ -169,8 +170,10 @@ require __DIR__ . '/layout.php';
     <?php endif; ?>
 </div>
 
-<p class="hint">
+<p class="admin-table__muted">
     更多维度（如渠道、来源等）可以在 <code>test_runs</code> 或 <code>test_run_scores</code> 表中自行扩展字段，并在此处增加相应的统计查询。
 </p>
 
-<?php require __DIR__ . '/layout_footer.php'; ?>
+<?php
+$content = ob_get_clean();
+include __DIR__ . '/layout.php';

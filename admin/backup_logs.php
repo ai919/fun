@@ -36,7 +36,7 @@ $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $token     = $backupConfig['token'];
 $backupUrl = '/backup.php?token=' . urlencode($token);
 
-require __DIR__ . '/layout.php';
+ob_start();
 ?>
 
 <div class="section-card" style="background:#0f172a;color:#e5e7eb; border-color: rgba(148,163,184,0.4); box-shadow: 0 10px 25px rgba(15,23,42,0.5);">
@@ -115,4 +115,6 @@ function confirmBackup() {
 }
 </script>
 
-<?php require __DIR__ . '/layout_footer.php'; ?>
+<?php
+$content = ob_get_clean();
+include __DIR__ . '/layout.php';

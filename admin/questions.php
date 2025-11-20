@@ -206,7 +206,7 @@ if ($questions) {
     }
 }
 
-require __DIR__ . '/layout.php';
+ob_start();
 ?>
 
 <?php if ($errors): ?>
@@ -335,4 +335,6 @@ require __DIR__ . '/layout.php';
     <button type="submit" class="btn btn-primary">添加题目</button>
 </form>
 
-<?php require __DIR__ . '/layout_footer.php'; ?>
+<?php
+$content = ob_get_clean();
+include __DIR__ . '/layout.php';
