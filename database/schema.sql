@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主机： localhost
--- 生成日期： 2025-11-20 06:08:43
+-- 生成日期： 2025-11-20 06:38:09
 -- 服务器版本： 5.7.39
 -- PHP 版本： 8.3.25
 
@@ -33,6 +33,36 @@ CREATE TABLE `admin_users` (
   `password_hash` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `display_name` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `questions`
+--
+
+CREATE TABLE `questions` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `test_id` int(10) UNSIGNED NOT NULL,
+  `question_text` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sort_order` int(11) NOT NULL DEFAULT '0',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `question_options`
+--
+
+CREATE TABLE `question_options` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `question_id` int(10) UNSIGNED NOT NULL,
+  `option_key` char(1) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `option_text` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `map_result_code` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `score_value` int(11) NOT NULL DEFAULT '1',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -117,6 +147,20 @@ ALTER TABLE `admin_users`
   ADD UNIQUE KEY `username` (`username`);
 
 --
+-- 表的索引 `questions`
+--
+ALTER TABLE `questions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_questions_test_id` (`test_id`);
+
+--
+-- 表的索引 `question_options`
+--
+ALTER TABLE `question_options`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_options_question_id` (`question_id`);
+
+--
 -- 表的索引 `results`
 --
 ALTER TABLE `results`
@@ -156,6 +200,18 @@ ALTER TABLE `admin_users`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- 使用表AUTO_INCREMENT `questions`
+--
+ALTER TABLE `questions`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- 使用表AUTO_INCREMENT `question_options`
+--
+ALTER TABLE `question_options`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- 使用表AUTO_INCREMENT `results`
 --
 ALTER TABLE `results`
@@ -182,6 +238,18 @@ ALTER TABLE `test_run_scores`
 --
 -- 限制导出的表
 --
+
+--
+-- 限制表 `questions`
+--
+ALTER TABLE `questions`
+  ADD CONSTRAINT `fk_questions_test` FOREIGN KEY (`test_id`) REFERENCES `tests` (`id`) ON DELETE CASCADE;
+
+--
+-- 限制表 `question_options`
+--
+ALTER TABLE `question_options`
+  ADD CONSTRAINT `fk_options_question` FOREIGN KEY (`question_id`) REFERENCES `questions` (`id`) ON DELETE CASCADE;
 
 --
 -- 限制表 `results`

@@ -1,14 +1,13 @@
 <?php
 require_once __DIR__ . '/seo_helper.php';
 
-$finalTest       = $finalTest ?? null;
-$finalResult     = $finalResult ?? null;
-$finalScores     = $finalScores ?? [];
-$finalTotalScore = isset($finalTotalScore) ? (int)$finalTotalScore : array_sum($finalScores);
+$finalTest    = $finalTest ?? null;
+$finalResult  = $finalResult ?? null;
+$codeCounts   = $codeCounts ?? [];
 
 $seo = [
     'title'       => 'DoFun 性格实验室 - 测试结果',
-    'description' => '探索你的测试结果与维度得分。',
+    'description' => '探索你的测试结果。',
     'url'         => df_current_url(),
     'image'       => df_base_url() . '/og.php?scope=result',
 ];
@@ -36,33 +35,23 @@ if ($finalTest && $finalResult) {
 <h1><?= htmlspecialchars($finalTest['title'] ?? '测试结果') ?></h1>
 
 <?php if (!$finalResult): ?>
-    <p>暂未匹配到结果，可能是后台还未配置完整的分数区间。稍后再试试吧。</p>
+    <p>暂未匹配到结果，可能是后台还未配置完整的结果区间。</p>
 <?php else: ?>
-    <section style="margin:20px 0;padding:18px;border-radius:16px;background:#fff;border:1px solid #e5e7eb;box-shadow:0 18px 35px rgba(15,23,42,0.08);">
+    <section style="margin:20px 0;padding:18px;border-radius:16px;background:#fff;border:1px solid #e5e7eb;box-shadow:0 20px 40px rgba(15,23,42,0.08);">
         <div style="font-size:13px;color:#6b7280;margin-bottom:8px;">检测结果</div>
-        <h2 style="margin:0 0 6px;font-size:24px;"><?= htmlspecialchars($finalResult['title']) ?></h2>
-        <p style="margin:0 0 10px;color:#4b5563;">总分：<?= $finalTotalScore ?></p>
+        <h2 style="margin:0 0 10px;"><?= htmlspecialchars($finalResult['title']) ?></h2>
         <?php if (!empty($finalResult['description'])): ?>
-            <div style="font-size:15px;color:#1f2937;line-height:1.8;">
+            <div style="font-size:15px;line-height:1.8;color:#1f2937;">
                 <?= nl2br(htmlspecialchars($finalResult['description'])) ?>
             </div>
         <?php endif; ?>
-        <?php if (!empty($finalResult['image_url'])): ?>
-            <div style="margin-top:12px;">
-                <img src="<?= htmlspecialchars($finalResult['image_url']) ?>" alt="result image" style="max-width:100%;border-radius:12px;">
-            </div>
-        <?php endif; ?>
     </section>
-
-    <?php if ($finalScores): ?>
-        <section style="margin:20px 0;padding:16px;border-radius:16px;background:#f9fafb;">
-            <h3 style="margin:0 0 12px;font-size:16px;">各维度得分</h3>
-            <ul style="list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:10px;">
-                <?php foreach ($finalScores as $dim => $score): ?>
-                    <li style="flex:1 1 160px;min-width:150px;background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:10px 12px;">
-                        <div style="font-size:13px;color:#475569;"><?= htmlspecialchars($dim) ?></div>
-                        <div style="font-size:18px;font-weight:600;color:#111827;"><?= (float)$score ?></div>
-                    </li>
+    <?php if ($codeCounts): ?>
+        <section style="margin:12px 0;padding:14px;border-radius:12px;background:#f9fafb;">
+            <strong>各类型得票数：</strong>
+            <ul style="list-style:none;padding:0;margin:8px 0 0;">
+                <?php foreach ($codeCounts as $code => $count): ?>
+                    <li><?= htmlspecialchars($code) ?> ： <?= (int)$count ?></li>
                 <?php endforeach; ?>
             </ul>
         </section>
