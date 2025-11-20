@@ -58,10 +58,10 @@ $emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
                 <div class="result-emoji"><?= htmlspecialchars($emoji) ?></div>
             <?php endif; ?>
             <div class="result-pill">测验结果</div>
-            <h1 class="result-title"><?= htmlspecialchars($finalResult['title'] ?? '测验结果') ?></h1>
             <p class="result-subtitle">
                 来自测验：<?= htmlspecialchars($finalTest['title'] ?? '') ?>
             </p>
+            <h1 class="result-title"><?= htmlspecialchars($finalResult['title'] ?? '测验结果') ?></h1>
         </header>
     <?php endif; ?>
 

@@ -792,6 +792,7 @@ a:active {
     padding: 4px 10px;
     border-radius: 999px;
     background-color: #f3f4ff;
+    font-weight: 700;
 }
 
 .result-body {
