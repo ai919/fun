@@ -602,7 +602,7 @@ a:active {
 .question-text {
     font-size: 18px;
     line-height: 1.7;
-    color: #4338ca;
+    color: #4f46e5 !important;
     font-weight: 600;
 }
 
