@@ -1,12 +1,5 @@
 <?php
 
-/**
- * 根据选中的选项 ID 计算各维度得分
- *
- * @param PDO $pdo
- * @param int[] $optionIds
- * @return array ['anxiety' => 10, 'avoidance' => 5, ...]
- */
 function calculateDimensionScores(PDO $pdo, array $optionIds, int $testId): array
 {
     $optionIds = array_values(array_unique(array_map('intval', $optionIds)));
@@ -45,25 +38,20 @@ function calculateDimensionScores(PDO $pdo, array $optionIds, int $testId): arra
     return $scores;
 }
 
-/**
- * 按维度和得分获取结果文案
- *
- * @param PDO $pdo
- * @param int $testId
- * @param string $dimensionKey
- * @param int $score
- * @return array|null
- */
-function getResultForDimension(PDO $pdo, int $testId, string $dimensionKey, int $score): ?array
+function getResultByTotalScore(PDO $pdo, int $testId, int $totalScore): ?array
 {
     $stmt = $pdo->prepare(
-        "SELECT * FROM results 
-         WHERE test_id = ? 
-           AND dimension_key = ?
-           AND ? BETWEEN range_min AND range_max
+        "SELECT *
+         FROM results
+         WHERE test_id = :test_id
+           AND :score BETWEEN min_score AND max_score
+         ORDER BY min_score ASC
          LIMIT 1"
     );
-    $stmt->execute([$testId, $dimensionKey, $score]);
+    $stmt->execute([
+        ':test_id' => $testId,
+        ':score'   => $totalScore,
+    ]);
     $res = $stmt->fetch(PDO::FETCH_ASSOC);
     return $res ?: null;
 }

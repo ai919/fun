@@ -26,16 +26,8 @@ try {
     die('提交的数据无效，请刷新页面后重试。');
 }
 
-$dimensionResults = [];
-foreach ($scores as $dim => $score) {
-    $result = getResultForDimension($pdo, $testId, $dim, $score);
-    if ($result) {
-        $dimensionResults[$dim] = [
-            'score'  => $score,
-            'result' => $result,
-        ];
-    }
-}
+$totalScore     = array_sum($scores);
+$finalResultRow = getResultByTotalScore($pdo, $testId, (int)$totalScore);
 
 $testStmt = $pdo->prepare("SELECT * FROM tests WHERE id = ? AND (status = 'published' OR status = 1) LIMIT 1");
 $testStmt->execute([$testId]);
@@ -45,8 +37,9 @@ if (!$test) {
     die('测试不存在或已下线。');
 }
 
-$finalTest            = $test;
-$finalScores          = $scores;
-$finalDimensionResult = $dimensionResults;
+$finalTest       = $test;
+$finalScores     = $scores;
+$finalResult     = $finalResultRow;
+$finalTotalScore = $totalScore;
 
 require __DIR__ . '/result.php';

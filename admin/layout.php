@@ -11,7 +11,11 @@ $flashSuccess = $flashSuccess ?? null;
 $flashError   = $flashError   ?? null;
 $currentAdmin = $currentAdmin ?? (function_exists('current_admin') ? current_admin() : null);
 $scriptName   = $_SERVER['SCRIPT_NAME'] ?? '';
-$isTestsNavActive = (strpos($scriptName, 'tests.php') !== false) || ($activeMenu === 'tests');
+$isTestsNavActive = (
+    strpos($scriptName, 'tests.php') !== false
+    || strpos($scriptName, 'test_edit.php') !== false
+    || ($activeMenu === 'tests')
+);
 
 $capturedContent = null;
 $hasContentFile  = !empty($contentFile) && file_exists($contentFile);
@@ -47,7 +51,7 @@ if ($hasContentFile) {
                 <span class="nav-icon">📋</span>
                 <span class="nav-label">测试列表</span>
             </a>
-            <a href="/admin/new_test.php" class="nav-item <?= $activeMenu === 'new' ? 'is-active' : '' ?>">
+            <a href="/admin/test_edit.php" class="nav-item <?= strpos($scriptName, 'test_edit.php') !== false ? 'is-active' : '' ?>">
                 <span class="nav-icon">➕</span>
                 <span class="nav-label">新增测试</span>
             </a>

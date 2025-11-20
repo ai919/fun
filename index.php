@@ -52,9 +52,10 @@ $seo = [
                 $titleStyle = "color: {$color};";
             }
 
-            $emoji = !empty($test['title_emoji'])
-                ? htmlspecialchars($test['title_emoji'], ENT_QUOTES, 'UTF-8')
-                : '🧩';
+            $emojiValue = $test['title_emoji'] ?? '';
+            $emoji = $emojiValue !== ''
+                ? htmlspecialchars($emojiValue, ENT_QUOTES, 'UTF-8')
+                : '✨';
 
             $runCount = isset($test['run_count']) ? (int)$test['run_count'] : 0;
             ?>

@@ -1,5 +1,4 @@
 <?php
-// seo_helper.php
 
 function df_base_url(): string
 {
@@ -37,7 +36,7 @@ function df_seo_for_result(array $test, array $result): array
     $site  = 'DoFun 性格实验室';
     $title = trim(($result['title'] ?? '') . ' - ' . ($test['title'] ?? '') . ' - ' . $site);
 
-    $desc  = $result['summary'] ?? ($test['description'] ?? '关于你的性格与关系的小实验结果。');
+    $desc  = $result['description'] ?? ($test['description'] ?? '关于你的性格与关系的小实验结果。');
     $desc  = mb_substr(trim($desc), 0, 150);
 
     $url   = df_base_url() . '/result.php?test_id=' . urlencode($test['id'] ?? '') . '&code=' . urlencode($result['code'] ?? '');

@@ -1,20 +1,20 @@
 <?php
-// 这里依赖 submit.php 传入的：
-// $finalTest, $finalScores, $finalDimensionResult
 require_once __DIR__ . '/seo_helper.php';
+
+$finalTest       = $finalTest ?? null;
+$finalResult     = $finalResult ?? null;
+$finalScores     = $finalScores ?? [];
+$finalTotalScore = isset($finalTotalScore) ? (int)$finalTotalScore : array_sum($finalScores);
 
 $seo = [
     'title'       => 'DoFun 性格实验室 - 测试结果',
-    'description' => '关于你的性格与选择的小实验结果。',
+    'description' => '探索你的测试结果与维度得分。',
     'url'         => df_current_url(),
     'image'       => df_base_url() . '/og.php?scope=result',
 ];
 
-if (!empty($finalTest) && !empty($finalDimensionResult)) {
-    $firstResultData = reset($finalDimensionResult);
-    if (!empty($firstResultData['result'])) {
-        $seo = df_seo_for_result($finalTest, $firstResultData['result']);
-    }
+if ($finalTest && $finalResult) {
+    $seo = df_seo_for_result($finalTest, $finalResult);
 }
 ?>
 <!doctype html>
@@ -30,27 +30,45 @@ if (!empty($finalTest) && !empty($finalDimensionResult)) {
     <meta property="og:url" content="<?= htmlspecialchars($seo['url']) ?>">
     <meta property="og:type" content="website">
     <link rel="stylesheet" href="/assets/css/style.css">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="shortcut icon" href="/favicon.ico">
 </head>
-<body>
+<body style="max-width:720px;margin:0 auto;padding:24px 18px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC','Microsoft YaHei',sans-serif;">
+
 <h1><?= htmlspecialchars($finalTest['title'] ?? '测试结果') ?></h1>
 
-<?php if (!$finalDimensionResult): ?>
-    <p>暂时没有匹配到结果，请检查 results 表的分数区间设置。</p>
+<?php if (!$finalResult): ?>
+    <p>暂未匹配到结果，可能是后台还未配置完整的分数区间。稍后再试试吧。</p>
 <?php else: ?>
-    <?php foreach ($finalDimensionResult as $dim => $data): 
-        $res   = $data['result'];
-        $score = $data['score'];
-    ?>
-        <div class="dimension-block">
-            <h2><?= htmlspecialchars($res['title']) ?>（<?= htmlspecialchars($dim) ?>，得分：<?= (int)$score ?>）</h2>
-            <p><?= nl2br(htmlspecialchars($res['description'])) ?></p>
-        </div>
-        <hr>
-    <?php endforeach; ?>
+    <section style="margin:20px 0;padding:18px;border-radius:16px;background:#fff;border:1px solid #e5e7eb;box-shadow:0 18px 35px rgba(15,23,42,0.08);">
+        <div style="font-size:13px;color:#6b7280;margin-bottom:8px;">检测结果</div>
+        <h2 style="margin:0 0 6px;font-size:24px;"><?= htmlspecialchars($finalResult['title']) ?></h2>
+        <p style="margin:0 0 10px;color:#4b5563;">总分：<?= $finalTotalScore ?></p>
+        <?php if (!empty($finalResult['description'])): ?>
+            <div style="font-size:15px;color:#1f2937;line-height:1.8;">
+                <?= nl2br(htmlspecialchars($finalResult['description'])) ?>
+            </div>
+        <?php endif; ?>
+        <?php if (!empty($finalResult['image_url'])): ?>
+            <div style="margin-top:12px;">
+                <img src="<?= htmlspecialchars($finalResult['image_url']) ?>" alt="result image" style="max-width:100%;border-radius:12px;">
+            </div>
+        <?php endif; ?>
+    </section>
+
+    <?php if ($finalScores): ?>
+        <section style="margin:20px 0;padding:16px;border-radius:16px;background:#f9fafb;">
+            <h3 style="margin:0 0 12px;font-size:16px;">各维度得分</h3>
+            <ul style="list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:10px;">
+                <?php foreach ($finalScores as $dim => $score): ?>
+                    <li style="flex:1 1 160px;min-width:150px;background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:10px 12px;">
+                        <div style="font-size:13px;color:#475569;"><?= htmlspecialchars($dim) ?></div>
+                        <div style="font-size:18px;font-weight:600;color:#111827;"><?= (float)$score ?></div>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        </section>
+    <?php endif; ?>
 <?php endif; ?>
 
-<p><a href="/">返回首页</a></p>
+<p><a href="/">← 返回测试列表</a></p>
 </body>
 </html>

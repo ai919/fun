@@ -19,16 +19,16 @@ if (isset($_GET['test_id'])) {
 if (!$testId) {
     $statsTests = $pdo->query("SELECT id, title, slug FROM tests ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
 
-    $pageTitle    = '数据统计 · DoFun';
-    $pageHeading  = '数据统计';
-    $pageSubtitle = '请选择一个测试查看完成人次和结果分布。';
+    $pageTitle    = '测试统计 - DoFun';
+    $pageHeading  = '测试统计';
+    $pageSubtitle = '选择一个测试查看运行数据。';
     $activeMenu   = 'stats';
 
     require __DIR__ . '/layout.php';
     ?>
     <div class="section-card">
         <?php if (!$statsTests): ?>
-            <p class="hint">当前还没有测试可以统计，先去创建一个测试吧。</p>
+            <p class="hint">目前还没有可统计的测试，先去创建一个吧。</p>
         <?php else: ?>
             <ul>
                 <?php foreach ($statsTests as $row): ?>
@@ -61,7 +61,7 @@ $totalRuns = (int)$totalRunsStmt->fetchColumn();
 $totalDimsStmt = $pdo->prepare(
     "SELECT COUNT(*)
      FROM test_run_scores s
-     JOIN test_runs r ON r.id = s.run_id
+     JOIN test_runs r ON r.id = s.test_run_id
      WHERE r.test_id = ?"
 );
 $totalDimsStmt->execute([$testId]);
@@ -69,39 +69,34 @@ $totalDims = (int)$totalDimsStmt->fetchColumn();
 
 $totalHitStmt = $pdo->prepare(
     "SELECT COUNT(*)
-     FROM test_run_scores s
-     JOIN test_runs r ON r.id = s.run_id
-     WHERE r.test_id = ?
-       AND s.result_id IS NOT NULL"
+     FROM test_runs
+     WHERE test_id = ?
+       AND result_id IS NOT NULL"
 );
 $totalHitStmt->execute([$testId]);
-$totalHit = (int)$totalHitStmt->fetchColumn();
-
-$unmatchedDims = max(0, $totalDims - $totalHit);
+$matchedRuns = (int)$totalHitStmt->fetchColumn();
+$unmatchedRuns = max(0, $totalRuns - $matchedRuns);
 
 $distStmt = $pdo->prepare(
     "SELECT 
          res.id,
-         res.dimension_key,
-         res.range_min,
-         res.range_max,
+         res.code,
+         res.min_score,
+         res.max_score,
          res.title,
-         COUNT(s.id) AS hit_count
+         COUNT(tr.id) AS hit_count
      FROM results res
-     LEFT JOIN test_run_scores s
-        ON s.result_id = res.id
-     LEFT JOIN test_runs r
-        ON r.id = s.run_id
+     LEFT JOIN test_runs tr ON tr.result_id = res.id
      WHERE res.test_id = ?
-     GROUP BY res.id, res.dimension_key, res.range_min, res.range_max, res.title
-     ORDER BY res.dimension_key ASC, res.range_min ASC, res.range_max ASC, res.id ASC"
+     GROUP BY res.id, res.code, res.min_score, res.max_score, res.title
+     ORDER BY res.min_score ASC, res.id ASC"
 );
 $distStmt->execute([$testId]);
 $resultStats = $distStmt->fetchAll(PDO::FETCH_ASSOC);
 
-$pageTitle    = '统计 · ' . ($test['title'] ?? '');
+$pageTitle    = '统计 - ' . ($test['title'] ?? '');
 $pageHeading  = '测试统计：' . ($test['title'] ?? '');
-$pageSubtitle = 'slug：' . ($test['slug'] ?? '') . ' · 前台路径 /' . ($test['slug'] ?? '');
+$pageSubtitle = 'slug: ' . ($test['slug'] ?? '');
 $activeMenu   = 'stats';
 
 require __DIR__ . '/layout.php';
@@ -109,67 +104,60 @@ require __DIR__ . '/layout.php';
 
 <div class="section-card">
     <?php if ($totalRuns === 0): ?>
-        <p class="hint">
-            这个测试目前还没有任何完成记录。可以先在前台做几次测试，再回来查看统计。
-        </p>
+        <p class="hint">还没有任何完成记录，先在前台跑一次吧。</p>
     <?php else: ?>
         <div class="stat-cards">
             <div class="stat-card">
-                <div class="stat-card-title">总完成次数（run）</div>
+                <div class="stat-card-title">完成次数</div>
                 <div class="stat-card-value"><?= number_format($totalRuns) ?></div>
             </div>
             <div class="stat-card">
-                <div class="stat-card-title">维度计分记录</div>
+                <div class="stat-card-title">维度得分记录</div>
                 <div class="stat-card-value"><?= number_format($totalDims) ?></div>
             </div>
             <div class="stat-card">
-                <div class="stat-card-title">命中结果的记录</div>
-                <div class="stat-card-value"><?= number_format($totalHit) ?></div>
+                <div class="stat-card-title">匹配到结果的 run</div>
+                <div class="stat-card-value"><?= number_format($matchedRuns) ?></div>
             </div>
             <div class="stat-card">
-                <div class="stat-card-title">未命中任何结果</div>
-                <div class="stat-card-value"><?= number_format($unmatchedDims) ?></div>
+                <div class="stat-card-title">未匹配结果的 run</div>
+                <div class="stat-card-value"><?= number_format($unmatchedRuns) ?></div>
             </div>
         </div>
         <p class="hint">
-            一位用户一次作答是 1 个 run；如果测试包含多个维度，一次作答会产生多条维度得分记录。
-            下方“占所有完成次数”的百分比以 run 为分母，因此总和可能大于 100%。
+            每一次测验会产生 1 条 run 记录，并记录该 run 的维度得分。
         </p>
     <?php endif; ?>
 </div>
 
 <div class="section-card">
-    <h2>各结果区间出现比例</h2>
+    <h2>结果命中分布</h2>
     <?php if (!$resultStats): ?>
-        <p class="hint">这个测试还没有配置任何结果区间，请先到「结果管理」里添加。</p>
+        <p class="hint">暂无结果数据，先在上方添加结果区间吧。</p>
     <?php else: ?>
         <table class="table-admin">
             <thead>
             <tr>
                 <th style="width:60px;">ID</th>
-                <th style="width:120px;">维度</th>
-                <th style="width:140px;">分数范围</th>
+                <th style="width:140px;">代码</th>
+                <th style="width:140px;">分数区间</th>
                 <th>标题</th>
-                <th style="width:110px;">命中次数</th>
-                <th style="width:150px;">占所有完成次数</th>
-                <th style="width:150px;">占命中记录</th>
+                <th style="width:120px;">命中 run</th>
+                <th style="width:140px;">覆盖全部 run</th>
+                <th style="width:140px;">覆盖已匹配 run</th>
             </tr>
             </thead>
             <tbody>
             <?php foreach ($resultStats as $row): ?>
                 <?php
                 $hitCount = (int)$row['hit_count'];
-                $pctRuns = ($totalRuns > 0)
-                    ? round($hitCount * 100.0 / max(1, $totalRuns), 1)
-                    : 0.0;
-                $pctHits = ($totalHit > 0)
-                    ? round($hitCount * 100.0 / max(1, $totalHit), 1)
-                    : 0.0;
+                $pctRuns = $totalRuns > 0 ? round($hitCount * 100.0 / $totalRuns, 1) : 0.0;
+                $pctHits = $matchedRuns > 0 ? round($hitCount * 100.0 / $matchedRuns, 1) : 0.0;
                 ?>
                 <tr>
                     <td><?= (int)$row['id'] ?></td>
-                    <td><code><?= htmlspecialchars($row['dimension_key']) ?></code></td>
-                    <td><?= (int)$row['range_min'] ?> - <?= (int)$row['range_max'] ?></td>
+                    <td><code><?= htmlspecialchars($row['code']) ?></code></td>
+                    <td><?= (int)$row['min_score'] ?> - <?= (int)$row['max_score'] ?></td>
                     <td><?= htmlspecialchars($row['title']) ?></td>
                     <td><?= $hitCount ?></td>
                     <td><?= $pctRuns ?>%</td>
@@ -182,8 +170,7 @@ require __DIR__ . '/layout.php';
 </div>
 
 <p class="hint">
-    小提示：若需要按日期、渠道等维度做更复杂的统计，可以在 <code>test_runs</code> 表里扩展字段（如 source、utm 等），
-    然后在这里追加对应的查询。
+    更多维度（如渠道、来源等）可以在 <code>test_runs</code> 或 <code>test_run_scores</code> 表中自行扩展字段，并在此处增加相应的统计查询。
 </p>
 
 <?php require __DIR__ . '/layout_footer.php'; ?>
