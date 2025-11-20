@@ -6,9 +6,8 @@ require __DIR__ . '/../lib/db_connect.php';
 $backupConfig = require __DIR__ . '/../backup_config.php';
 
 $pageTitle    = '备份记录';
-$pageHeading  = '备份记录';
 $pageSubtitle = '查看、下载或删除最近的站点备份。系统最多保留 ' . (int)($backupConfig['max_keep'] ?? 5) . ' 份。';
-$activeMenu   = 'backups';
+$activeMenu   = 'backup';
 
 // Ensure backup_logs table exists
 $dbName = $pdo->query('SELECT DATABASE()')->fetchColumn();

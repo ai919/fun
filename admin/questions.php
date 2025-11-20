@@ -1,23 +1,92 @@
 <?php
-require __DIR__ . '/auth.php';
+require_once __DIR__ . '/auth.php';
 require_admin_login();
+require_once __DIR__ . '/../lib/db_connect.php';
 
-require __DIR__ . '/../lib/db_connect.php';
+$pageTitle = '题目管理';
+$pageSubtitle = '为指定测验管理题目与选项';
+$activeMenu = 'questions';
 
-$testId = null;
-if (isset($_GET['test_id'])) {
-    $testId = (int)$_GET['test_id'];
-} elseif (isset($_GET['slug'])) {
-    $slug = trim($_GET['slug']);
-    $stmt = $pdo->prepare("SELECT id FROM tests WHERE slug = ? LIMIT 1");
-    $stmt->execute([$slug]);
+// 参数解析：test_id 或 slug
+$testId = isset($_GET['test_id']) ? (int)$_GET['test_id'] : null;
+$slug   = isset($_GET['slug']) ? trim((string)$_GET['slug']) : '';
+
+if (!$testId && $slug !== '') {
+    $stmt = $pdo->prepare("SELECT id FROM tests WHERE slug = :slug LIMIT 1");
+    $stmt->execute([':slug' => $slug]);
     if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $testId = (int)$row['id'];
     }
 }
 
+// 无参数时展示测验列表供选择
 if (!$testId) {
-    die('缺少 test_id 或 slug 参数，例如：/admin/questions.php?test_id=1');
+    $stmt = $pdo->query("
+        SELECT t.id, t.title, t.subtitle, t.slug, t.status
+        FROM tests t
+        ORDER BY sort_order DESC, id DESC
+    ");
+    $tests = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    ob_start();
+    ?>
+    <div class="admin-toolbar">
+        <div class="admin-toolbar__left">
+            <span class="admin-table__muted">请先选择一个测验，再进行题目管理：</span>
+        </div>
+        <div class="admin-toolbar__right">
+            <a href="new_test.php" class="btn btn-primary">+ 新建测验</a>
+        </div>
+    </div>
+
+    <div class="admin-card">
+        <table class="admin-table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>标题</th>
+                <th>slug</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($tests as $test): ?>
+                <tr>
+                    <td><?= (int)$test['id'] ?></td>
+                    <td>
+                        <div class="admin-table__title"><?= htmlspecialchars($test['title']) ?></div>
+                        <?php if (!empty($test['subtitle'])): ?>
+                            <div class="admin-table__subtitle"><?= htmlspecialchars($test['subtitle']) ?></div>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <code class="code-badge"><?= htmlspecialchars($test['slug']) ?></code>
+                    </td>
+                    <td>
+                        <?php
+                        $status = $test['status'];
+                        $statusLabel = [
+                            'draft'     => '草稿',
+                            'published' => '已发布',
+                            'archived'  => '已归档',
+                        ][$status] ?? $status;
+                        ?>
+                        <span class="badge badge--<?= htmlspecialchars($status) ?>"><?= $statusLabel ?></span>
+                    </td>
+                    <td class="admin-table__actions">
+                        <a href="questions.php?test_id=<?= (int)$test['id'] ?>" class="btn btn-xs">管理题目</a>
+                        <a href="results.php?test_id=<?= (int)$test['id'] ?>" class="btn btn-xs btn-ghost">管理结果</a>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+    <?php
+    $content = ob_get_clean();
+    include __DIR__ . '/layout.php';
+    exit;
 }
 
 $testStmt = $pdo->prepare("SELECT * FROM tests WHERE id = ? LIMIT 1");
@@ -27,13 +96,10 @@ if (!$test) {
     die('测验不存在');
 }
 
-$pageTitle    = '题目管理 · ' . ($test['title'] ?? '');
-$pageHeading  = '题目 & 选项';
-$pageSubtitle = '管理此测验的题目、选项、分数与维度，支持卡片化编辑。';
-$activeMenu   = 'tests';
-
 $errors  = [];
 $success = null;
+
+ob_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
