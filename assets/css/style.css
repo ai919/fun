@@ -778,7 +778,7 @@ a:active {
 .result-title {
     font-size: clamp(24px, 4vw, 30px);
     font-weight: 700;
-    color: #111827;
+    color: #4338ca;
     margin: 0;
 }
 
@@ -803,7 +803,7 @@ a:active {
 }
 
 .result-description {
-    font-size: 14px;
+    font-size: 17px;
     color: #111827;
     line-height: 1.8;
     white-space: pre-line;
