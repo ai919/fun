@@ -863,6 +863,101 @@ a:active {
     opacity: 1;
 }
 
+/* ===== 测验结果海报 ===== */
+.result-poster {
+    width: 900px;
+    height: 1600px;
+    box-sizing: border-box;
+    border-radius: 32px;
+    background-image: url('/assets/img/dofun-poster-bg.jpg');
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    display: none;
+    overflow: hidden;
+}
+
+.result-poster::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.70);
+}
+
+.result-poster-inner {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    padding: 80px 72px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-family: "PingFang SC", -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.poster-header {
+    margin-bottom: 40px;
+}
+
+.poster-brand {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 999px;
+    font-size: 14px;
+    background: rgba(148, 163, 184, 0.16);
+    color: #4b5563;
+}
+
+.poster-test-title {
+    margin-top: 16px;
+    font-size: 18px;
+    color: #6b7280;
+}
+
+.poster-result-block {
+    margin-top: 24px;
+    margin-bottom: 32px;
+}
+
+.poster-result-label {
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #9ca3af;
+    margin-bottom: 6px;
+}
+
+.poster-result-title {
+    font-size: 34px;
+    line-height: 1.4;
+    font-weight: 800;
+    color: #111827;
+}
+
+.poster-description {
+    flex-grow: 1;
+    margin-top: 12px;
+    margin-bottom: 40px;
+    font-size: 18px;
+    line-height: 1.8;
+    color: #374151;
+    white-space: pre-line;
+}
+
+.poster-footer {
+    border-top: 1px solid rgba(148, 163, 184, 0.4);
+    padding-top: 18px;
+    font-size: 16px;
+    color: #6366f1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.poster-footer-brand {
+    font-weight: 500;
+}
+
 @media (max-width: 640px) {
     .result-page {
         margin: 12px auto 24px;

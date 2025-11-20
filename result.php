@@ -139,6 +139,7 @@ $emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
     <div class="result-share-actions">
         <button type="button" class="btn-ghost-muted" id="copy-link-btn">复制结果链接</button>
         <button type="button" class="btn-ghost-muted" id="copy-text-btn">复制分享文案</button>
+        <button type="button" class="btn-secondary" id="save-poster-btn">保存结果海报</button>
     </div>
 
     <footer class="result-actions">
@@ -147,6 +148,28 @@ $emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
         <?php endif; ?>
         <a href="/index.php" class="btn-primary">返回全部测验</a>
     </footer>
+</div>
+
+<div id="result-poster" class="result-poster">
+  <div class="result-poster-inner">
+    <div class="poster-header">
+      <div class="poster-brand">DoFun空间 · 测验结果</div>
+      <div class="poster-test-title">来自测验：<?= htmlspecialchars($finalTest['title'] ?? '') ?></div>
+    </div>
+
+    <div class="poster-result-block">
+      <div class="poster-result-label">你的结果</div>
+      <div class="poster-result-title"><?= htmlspecialchars($finalResult['title'] ?? '') ?></div>
+    </div>
+
+    <div class="poster-description">
+      <?= nl2br(htmlspecialchars($finalResult['description'] ?? '')) ?>
+    </div>
+
+    <div class="poster-footer">
+      <div class="poster-footer-brand">dofun.fun · 在线趣味测试更好发现自己</div>
+    </div>
+  </div>
 </div>
 
 <div class="copy-toast" id="copy-toast">已复制到剪贴板</div>
@@ -201,6 +224,33 @@ $emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
         });
     }
 })();
+
+(function () {
+    var btn = document.getElementById("save-poster-btn");
+    var poster = document.getElementById("result-poster");
+    if (!btn || !poster || typeof html2canvas === 'undefined') return;
+
+    btn.addEventListener("click", function () {
+      poster.style.display = "block";
+
+      html2canvas(poster, {
+        scale: 2,
+        useCORS: true,
+        logging: false
+      }).then(function (canvas) {
+        poster.style.display = "none";
+
+        var dataURL = canvas.toDataURL("image/png");
+        var link = document.createElement("a");
+        link.href = dataURL;
+        link.download = "测验结果.png";
+        link.click();
+      }).catch(function () {
+        poster.style.display = "none";
+        alert("生成海报时出错，请稍后再试");
+      });
+    });
+  })();
 </script>
 </body>
 </html>
