@@ -523,12 +523,13 @@ a:active {
 
 .test-meta-text {
     color: #4b5563;
-    font-size: 13px;
+    font-size: 14px;
+    font-weight: 600;
 }
 
 .test-meta-text strong {
     color: #4f46e5;
-    font-weight: 700;
+    font-weight: 800;
 }
 
 .test-progress {
@@ -546,8 +547,9 @@ a:active {
 }
 
 .test-progress-label {
-    font-size: 12px;
-    color: #6b7280;
+    font-size: 13px;
+    font-weight: 700;
+    color: #374151;
     margin-bottom: 4px;
 }
 
