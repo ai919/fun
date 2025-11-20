@@ -547,7 +547,7 @@ a:active {
 }
 
 .test-progress-label {
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 700;
     color: #374151;
     margin-bottom: 4px;
@@ -590,7 +590,7 @@ a:active {
     border-radius: 999px;
     background: radial-gradient(circle at 30% 30%, #eef2ff, #e0e7ff);
     color: #4338ca;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -600,9 +600,9 @@ a:active {
 }
 
 .question-text {
-    font-size: 16px;
+    font-size: 18px;
     line-height: 1.7;
-    color: #0f172a;
+    color: #111827;
     font-weight: 600;
 }
 
