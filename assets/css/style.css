@@ -866,6 +866,7 @@ a:active {
     font-size: 13px;
     color: #4b5563;
     line-height: 1.6;
+    min-height: 3.2em; /* 两行高度，确保描述区位置一致 */
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
