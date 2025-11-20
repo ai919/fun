@@ -62,8 +62,8 @@ $seo = [
                 $titleStyle = "color: {$color};";
             }
 
-            $emojiRaw = trim($test['emoji'] ?? '');
-            $emoji = $emojiRaw !== '' ? htmlspecialchars($emojiRaw, ENT_QUOTES, 'UTF-8') : '';
+                $emojiRaw = trim($test['emoji'] ?? ($test['title_emoji'] ?? ''));
+                $emoji = $emojiRaw !== '' ? htmlspecialchars($emojiRaw, ENT_QUOTES, 'UTF-8') : '';
 
             $playCount = isset($test['play_count']) ? (int)$test['play_count'] : 0;
             $playText = $playCount > 0 ? "已有 {$playCount} 人测验" : '等待第一位测验者';

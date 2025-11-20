@@ -117,7 +117,7 @@ if (!empty($test['subtitle'])) {
 } elseif (!empty($test['description'])) {
     $heroSubtitle = mb_substr($test['description'], 0, 120);
 }
-$emoji = trim($test['emoji'] ?? '');
+$emoji = trim($test['emoji'] ?? ($test['title_emoji'] ?? ''));
 ?>
 
 <div class="test-page">
