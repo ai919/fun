@@ -137,8 +137,8 @@ $emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
     <?php endif; ?>
 
     <div class="result-share-actions">
-        <button type="button" class="btn-secondary" id="copy-link-btn">复制结果链接</button>
-        <button type="button" class="btn-secondary" id="copy-text-btn">复制分享文案</button>
+        <button type="button" class="btn-ghost-muted" id="copy-link-btn">复制结果链接</button>
+        <button type="button" class="btn-ghost-muted" id="copy-text-btn">复制分享文案</button>
     </div>
 
     <footer class="result-actions">
@@ -149,18 +149,34 @@ $emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
     </footer>
 </div>
 
+<div class="copy-toast" id="copy-toast">已复制到剪贴板</div>
+
 <script>
 (function () {
     var copyLinkBtn = document.getElementById('copy-link-btn');
     var copyTextBtn = document.getElementById('copy-text-btn');
+    var toastEl = document.getElementById('copy-toast');
     if (!copyLinkBtn && !copyTextBtn) return;
 
     var shareUrl = <?php echo json_encode($shareUrl); ?> || window.location.href;
 
+    var toastTimer = null;
+    function showToast(text) {
+        if (!toastEl) return;
+        toastEl.textContent = text;
+        toastEl.classList.add('copy-toast--show');
+        if (toastTimer) {
+            clearTimeout(toastTimer);
+        }
+        toastTimer = setTimeout(function () {
+            toastEl.classList.remove('copy-toast--show');
+        }, 3000);
+    }
+
     function copyText(text) {
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(text).then(function () {
-                alert('已复制到剪贴板');
+                showToast('已复制到剪贴板');
             }).catch(function () {
                 window.prompt('复制失败，请手动复制：', text);
             });

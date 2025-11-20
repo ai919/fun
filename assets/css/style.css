@@ -822,6 +822,46 @@ a:active {
     justify-content: flex-end;
     gap: 12px;
 }
+.result-share-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+}
+.btn-ghost-muted {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 14px;
+    border-radius: 10px;
+    background-color: #f3f4f6;
+    color: #4b5563;
+    border: 1px solid #e5e7eb;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: none;
+}
+.btn-ghost-muted:hover {
+    background-color: #e5e7eb;
+}
+
+.copy-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: rgba(17, 24, 39, 0.9);
+    color: #ffffff;
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+.copy-toast.copy-toast--show {
+    opacity: 1;
+}
 
 @media (max-width: 640px) {
     .result-page {
