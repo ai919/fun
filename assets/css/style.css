@@ -503,13 +503,13 @@ a:active {
 
 .test-description {
     margin-top: 6px;
-    font-size: 14px;
+    font-size: 13px;
     color: #4b5563;
-    line-height: 1.5;
+    line-height: 1.4;
 }
 
 .test-description p {
-    margin: 4px 0;
+    margin: 3px 0;
 }
 
 .test-hero-extra {
@@ -722,6 +722,7 @@ a:active {
 
     .test-description {
         font-size: 13px;
+        line-height: 1.4;
     }
 
     .test-actions {
