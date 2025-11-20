@@ -159,7 +159,12 @@ $emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
 
     <div class="poster-result-block">
       <div class="poster-result-label">你的结果</div>
-      <div class="poster-result-title"><?= htmlspecialchars($finalResult['title'] ?? '') ?></div>
+      <div class="poster-result-title">
+        <?php if (!empty($finalTest['emoji'])): ?>
+          <span class="poster-result-emoji"><?= htmlspecialchars($finalTest['emoji']) ?></span>
+        <?php endif; ?>
+        <span class="poster-result-text"><?= htmlspecialchars($finalResult['title'] ?? '') ?></span>
+      </div>
     </div>
 
     <div class="poster-description">

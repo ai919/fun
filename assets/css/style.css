@@ -932,33 +932,57 @@ a:active {
 }
 
 .poster-result-block {
-    margin-top: 24px;
-    margin-bottom: 32px;
+    margin-top: 8px;
+    margin-bottom: 18px;
 }
 
 .poster-result-label {
-    font-size: 14px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-size: 13px;
     color: #9ca3af;
+    letter-spacing: 0.08em;
     margin-bottom: 6px;
 }
 
 .poster-result-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.poster-result-emoji {
     font-size: 34px;
-    line-height: 1.4;
+    line-height: 1;
+    filter: drop-shadow(0 4px 10px rgba(15, 23, 42, 0.16));
+}
+
+.poster-result-text {
+    font-size: 30px;
+    line-height: 1.5;
     font-weight: 800;
-    color: #111827;
+    color: #0f172a;
 }
 
 .poster-description {
     flex-grow: 1;
-    margin-top: 12px;
+    margin-top: 10px;
     margin-bottom: 40px;
-    font-size: 18px;
-    line-height: 1.8;
-    color: #374151;
+    font-size: 15px;
+    line-height: 1.95;
+    color: #4b5563;
     white-space: pre-line;
+    position: relative;
+    max-height: 520px;
+    overflow: hidden;
+}
+
+.poster-description::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 64px;
+    background: linear-gradient(to bottom, rgba(248, 250, 252, 0), rgba(248, 250, 252, 0.95));
 }
 
 .poster-footer {
@@ -973,6 +997,29 @@ a:active {
 
 .poster-footer-brand {
     font-weight: 500;
+}
+
+.poster-main {
+    max-width: 680px;
+    background: rgba(255, 255, 255, 0.86);
+    border-radius: 24px;
+    padding: 28px 30px 24px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+}
+
+.poster-brand {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    background: rgba(148, 163, 184, 0.20);
+    color: #4b5563;
+}
+
+.poster-test-title {
+    margin-top: 10px;
+    font-size: 16px;
+    color: #6b7280;
 }
 
 @media (max-width: 640px) {
