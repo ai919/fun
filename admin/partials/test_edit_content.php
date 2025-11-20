@@ -6,6 +6,21 @@ $statuses = [
     'published' => '已发布',
     'archived'  => '已归档',
 ];
+$emojiOptions = [
+    ''   => '（不选择）',
+    '🧠' => '🧠 大脑',
+    '💘' => '💘 爱心',
+    '🔥' => '🔥 火焰',
+    '🌙' => '🌙 月亮',
+    '🎲' => '🎲 骰子',
+    '📚' => '📚 书本',
+    '😈' => '😈 小恶魔',
+    '🌈' => '🌈 彩虹',
+    '⭐' => '⭐ 星星',
+    '🎯' => '🎯 靶心',
+    '🎧' => '🎧 耳机',
+    '🪐' => '🪐 行星',
+];
 $scoringModes = [
     'simple'     => 'Simple（单结果）',
     'dimensions' => 'Dimensions（维度组合）',
@@ -18,7 +33,8 @@ $formData = [
     'slug'           => '',
     'subtitle'       => '',
     'description'    => '',
-    'title_color'    => '#4f46e5',
+    'emoji'          => '',
+    'title_color'    => '#6366F1',
     'tags'           => '',
     'status'         => 'draft',
     'sort_order'     => 0,
@@ -35,14 +51,18 @@ if ($testId) {
         $errors[] = '未找到对应的测试。';
     } else {
         foreach ($formData as $key => $defaultValue) {
-            if (array_key_exists($key, $existingTest) && $existingTest[$key] !== null) {
-                $formData[$key] = $existingTest[$key];
+            if (array_key_exists($key, $existingTest)) {
+                $formData[$key] = $existingTest[$key] ?? '';
             }
         }
-        if (!$formData['title_color']) {
-            $formData['title_color'] = '#4f46e5';
+        if ($formData['title_color'] === null) {
+            $formData['title_color'] = '';
         }
     }
+}
+
+if (!$testId && $formData['title_color'] === '') {
+    $formData['title_color'] = '#6366F1';
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingTest))) {
@@ -50,7 +70,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
     $formData['slug']           = strtolower(trim($_POST['slug'] ?? ''));
     $formData['subtitle']       = trim($_POST['subtitle'] ?? '');
     $formData['description']    = trim($_POST['description'] ?? '');
-    $formData['title_color']    = trim($_POST['title_color'] ?? '#4f46e5');
+    $titleColorClear            = ($_POST['title_color_clear'] ?? '0') === '1';
+    $formData['title_color']    = $titleColorClear ? '' : trim($_POST['title_color'] ?? '');
+    $selectedEmoji              = trim($_POST['emoji'] ?? '');
+    $customEmoji                = trim($_POST['emoji_custom'] ?? '');
+    $formData['emoji']          = $customEmoji !== '' ? $customEmoji : $selectedEmoji;
     $formData['tags']           = trim($_POST['tags'] ?? '');
     $formData['status']         = $_POST['status'] ?? 'draft';
     $formData['sort_order']     = (int)($_POST['sort_order'] ?? 0);
@@ -71,10 +95,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
     if (!array_key_exists($formData['scoring_mode'], $scoringModes)) {
         $errors[] = '请选择有效的评分模式。';
     }
-    if ($formData['title_color'] === '') {
-        $formData['title_color'] = '#4f46e5';
-    } elseif (!preg_match('/^#[0-9a-fA-F]{6}$/', $formData['title_color'])) {
-        $errors[] = '请输入合法的颜色值，例如 #4f46e5。';
+    if ($formData['title_color'] !== '' && !preg_match('/^#[0-9a-fA-F]{6}$/', $formData['title_color'])) {
+        $errors[] = '请输入合法的颜色值，例如 #6366F1。';
+    }
+    if (mb_strlen($formData['emoji']) > 16) {
+        $errors[] = 'Emoji 最长支持 16 个字符。';
     }
 
     $tagsNormalized = '';
@@ -110,7 +135,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
             ':slug'           => $formData['slug'],
             ':subtitle'       => $formData['subtitle'] !== '' ? $formData['subtitle'] : null,
             ':description'    => $formData['description'] !== '' ? $formData['description'] : null,
-            ':title_color'    => $formData['title_color'] ?: '#4f46e5',
+            ':emoji'          => $formData['emoji'] !== '' ? $formData['emoji'] : null,
+            ':title_color'    => $formData['title_color'] !== '' ? $formData['title_color'] : null,
             ':tags'           => $formData['tags'] !== '' ? $formData['tags'] : null,
             ':status'         => $formData['status'],
             ':sort_order'     => $formData['sort_order'],
@@ -125,6 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
                 slug = :slug,
                 subtitle = :subtitle,
                 description = :description,
+                emoji = :emoji,
                 title_color = :title_color,
                 tags = :tags,
                 status = :status,
@@ -137,9 +164,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
             $updateStmt->execute($payload);
         } else {
             $insertSql = "INSERT INTO tests
-                (title, slug, subtitle, description, title_color, tags, status, sort_order, scoring_mode, scoring_config)
+                (title, slug, subtitle, description, emoji, title_color, tags, status, sort_order, scoring_mode, scoring_config)
                 VALUES
-                (:title, :slug, :subtitle, :description, :title_color, :tags, :status, :sort_order, :scoring_mode, :scoring_config)";
+                (:title, :slug, :subtitle, :description, :emoji, :title_color, :tags, :status, :sort_order, :scoring_mode, :scoring_config)";
             $insertStmt = $pdo->prepare($insertSql);
             $insertStmt->execute($payload);
         }
@@ -164,6 +191,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
     </div>
 <?php endif; ?>
 
+<?php
+$emojiSelectValue = array_key_exists($formData['emoji'], $emojiOptions) ? $formData['emoji'] : '';
+$colorClearDefault = $formData['title_color'] === '' ? '1' : '0';
+?>
+
 <div class="card">
     <form method="post">
         <div class="form-grid">
@@ -185,7 +217,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
             </label>
             <label>
                 <span>标题颜色</span>
-                <input type="color" name="title_color" value="<?= htmlspecialchars($formData['title_color'] ?: '#4f46e5') ?>">
+                <input type="hidden" name="title_color_clear" value="<?= $colorClearDefault ?>">
+                <div class="color-input-row">
+                    <input type="color"
+                           name="title_color"
+                           value="<?= htmlspecialchars($formData['title_color'] !== '' ? $formData['title_color'] : '#6366F1') ?>"
+                           oninput="this.form.title_color_clear.value='0';">
+                    <button type="button" class="btn btn-ghost btn-xs"
+                            onclick="this.closest('form').title_color_clear.value='1'; this.closest('form').title_color.value='#6366F1';">
+                        清空
+                    </button>
+                </div>
+                <small class="muted">清空后前台使用默认颜色。</small>
+            </label>
+        </div>
+
+        <div class="form-grid">
+            <label>
+                <span>Emoji</span>
+                <select name="emoji">
+                    <?php foreach ($emojiOptions as $value => $label): ?>
+                        <option value="<?= htmlspecialchars($value) ?>"<?= $emojiSelectValue === $value ? ' selected' : '' ?>>
+                            <?= htmlspecialchars($label) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <small class="muted">可选填，为标题增加一个小图标。</small>
+            </label>
+            <label>
+                <span>自定义 Emoji</span>
+                <input type="text" name="emoji_custom" value="<?= htmlspecialchars($emojiSelectValue === '' ? $formData['emoji'] : '') ?>" maxlength="16" placeholder="也可手动输入">
+                <small class="muted">如果下拉没有想要的，可以在此输入（不超过 16 字符）。</small>
             </label>
         </div>
 

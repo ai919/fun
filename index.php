@@ -2,7 +2,14 @@
 require __DIR__ . '/lib/db_connect.php';
 require_once __DIR__ . '/seo_helper.php';
 
-$stmt = $pdo->prepare("SELECT * FROM tests WHERE (status = 'published' OR status = 1) ORDER BY sort_order ASC, id DESC");
+$stmt = $pdo->prepare("
+    SELECT
+        t.*,
+        (SELECT COUNT(*) FROM test_runs r WHERE r.test_id = t.id) AS play_count
+    FROM tests t
+    WHERE (t.status = 'published' OR t.status = 1)
+    ORDER BY t.sort_order DESC, t.id DESC
+");
 $stmt->execute();
 $tests = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -46,18 +53,18 @@ $seo = [
                 $tags = array_filter(array_map('trim', explode(',', $test['tags'])));
             }
 
-            $titleStyle = '';
-            if (!empty($test['title_color'])) {
-                $color = htmlspecialchars($test['title_color'], ENT_QUOTES, 'UTF-8');
+            $titleStyle = 'color: #111827;';
+            $titleColor = trim($test['title_color'] ?? '');
+            if ($titleColor !== '' && preg_match('/^#[0-9a-fA-F]{6}$/', $titleColor)) {
+                $color = htmlspecialchars($titleColor, ENT_QUOTES, 'UTF-8');
                 $titleStyle = "color: {$color};";
             }
 
-            $emojiValue = $test['title_emoji'] ?? '';
-            $emoji = $emojiValue !== ''
-                ? htmlspecialchars($emojiValue, ENT_QUOTES, 'UTF-8')
-                : '✨';
+            $emojiRaw = trim($test['emoji'] ?? '');
+            $emoji = $emojiRaw !== '' ? htmlspecialchars($emojiRaw, ENT_QUOTES, 'UTF-8') : '';
 
-            $runCount = isset($test['run_count']) ? (int)$test['run_count'] : 0;
+            $playCount = isset($test['play_count']) ? (int)$test['play_count'] : 0;
+            $playText = $playCount > 0 ? "已有 {$playCount} 人测试" : '等待第一个测试者';
             ?>
             <article class="quiz-card">
                 <div class="quiz-card-top">
@@ -70,31 +77,39 @@ $seo = [
                             <span class="quiz-tag">测验</span>
                         <?php endif; ?>
                     </div>
-                    <span class="quiz-emoji"><?= $emoji ?></span>
                 </div>
 
-                <h2 class="quiz-card-title" style="<?= $titleStyle ?>">
-                    <?= htmlspecialchars($test['title'], ENT_QUOTES, 'UTF-8') ?>
-                </h2>
+                <div class="quiz-card-body">
+                    <h2 class="quiz-card-title" style="<?= $titleStyle ?>">
+                        <a class="card-title" href="/test.php?slug=<?= urlencode($test['slug']) ?>">
+                            <?php if ($emoji !== ''): ?>
+                                <span class="card-emoji"><?= $emoji ?></span>
+                            <?php endif; ?>
+                            <span class="card-title-text">
+                                <?= htmlspecialchars($test['title'], ENT_QUOTES, 'UTF-8') ?>
+                            </span>
+                        </a>
+                    </h2>
 
-                <?php if (!empty($test['subtitle'])): ?>
-                    <p class="quiz-card-desc">
-                        <?= htmlspecialchars($test['subtitle'], ENT_QUOTES, 'UTF-8') ?>
-                    </p>
-                <?php elseif (!empty($test['description'])): ?>
-                    <p class="quiz-card-desc">
-                        <?= htmlspecialchars(mb_substr($test['description'], 0, 48), ENT_QUOTES, 'UTF-8') ?>…
-                    </p>
-                <?php endif; ?>
+                    <?php if (!empty($test['subtitle'])): ?>
+                        <p class="quiz-card-desc">
+                            <?= htmlspecialchars($test['subtitle'], ENT_QUOTES, 'UTF-8') ?>
+                        </p>
+                    <?php elseif (!empty($test['description'])): ?>
+                        <p class="quiz-card-desc">
+                            <?= htmlspecialchars(mb_substr($test['description'], 0, 48), ENT_QUOTES, 'UTF-8') ?>…
+                        </p>
+                    <?php endif; ?>
+                </div>
 
                 <div class="quiz-card-meta">
                     <div class="quiz-meta-count">
-                        已有 <?= $runCount ?> 人测试
+                        <?= htmlspecialchars($playText, ENT_QUOTES, 'UTF-8') ?>
                     </div>
                 </div>
 
                 <div class="quiz-card-footer">
-                    <a class="quiz-btn" href="/<?= urlencode($test['slug']) ?>">
+                    <a class="quiz-btn" href="/test.php?slug=<?= urlencode($test['slug']) ?>">
                         开始测验
                     </a>
                 </div>

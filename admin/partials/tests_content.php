@@ -80,7 +80,7 @@ if ($page > $totalPages) {
 }
 $offset = ($page - 1) * $perPage;
 
-$listSql = "SELECT t.id, t.title, t.slug, t.status, t.tags, t.sort_order, t.created_at, t.updated_at, t.scoring_mode
+$listSql = "SELECT t.id, t.title, t.slug, t.status, t.tags, t.sort_order, t.created_at, t.updated_at, t.scoring_mode, t.emoji, t.title_color
             FROM tests t{$whereSql}{$orderSql} LIMIT :limit OFFSET :offset";
 $listStmt = $pdo->prepare($listSql);
 foreach ($params as $name => $value) {
@@ -153,6 +153,8 @@ $filterQuery = array_filter([
         <tr>
             <th style="width:60px;">ID</th>
             <th>标题</th>
+            <th style="width:80px;">Emoji</th>
+            <th style="width:140px;">标题颜色</th>
             <th style="width:160px;">Slug</th>
             <th style="width:110px;">状态</th>
             <th style="width:120px;">评分模式</th>
@@ -181,6 +183,17 @@ $filterQuery = array_filter([
                 <td>
                     <div><?= htmlspecialchars($test['title']) ?></div>
                     <div class="muted">排序值：<?= (int)$test['sort_order'] ?></div>
+                </td>
+                <td>
+                    <?= ($test['emoji'] ?? '') !== '' ? htmlspecialchars($test['emoji']) : '—' ?>
+                </td>
+                <td>
+                    <?php if (!empty($test['title_color'])): ?>
+                        <span class="color-swatch" style="background: <?= htmlspecialchars($test['title_color']) ?>;"></span>
+                        <span class="color-text"><?= htmlspecialchars($test['title_color']) ?></span>
+                    <?php else: ?>
+                        <span class="muted">—</span>
+                    <?php endif; ?>
                 </td>
                 <td><code><?= htmlspecialchars($test['slug']) ?></code></td>
                 <td>
