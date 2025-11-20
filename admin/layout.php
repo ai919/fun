@@ -1,124 +1,117 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+require_once __DIR__ . '/auth.php';
+
+if (!isset($pageTitle)) {
+    $pageTitle = 'DoFun 后台';
 }
-
-if (!headers_sent()) {
-    header('Content-Type: text/html; charset=UTF-8');
-}
-
-$pageTitle    = $pageTitle    ?? 'DoFun 管理后台';
-$pageHeading  = $pageHeading  ?? '';
-$pageSubtitle = $pageSubtitle ?? '';
-$activeMenu   = $activeMenu   ?? '';
-$flashSuccess = $flashSuccess ?? null;
-$flashError   = $flashError   ?? null;
-$currentAdmin = $currentAdmin ?? (function_exists('current_admin') ? current_admin() : null);
-$scriptName   = $_SERVER['SCRIPT_NAME'] ?? '';
-$isTestsNavActive = (
-    strpos($scriptName, 'tests.php') !== false
-    || strpos($scriptName, 'test_edit.php') !== false
-    || ($activeMenu === 'tests')
-);
-
-$capturedContent = null;
-$hasContentFile  = !empty($contentFile) && file_exists($contentFile);
-if ($hasContentFile) {
-    ob_start();
-    include $contentFile;
-    $capturedContent = ob_get_clean();
+if (!isset($activeMenu)) {
+    $activeMenu = '';
 }
 ?>
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="utf-8">
-    <title><?= htmlspecialchars($pageTitle) ?></title>
-    <link rel="stylesheet" href="/assets/css/admin.css">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="shortcut icon" href="/favicon.ico">
+    <meta charset="UTF-8">
+    <title><?= htmlspecialchars($pageTitle) ?> · DoFun Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="../favicon.ico">
+    <link rel="stylesheet" href="../assets/css/admin.css?v=20251120">
 </head>
 <body class="admin-body">
-
 <div class="admin-shell">
+
+    <!-- 左侧侧边栏 -->
     <aside class="admin-sidebar">
-        <div class="admin-brand">
-            <div class="brand-logo">DoFun 空间 · 后台</div>
-            <div class="brand-subtitle">DoFun Admin Panel</div>
+        <div class="admin-sidebar__logo">
+            <div class="admin-logo-mark">DF</div>
+            <div class="admin-logo-text">
+                <div class="admin-logo-text__title">DoFun 后台</div>
+                <div class="admin-logo-text__sub">在线趣味测试管理</div>
+            </div>
         </div>
+
         <nav class="admin-nav">
-            <a href="/admin/index.php" class="nav-item <?= $activeMenu === 'dashboard' ? 'is-active' : '' ?>">
-                <span class="nav-icon">🏠</span>
-                <span class="nav-label">控制台</span>
+            <a href="index.php"
+               class="admin-nav__item <?= $activeMenu === 'dashboard' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">📊</span>
+                <span class="admin-nav__label">概览</span>
             </a>
-            <a href="/admin/tests.php" class="nav-item <?= $isTestsNavActive ? 'is-active' : '' ?>">
-                <span class="nav-icon">📋</span>
-                <span class="nav-label">测验列表</span>
+            <a href="tests.php"
+               class="admin-nav__item <?= $activeMenu === 'tests' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">🧪</span>
+                <span class="admin-nav__label">测验管理</span>
             </a>
-            <a href="/admin/test_edit.php" class="nav-item <?= strpos($scriptName, 'test_edit.php') !== false ? 'is-active' : '' ?>">
-                <span class="nav-icon">➕</span>
-                <span class="nav-label">新增测验</span>
+            <a href="questions.php"
+               class="admin-nav__item <?= $activeMenu === 'questions' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">❓</span>
+                <span class="admin-nav__label">题目管理</span>
             </a>
-            <a href="/admin/clone_test.php" class="nav-item <?= $activeMenu === 'clone' ? 'is-active' : '' ?>">
-                <span class="nav-icon">✨</span>
-                <span class="nav-label">克隆测验</span>
+            <a href="results.php"
+               class="admin-nav__item <?= $activeMenu === 'results' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">🎯</span>
+                <span class="admin-nav__label">结果管理</span>
             </a>
-            <a href="/admin/stats.php" class="nav-item <?= $activeMenu === 'stats' ? 'is-active' : '' ?>">
-                <span class="nav-icon">📈</span>
-                <span class="nav-label">数据统计</span>
+            <a href="stats.php"
+               class="admin-nav__item <?= $activeMenu === 'stats' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">📈</span>
+                <span class="admin-nav__label">统计</span>
             </a>
-            <a href="/admin/backup_logs.php" class="nav-item <?= $activeMenu === 'backups' ? 'is-active' : '' ?>">
-                <span class="nav-icon">💾</span>
-                <span class="nav-label">备份记录</span>
+            <a href="backup_logs.php"
+               class="admin-nav__item <?= $activeMenu === 'backup' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">💾</span>
+                <span class="admin-nav__label">备份 & 日志</span>
             </a>
         </nav>
-        <div class="admin-sidebar-footer">
-            <a href="/" class="sidebar-link" target="_blank">打开前台首页</a>
-            <a href="/admin/logout.php" class="sidebar-link">退出登录</a>
+
+        <div class="admin-sidebar__footer">
+            <a href="logout.php" class="admin-nav__item admin-nav__item--muted">
+                <span class="admin-nav__icon">🚪</span>
+                <span class="admin-nav__label">退出登录</span>
+            </a>
+            <div class="admin-sidebar__meta">
+                <span class="admin-meta-key">环境</span>
+                <span class="admin-meta-value">
+                    <?= htmlspecialchars(php_uname('n')) ?>
+                </span>
+            </div>
         </div>
     </aside>
 
-    <main class="admin-main">
+    <!-- 右侧主区域 -->
+    <div class="admin-main">
+        <!-- 顶栏 -->
         <header class="admin-topbar">
-            <div class="topbar-left">
-                <div class="topbar-breadcrumb"><?= htmlspecialchars($pageTitle) ?></div>
+            <div class="admin-topbar__left">
+                <h1 class="admin-page-title"><?= htmlspecialchars($pageTitle) ?></h1>
+                <?php if (!empty($pageSubtitle ?? '')): ?>
+                    <p class="admin-page-subtitle"><?= htmlspecialchars($pageSubtitle) ?></p>
+                <?php endif; ?>
             </div>
-            <div class="topbar-right">
-                <span class="topbar-user"><?= htmlspecialchars($currentAdmin['display_name'] ?? $currentAdmin['username'] ?? '管理员') ?></span>
-                <a href="/admin/logout.php" class="btn btn-ghost btn-xs">退出</a>
+            <div class="admin-topbar__right">
+                <span class="admin-topbar__user">👤 管理员</span>
+                <a class="admin-topbar__link" href="../" target="_blank">打开前台</a>
             </div>
         </header>
 
-        <section class="admin-content">
-            <?php if ($pageHeading !== ''): ?>
-                <div class="page-header">
-                    <h1 class="page-title"><?= htmlspecialchars($pageHeading) ?></h1>
-                    <?php if ($pageSubtitle !== ''): ?>
-                        <p class="page-subtitle"><?= htmlspecialchars($pageSubtitle) ?></p>
-                    <?php endif; ?>
-                </div>
-            <?php endif; ?>
-
-            <?php if ($flashSuccess): ?>
-                <div class="alert alert-success"><?= htmlspecialchars($flashSuccess) ?></div>
-            <?php endif; ?>
-
-            <?php if ($flashError): ?>
-                <div class="alert alert-danger"><?= htmlspecialchars($flashError) ?></div>
-            <?php endif; ?>
-
+        <!-- 内容 -->
+        <main class="admin-content">
             <?php
-            if ($hasContentFile && $capturedContent !== null) {
-                echo $capturedContent;
+            // 兼容两种用法：
+            // 1）页面通过 $content 注入
+            // 2）页面直接 echo 出内容（layout 只做外壳）
+            if (isset($content)) {
+                echo $content;
             }
             ?>
-        </section>
-    </main>
+        </main>
+
+        <footer class="admin-footer">
+            <span>DoFun Admin · <?= date('Y') ?></span>
+            <span class="admin-footer__dot">·</span>
+            <span>轻量测验管理后台</span>
+        </footer>
+    </div>
 </div>
 
 </body>
 </html>
-<?php
-if (!defined('ADMIN_LAYOUT_CLOSED')) {
-    define('ADMIN_LAYOUT_CLOSED', true);
-}
