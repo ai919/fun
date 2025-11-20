@@ -154,14 +154,14 @@ a:hover {
     overflow: hidden;
 }
 .card-title a {
-    color: #111827;
+    color: inherit;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 6px;
 }
 .card-title a:hover {
-    text-decoration: underline;
+    text-decoration: none;
 }
 .card-emoji {
     font-size: 20px;
