@@ -6,6 +6,27 @@ $statuses = [
     'published' => '已发布',
     'archived'  => '已归档',
 ];
+
+function admin_column_exists(PDO $pdo, string $table, string $column): bool
+{
+    static $cache = [];
+    $dbName = (string)$pdo->query('SELECT DATABASE()')->fetchColumn();
+    $key = "{$dbName}.{$table}.{$column}";
+    if (array_key_exists($key, $cache)) {
+        return $cache[$key];
+    }
+    $stmt = $pdo->prepare("
+        SELECT 1
+        FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?
+        LIMIT 1
+    ");
+    $stmt->execute([$dbName, $table, $column]);
+    $cache[$key] = (bool)$stmt->fetchColumn();
+    return $cache[$key];
+}
+$hasEmojiCol = admin_column_exists($pdo, 'tests', 'emoji');
+$hasTitleColorCol = admin_column_exists($pdo, 'tests', 'title_color');
 $emojiOptions = [
     ''   => '（不选择）',
     '🧠' => '🧠 大脑',
@@ -95,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
     if (!array_key_exists($formData['scoring_mode'], $scoringModes)) {
         $errors[] = '请选择有效的评分模式。';
     }
-    if ($formData['title_color'] !== '' && !preg_match('/^#[0-9a-fA-F]{6}$/', $formData['title_color'])) {
+    if ($hasTitleColorCol && $formData['title_color'] !== '' && !preg_match('/^#[0-9a-fA-F]{6}$/', $formData['title_color'])) {
         $errors[] = '请输入合法的颜色值，例如 #6366F1。';
     }
     if (mb_strlen($formData['emoji']) > 16) {
@@ -135,38 +156,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
             ':slug'           => $formData['slug'],
             ':subtitle'       => $formData['subtitle'] !== '' ? $formData['subtitle'] : null,
             ':description'    => $formData['description'] !== '' ? $formData['description'] : null,
-            ':emoji'          => $formData['emoji'] !== '' ? $formData['emoji'] : null,
-            ':title_color'    => $formData['title_color'] !== '' ? $formData['title_color'] : null,
             ':tags'           => $formData['tags'] !== '' ? $formData['tags'] : null,
             ':status'         => $formData['status'],
             ':sort_order'     => $formData['sort_order'],
             ':scoring_mode'   => $formData['scoring_mode'],
             ':scoring_config' => $formData['scoring_config'] !== '' ? $formData['scoring_config'] : null,
         ];
+        if ($hasEmojiCol) {
+            $payload[':emoji'] = $formData['emoji'] !== '' ? $formData['emoji'] : null;
+        }
+        if ($hasTitleColorCol) {
+            $payload[':title_color'] = $formData['title_color'] !== '' ? $formData['title_color'] : null;
+        }
 
         if ($testId) {
             $payload[':id'] = $testId;
-            $updateSql = "UPDATE tests SET
-                title = :title,
-                slug = :slug,
-                subtitle = :subtitle,
-                description = :description,
-                emoji = :emoji,
-                title_color = :title_color,
-                tags = :tags,
-                status = :status,
-                sort_order = :sort_order,
-                scoring_mode = :scoring_mode,
-                scoring_config = :scoring_config,
-                updated_at = NOW()
-            WHERE id = :id";
+            $setParts = [
+                'title = :title',
+                'slug = :slug',
+                'subtitle = :subtitle',
+                'description = :description',
+                'tags = :tags',
+                'status = :status',
+                'sort_order = :sort_order',
+                'scoring_mode = :scoring_mode',
+                'scoring_config = :scoring_config',
+                'updated_at = NOW()',
+            ];
+            if ($hasEmojiCol) {
+                $setParts[] = 'emoji = :emoji';
+            }
+            if ($hasTitleColorCol) {
+                $setParts[] = 'title_color = :title_color';
+            }
+            $updateSql = "UPDATE tests SET " . implode(",\n                ", $setParts) . " WHERE id = :id";
             $updateStmt = $pdo->prepare($updateSql);
             $updateStmt->execute($payload);
         } else {
-            $insertSql = "INSERT INTO tests
-                (title, slug, subtitle, description, emoji, title_color, tags, status, sort_order, scoring_mode, scoring_config)
-                VALUES
-                (:title, :slug, :subtitle, :description, :emoji, :title_color, :tags, :status, :sort_order, :scoring_mode, :scoring_config)";
+            $columns = ['title', 'slug', 'subtitle', 'description', 'tags', 'status', 'sort_order', 'scoring_mode', 'scoring_config'];
+            $placeholders = [':title', ':slug', ':subtitle', ':description', ':tags', ':status', ':sort_order', ':scoring_mode', ':scoring_config'];
+            if ($hasEmojiCol) {
+                $columns[] = 'emoji';
+                $placeholders[] = ':emoji';
+            }
+            if ($hasTitleColorCol) {
+                $columns[] = 'title_color';
+                $placeholders[] = ':title_color';
+            }
+            $insertSql = "INSERT INTO tests (" . implode(', ', $columns) . ")
+                VALUES (" . implode(', ', $placeholders) . ")";
             $insertStmt = $pdo->prepare($insertSql);
             $insertStmt->execute($payload);
         }
