@@ -109,7 +109,13 @@ $seo = [
                 </div>
 
                     <div class="card-footer">
-                        <span class="card-play-count"><?= htmlspecialchars($playText, ENT_QUOTES, 'UTF-8') ?></span>
+                        <?php if ($playCount > 0): ?>
+                            <span class="card-play-count">
+                                已有 <strong><?= $playCount ?></strong> 人测验
+                            </span>
+                        <?php else: ?>
+                            <span class="card-play-count">等待第一位测验者</span>
+                        <?php endif; ?>
                         <a class="card-button" href="/test.php?slug=<?= urlencode($test['slug']) ?>">
                             开始测验
                         </a>

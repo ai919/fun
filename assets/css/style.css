@@ -891,9 +891,14 @@ a:active {
 
 .card-play-count {
     font-size: 13px;
-    font-weight: 600;
-    color: #4f46e5;
+    font-weight: 500;
+    color: #6b7280;
     white-space: nowrap;
+}
+
+.card-play-count strong {
+    color: #4f46e5;
+    font-weight: 700;
 }
 
 .card-button {
