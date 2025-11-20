@@ -20,7 +20,7 @@ if ((!$finalTest || !$finalResult) && isset($_GET['test_id'], $_GET['code'])) {
     }
 }
 
-$seo = [
+ $seo = [
     'title'       => 'DoFun 性格实验室 - 测验结果',
     'description' => '探索你的测验结果。',
     'url'         => df_current_url(),
@@ -47,42 +47,49 @@ if ($finalTest && $finalResult) {
 </head>
 <body>
 
-<div class="page-container" style="max-width: 780px;">
-    <h1><?= htmlspecialchars($finalTest['title'] ?? '测验结果') ?></h1>
-    <?php if (!empty($finalTest['subtitle'])): ?>
-        <p class="subtitle"><?= htmlspecialchars($finalTest['subtitle']) ?></p>
+<?php
+$emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
+?>
+
+<div class="result-page">
+    <?php if ($finalTest): ?>
+        <header class="result-hero">
+            <?php if ($emoji !== ''): ?>
+                <div class="result-emoji"><?= htmlspecialchars($emoji) ?></div>
+            <?php endif; ?>
+            <div class="result-pill">测验结果</div>
+            <h1 class="result-title"><?= htmlspecialchars($finalResult['title'] ?? '测验结果') ?></h1>
+            <p class="result-subtitle">
+                来自测验：<?= htmlspecialchars($finalTest['title'] ?? '') ?>
+            </p>
+        </header>
     <?php endif; ?>
 
     <?php if (!$finalResult): ?>
         <p>暂未匹配到结果，可能是后台还未配置完整。</p>
     <?php else: ?>
-        <section style="margin:20px 0;padding:18px;border-radius:16px;background:#fff;border:1px solid #e5e7eb;box-shadow:0 20px 40px rgba(15,23,42,0.08);">
-            <div style="font-size:13px;color:#6b7280;margin-bottom:8px;">测验结果</div>
-            <h2 style="margin:0 0 10px;"><?= htmlspecialchars($finalResult['title']) ?></h2>
-            <?php if (!empty($finalResult['description'])): ?>
-                <div style="font-size:15px;line-height:1.8;color:#1f2937;">
-                    <?= nl2br(htmlspecialchars($finalResult['description'])) ?>
-                </div>
-            <?php endif; ?>
+        <section class="result-body">
+            <p class="result-highlight">
+                这代表你在此次测验中，呈现出的核心倾向是：
+                <strong><?= htmlspecialchars($finalResult['title']) ?></strong>
+            </p>
+            <div class="result-description">
+                <?= nl2br(htmlspecialchars($finalResult['description'] ?? '')) ?>
+            </div>
             <?php if (!empty($finalResult['image_url'])): ?>
                 <div style="margin-top:12px;">
                     <img src="<?= htmlspecialchars($finalResult['image_url']) ?>" alt="result image" style="max-width:100%;border-radius:12px;">
                 </div>
             <?php endif; ?>
         </section>
-        <?php if ($codeCounts): ?>
-            <section style="margin:12px 0;padding:14px;border-radius:12px;background:#f9fafb;">
-                <strong>各类型得票数：</strong>
-                <ul style="list-style:none;padding:0;margin:8px 0 0;">
-                    <?php foreach ($codeCounts as $code => $count): ?>
-                        <li><?= htmlspecialchars($code) ?> ： <?= (int)$count ?></li>
-                    <?php endforeach; ?>
-                </ul>
-            </section>
-        <?php endif; ?>
     <?php endif; ?>
 
-    <p><a href="/">← 返回测验列表</a></p>
+    <footer class="result-actions">
+        <?php if ($finalTest): ?>
+            <a href="/test.php?slug=<?= urlencode($finalTest['slug'] ?? '') ?>" class="btn-secondary">再测一次</a>
+        <?php endif; ?>
+        <a href="/index.php" class="btn-primary">返回全部测验</a>
+    </footer>
 </div>
 </body>
 </html>

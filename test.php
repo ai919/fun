@@ -117,6 +117,10 @@ if (!empty($test['subtitle'])) {
 } elseif (!empty($test['description'])) {
     $heroSubtitle = mb_substr($test['description'], 0, 120);
 }
+$heroDescription = '';
+if (!empty($test['description'])) {
+    $heroDescription = $test['description'];
+}
 $emoji = trim($test['emoji'] ?? ($test['title_emoji'] ?? ''));
 ?>
 
@@ -130,6 +134,11 @@ $emoji = trim($test['emoji'] ?? ($test['title_emoji'] ?? ''));
                 <h1 class="test-title"><?= htmlspecialchars($test['title']) ?></h1>
                 <?php if ($heroSubtitle !== ''): ?>
                     <p class="test-subtitle"><?= htmlspecialchars($heroSubtitle) ?></p>
+                <?php endif; ?>
+                <?php if ($heroDescription !== ''): ?>
+                    <div class="test-description">
+                        <?= nl2br(htmlspecialchars($heroDescription)) ?>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
