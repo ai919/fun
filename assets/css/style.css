@@ -839,7 +839,7 @@ a:active {
 }
 
 .card-title {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 600;
     color: #111827;
     margin: 0;
@@ -847,7 +847,7 @@ a:active {
 
 .card-title a,
 .card-title-link {
-    color: #111827;
+    color: inherit;
 }
 
 .card-title-link {
@@ -887,7 +887,7 @@ a:active {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 6px 14px;
+    padding: 8px 16px;
     border-radius: 999px;
     border: 1px solid #4f46e5;
     background-color: #4f46e5;
