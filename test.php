@@ -75,6 +75,11 @@ $questionOrderSql = $questionOrderField ? "ORDER BY {$questionOrderField} ASC, i
 $questionsStmt = $pdo->prepare("SELECT * FROM questions WHERE test_id = ? {$questionOrderSql}");
 $questionsStmt->execute([$testId]);
 $questions = $questionsStmt->fetchAll(PDO::FETCH_ASSOC);
+$questionCount = count($questions);
+
+$playCountStmt = $pdo->prepare("SELECT COUNT(*) FROM test_runs WHERE test_id = ?");
+$playCountStmt->execute([$testId]);
+$playCount = (int)$playCountStmt->fetchColumn();
 
 $questionIds = array_column($questions, 'id');
 $optionsByQuestion = [];
@@ -105,19 +110,48 @@ if ($questionIds) {
 </head>
 <body>
 
-<div class="page-container">
-    <h1><?= htmlspecialchars($test['title']) ?></h1>
-    <?php if (!empty($test['subtitle'])): ?>
-        <p class="subtitle"><?= htmlspecialchars($test['subtitle']) ?></p>
-    <?php endif; ?>
-    <?php if (!empty($test['description'])): ?>
-        <p><?= nl2br(htmlspecialchars($test['description'])) ?></p>
-    <?php endif; ?>
+<?php
+$heroSubtitle = '';
+if (!empty($test['subtitle'])) {
+    $heroSubtitle = $test['subtitle'];
+} elseif (!empty($test['description'])) {
+    $heroSubtitle = mb_substr($test['description'], 0, 120);
+}
+$emoji = trim($test['emoji'] ?? '');
+?>
+
+<div class="test-page">
+    <header class="test-hero">
+        <div class="test-hero-meta">
+            <?php if ($emoji !== ''): ?>
+                <div class="test-emoji"><?= htmlspecialchars($emoji) ?></div>
+            <?php endif; ?>
+            <div class="test-hero-text">
+                <h1 class="test-title"><?= htmlspecialchars($test['title']) ?></h1>
+                <?php if ($heroSubtitle !== ''): ?>
+                    <p class="test-subtitle"><?= htmlspecialchars($heroSubtitle) ?></p>
+                <?php endif; ?>
+            </div>
+        </div>
+        <div class="test-hero-extra">
+            <span class="test-meta-pill">人格/情感测验</span>
+            <span class="test-meta-text">
+                已有 <?= $playCount ?> 人测验 · 共 <?= $questionCount ?> 题
+            </span>
+        </div>
+    </header>
+
+    <div class="test-progress">
+        <div class="test-progress-label">本次测验共 <?= $questionCount ?> 题</div>
+        <div class="test-progress-bar">
+            <div class="test-progress-fill" style="width:100%;"></div>
+        </div>
+    </div>
 
     <?php if (!$questions): ?>
         <p>该测验还没有题目，请稍后再试。</p>
     <?php else: ?>
-        <form method="post" action="/submit.php">
+        <form method="post" action="/submit.php" class="test-body">
             <input type="hidden" name="test_id" value="<?= (int)$testId ?>">
             <?php foreach ($questions as $idx => $question): ?>
                 <?php
@@ -126,33 +160,41 @@ if ($questionIds) {
                 $text       = pick_field($question, ['content', 'question_text', 'title', 'body'], '未命名问题');
                 $options    = $optionsByQuestion[$qid] ?? [];
                 ?>
-                <div class="question">
-                    <div class="question-title">Q<?= htmlspecialchars($questionNo) ?>. <?= htmlspecialchars($text) ?></div>
+                <div class="question-block">
+                    <div class="question-header">
+                        <div class="question-index">Q<?= htmlspecialchars($questionNo) ?></div>
+                        <div class="question-text"><?= htmlspecialchars($text) ?></div>
+                    </div>
                     <?php if (!$options): ?>
                         <p style="color:#ef4444;">该题暂无可选项。</p>
                     <?php else: ?>
-                        <?php foreach ($options as $optionIndex => $option): ?>
-                            <?php
-                            $optionId    = (int)$option['id'];
-                            $label       = pick_field($option, ['option_label', 'label', 'letter'], null);
-                            $optionText  = pick_field($option, ['text', 'content', 'option_text', 'body', 'description'], '选项');
-                            if ($label === null) {
-                                $label = chr(ord('A') + $optionIndex);
-                            }
-                            ?>
-                            <div class="option">
-                                <label>
-                                    <span class="badge"><?= htmlspecialchars($label) ?></span>
+                        <div class="question-options">
+                            <?php foreach ($options as $optionIndex => $option): ?>
+                                <?php
+                                $optionId    = (int)$option['id'];
+                                $label       = pick_field($option, ['option_label', 'label', 'letter'], null);
+                                $optionText  = pick_field($option, ['text', 'content', 'option_text', 'body', 'description'], '选项');
+                                if ($label === null) {
+                                    $label = chr(ord('A') + $optionIndex);
+                                }
+                                ?>
+                                <label class="option-card">
                                     <input type="radio" name="q[<?= $qid ?>]" value="<?= $optionId ?>" required>
-                                    <span><?= htmlspecialchars($optionText) ?></span>
+                                    <div class="option-inner">
+                                        <span class="option-key"><?= htmlspecialchars($label) ?></span>
+                                        <span class="option-text"><?= nl2br(htmlspecialchars($optionText)) ?></span>
+                                    </div>
                                 </label>
-                            </div>
-                        <?php endforeach; ?>
+                            <?php endforeach; ?>
+                        </div>
                     <?php endif; ?>
                 </div>
             <?php endforeach; ?>
 
-            <button type="submit">提交测验</button>
+            <div class="test-actions">
+                <a href="/index.php" class="btn-secondary">返回测验列表</a>
+                <button type="submit" class="btn-primary">提交测验</button>
+            </div>
         </form>
     <?php endif; ?>
 </div>
