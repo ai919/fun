@@ -602,7 +602,7 @@ a:active {
 .question-text {
     font-size: 18px;
     line-height: 1.7;
-    color: #111827;
+    color: #0f172a;
     font-weight: 600;
 }
 
@@ -645,7 +645,7 @@ a:active {
 }
 
 .option-text {
-    font-size: 14px;
+    font-size: 15px;
     color: #111827;
     line-height: 1.6;
 }
@@ -663,6 +663,11 @@ a:active {
     background-color: #eef2ff;
     box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.35);
     transform: translateY(-1px);
+}
+.option-card input[type="radio"]:checked + .option-inner .option-text,
+.option-card input[type="radio"]:checked ~ .option-inner .option-text {
+    font-weight: 700;
+    color: #1f3a8a;
 }
 
 .test-actions {
