@@ -150,10 +150,12 @@ $emoji = trim($test['emoji'] ?? ($test['title_emoji'] ?? ''));
         </div>
     </header>
 
-    <div class="test-progress">
-        <div class="test-progress-label">本次测验共 <?= $questionCount ?> 题</div>
+    <div class="test-progress sticky-progress">
+        <div class="test-progress-label">
+            <span id="answered-count">0</span> / <?= $questionCount ?> 题已作答
+        </div>
         <div class="test-progress-bar">
-            <div class="test-progress-fill" style="width:100%;"></div>
+            <div class="test-progress-fill" id="progress-fill"></div>
         </div>
     </div>
 
@@ -208,5 +210,35 @@ $emoji = trim($test['emoji'] ?? ($test['title_emoji'] ?? ''));
     <?php endif; ?>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const totalQuestions = <?= (int)$questionCount ?>;
+    const radios = document.querySelectorAll('input[type="radio"][name^="q["]');
+    const answeredLabel = document.getElementById('answered-count');
+    const progressFill = document.getElementById('progress-fill');
+
+    function updateProgress() {
+        const answeredQuestions = new Set();
+        radios.forEach(function (radio) {
+            if (radio.checked) {
+                answeredQuestions.add(radio.name);
+            }
+        });
+        const answeredCount = answeredQuestions.size;
+        if (answeredLabel) {
+            answeredLabel.textContent = answeredCount;
+        }
+        if (progressFill) {
+            const percent = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
+            progressFill.style.width = percent + '%';
+        }
+    }
+
+    radios.forEach(function (radio) {
+        radio.addEventListener('change', updateProgress);
+    });
+    updateProgress();
+});
+</script>
 </body>
 </html>

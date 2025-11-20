@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主机： localhost
--- 生成日期： 2025-11-20 08:51:27
+-- 生成日期： 2025-11-20 10:39:41
 -- 服务器版本： 5.7.39
 -- PHP 版本： 8.3.25
 
@@ -115,12 +115,14 @@ CREATE TABLE `tests` (
   `subtitle` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `description` text COLLATE utf8mb4_unicode_ci,
   `title_color` char(7) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `emoji` varchar(16) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `tags` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `status` enum('draft','published','archived') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',
   `sort_order` int(11) NOT NULL DEFAULT '0',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `scoring_mode` enum('simple','dimensions') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'simple'
+  `scoring_mode` enum('simple','dimensions','range','custom') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'simple',
+  `scoring_config` json DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
