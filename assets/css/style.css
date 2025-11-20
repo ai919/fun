@@ -502,14 +502,14 @@ a:active {
 }
 
 .test-description {
-    margin-top: 10px;
+    margin-top: 6px;
     font-size: 14px;
     color: #4b5563;
-    line-height: 1.7;
+    line-height: 1.6;
 }
 
 .test-description p {
-    margin: 4px 0 4px;
+    margin: 4px 0;
 }
 
 .test-hero-extra {
@@ -521,19 +521,14 @@ a:active {
     font-size: 13px;
 }
 
-.test-meta-pill {
-    display: inline-flex;
-    align-items: center;
-    padding: 3px 10px;
-    border-radius: 999px;
-    background: linear-gradient(90deg, #eef2ff, #e0f2fe);
-    color: #1d4ed8;
-    font-size: 12px;
-    font-weight: 600;
+.test-meta-text {
+    color: #4b5563;
+    font-size: 13px;
 }
 
-.test-meta-text {
-    color: #6b7280;
+.test-meta-text strong {
+    color: #4f46e5;
+    font-weight: 700;
 }
 
 .test-progress {

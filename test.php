@@ -145,9 +145,9 @@ $emoji = trim($test['emoji'] ?? ($test['title_emoji'] ?? ''));
             </div>
         </div>
         <div class="test-hero-extra">
-            <span class="test-meta-pill">人格/情感测验</span>
+            <span class="quiz-tag">人格/情感测验</span>
             <span class="test-meta-text">
-                已有 <?= $playCount ?> 人测验 · 共 <?= $questionCount ?> 题
+                已有 <strong><?= $playCount ?></strong> 人测验 · 共 <strong><?= $questionCount ?></strong> 题
             </span>
         </div>
     </header>
