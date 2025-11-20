@@ -1,34 +1,37 @@
 <?php
 $errors      = [];
 $successMsg  = null;
+
 $statusLabel = [
-    'draft'     => ['label' => '�׸�', 'class' => 'badge-muted'],
-    'published' => ['label' => '�ѷ���', 'class' => 'badge-success'],
-    'archived'  => ['label' => '�ѹǼ�', 'class' => 'badge-warning'],
+    'draft'     => ['label' => '草稿', 'class' => 'badge-muted'],
+    'published' => ['label' => '已发布', 'class' => 'badge-success'],
+    'archived'  => ['label' => '已归档', 'class' => 'badge-warning'],
 ];
+
 $statusFilterOptions = [
-    ''           => 'ȫ��״̬',
-    'draft'      => '�׸�',
-    'published'  => '�ѷ���',
-    'archived'   => '�ѹǼ�',
+    ''           => '全部状态',
+    'draft'      => '草稿',
+    'published'  => '已发布',
+    'archived'   => '已归档',
 ];
+
 $orderOptions = [
-    'updated_desc' => '������ʱ������',
-    'created_desc' => '��������ʱ������',
-    'order_asc'    => '����ֵ����С��',
+    'updated_desc' => '按更新时间倒序',
+    'created_desc' => '按创建时间倒序',
+    'order_asc'    => '按排序值升序',
 ];
 
 $msgKey = $_GET['msg'] ?? '';
 if ($msgKey === 'deleted') {
-    $successMsg = '����ɾ���ɹ���';
+    $successMsg = '测试已删除。';
 } elseif ($msgKey === 'saved') {
-    $successMsg = '�����ѱ��浽���顣';
+    $successMsg = '测试保存成功。';
 }
 
 if (($_GET['action'] ?? '') === 'delete') {
     $deleteId = (int)($_GET['id'] ?? 0);
     if ($deleteId <= 0) {
-        $errors[] = '����ȷ��Ĳ��� ID��';
+        $errors[] = '缺少测试 ID。';
     } else {
         $delStmt = $pdo->prepare('DELETE FROM tests WHERE id = :id LIMIT 1');
         $delStmt->execute([':id' => $deleteId]);
@@ -88,16 +91,12 @@ $listStmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $listStmt->execute();
 $tests = $listStmt->fetchAll(PDO::FETCH_ASSOC);
 
-$baseQuery = [
+$filterQuery = array_filter([
     'q'      => $keyword,
     'status' => $statusFilter,
     'order'  => $orderKey,
-];
-$filterQuery = array_filter($baseQuery, function ($value) {
-    return $value !== '' && $value !== null;
-});
-$pageQuery = $filterQuery;
-$pageQuery['page'] = $page;
+], static fn($value) => $value !== '' && $value !== null);
+
 ?>
 
 <?php if ($errors): ?>
@@ -115,11 +114,11 @@ $pageQuery['page'] = $page;
 <div class="card">
     <form method="get" class="filter-row">
         <div class="filter-item">
-            <label>����</label>
-            <input type="text" name="q" value="<?= htmlspecialchars($keyword) ?>" placeholder="������ title �� slug">
+            <label>关键字</label>
+            <input type="text" name="q" value="<?= htmlspecialchars($keyword) ?>" placeholder="搜索 title 或 slug">
         </div>
         <div class="filter-item">
-            <label>״̬</label>
+            <label>状态</label>
             <select name="status">
                 <?php foreach ($statusFilterOptions as $value => $label): ?>
                     <option value="<?= htmlspecialchars($value) ?>"<?= $statusFilter === $value ? ' selected' : '' ?>>
@@ -129,7 +128,7 @@ $pageQuery['page'] = $page;
             </select>
         </div>
         <div class="filter-item">
-            <label>����</label>
+            <label>排序</label>
             <select name="order">
                 <?php foreach ($orderOptions as $value => $label): ?>
                     <option value="<?= htmlspecialchars($value) ?>"<?= $orderKey === $value ? ' selected' : '' ?>>
@@ -139,28 +138,26 @@ $pageQuery['page'] = $page;
             </select>
         </div>
         <div class="filter-actions">
-            <button type="submit" class="btn btn-primary">��������</button>
-            <a href="/admin/tests.php" class="btn btn-ghost btn-xs">�������</a>
-        </div>
-        <div class="filter-actions">
-            <a href="/admin/test_edit.php" class="btn btn-success">+ �½�����</a>
+            <button type="submit" class="btn btn-primary">筛选</button>
+            <a href="/admin/tests.php" class="btn btn-ghost btn-xs">重置</a>
+            <a href="/admin/test_edit.php" class="btn btn-success">+ 新建测试</a>
         </div>
     </form>
 </div>
 
 <?php if (!$tests): ?>
-    <p class="hint">��ǰû�пɹ����Ĳ��ԣ�����Ԥ�����½�����ʹ��Ӱ����</p>
+    <p class="hint">当前没有可展示的测试，点击“新建测试”开始创建吧。</p>
 <?php else: ?>
     <table class="table-admin" style="margin-top:16px;">
         <thead>
         <tr>
             <th style="width:60px;">ID</th>
-            <th>����</th>
+            <th>标题</th>
             <th style="width:160px;">Slug</th>
-            <th style="width:120px;">״̬</th>
-            <th style="width:200px;">��ǩ</th>
-            <th style="width:150px;">ʱ��</th>
-            <th style="width:120px;">����</th>
+            <th style="width:120px;">状态</th>
+            <th style="width:200px;">标签</th>
+            <th style="width:150px;">更新时间</th>
+            <th style="width:140px;">操作</th>
         </tr>
         </thead>
         <tbody>
@@ -169,27 +166,20 @@ $pageQuery['page'] = $page;
             $statusValue = (string)$test['status'];
             if (!isset($statusLabel[$statusValue]) && in_array($statusValue, ['0', '1', '2'], true)) {
                 $map = ['0' => 'draft', '1' => 'published', '2' => 'archived'];
-                $statusValue = $map[$statusValue];
+                $statusValue = $map[$statusValue] ?? 'draft';
             }
-            $badgeInfo = $statusLabel[$statusValue] ?? ['label' => 'δ֪', 'class' => 'badge-muted'];
+            $badgeInfo = $statusLabel[$statusValue] ?? ['label' => '未知', 'class' => 'badge-muted'];
             $tags = array_filter(array_map('trim', explode(',', (string)$test['tags'])));
             $tags = array_slice($tags, 0, 3);
-            $updatedAt = $test['updated_at'] ?? null;
-            $createdAt = $test['created_at'] ?? null;
-            $timeToShow = $updatedAt && $updatedAt !== '0000-00-00 00:00:00' ? $updatedAt : $createdAt;
-            $timeDisplay = null;
-            if ($timeToShow && $timeToShow !== '0000-00-00 00:00:00') {
-                $timestamp = strtotime($timeToShow);
-                if ($timestamp) {
-                    $timeDisplay = date('Y-m-d H:i', $timestamp);
-                }
-            }
+            $timeDisplay = $test['updated_at'] && $test['updated_at'] !== '0000-00-00 00:00:00'
+                ? $test['updated_at']
+                : ($test['created_at'] ?? '');
             ?>
             <tr>
                 <td><?= (int)$test['id'] ?></td>
                 <td>
-                    <div class="test-title-text"><?= htmlspecialchars($test['title']) ?></div>
-                    <div class="muted">����ֵ: <?= (int)$test['sort_order'] ?></div>
+                    <div><?= htmlspecialchars($test['title']) ?></div>
+                    <div class="muted">排序值：<?= (int)$test['sort_order'] ?></div>
                 </td>
                 <td><code><?= htmlspecialchars($test['slug']) ?></code></td>
                 <td>
@@ -205,20 +195,16 @@ $pageQuery['page'] = $page;
                             <?php endforeach; ?>
                         </div>
                     <?php else: ?>
-                        <span class="muted">--</span>
+                        <span class="muted">—</span>
                     <?php endif; ?>
                 </td>
-                <td>
-                    <?php if ($timeDisplay): ?>
-                        <?= htmlspecialchars($timeDisplay) ?>
-                    <?php else: ?>
-                        <span class="muted">--</span>
-                    <?php endif; ?>
-                </td>
+                <td><?= $timeDisplay ? htmlspecialchars(date('Y-m-d H:i', strtotime($timeDisplay))) : '—' ?></td>
                 <td class="actions">
-                    <a class="btn-mini" href="/admin/test_edit.php?id=<?= (int)$test['id'] ?>">�༭</a>
-                    <a class="btn-mini danger-btn" href="/admin/tests.php?action=delete&id=<?= (int)$test['id'] ?>"
-                       onclick="return confirm('ȷ��ɾ�������Բ��ԣ���غ����޷��ָ���');">ɾ��</a>
+                    <a class="btn-mini" href="/admin/test_edit.php?id=<?= (int)$test['id'] ?>">编辑</a>
+                    <a class="btn-mini" href="/<?= urlencode($test['slug']) ?>" target="_blank">前台预览</a>
+                    <a class="btn-mini danger-btn"
+                       href="/admin/tests.php?action=delete&id=<?= (int)$test['id'] ?>"
+                       onclick="return confirm('确认删除这个测试？其下题目也会被移除。');">删除</a>
                 </td>
             </tr>
         <?php endforeach; ?>
@@ -227,20 +213,14 @@ $pageQuery['page'] = $page;
 
     <?php if ($totalRows > $perPage): ?>
         <div class="pagination">
-            <span>�� <?= $page ?> / <?= $totalPages ?> ҳ��</span>
+            <span>第 <?= $page ?> / <?= $totalPages ?> 页</span>
             <?php if ($page > 1): ?>
-                <?php
-                $prevQuery = $filterQuery;
-                $prevQuery['page'] = $page - 1;
-                ?>
-                <a class="btn btn-ghost btn-xs" href="/admin/tests.php?<?= http_build_query($prevQuery) ?>">��һҳ</a>
+                <?php $prevQuery = $filterQuery; $prevQuery['page'] = $page - 1; ?>
+                <a class="btn btn-ghost btn-xs" href="/admin/tests.php?<?= http_build_query($prevQuery) ?>">上一页</a>
             <?php endif; ?>
             <?php if ($page < $totalPages): ?>
-                <?php
-                $nextQuery = $filterQuery;
-                $nextQuery['page'] = $page + 1;
-                ?>
-                <a class="btn btn-ghost btn-xs" href="/admin/tests.php?<?= http_build_query($nextQuery) ?>">��һҳ</a>
+                <?php $nextQuery = $filterQuery; $nextQuery['page'] = $page + 1; ?>
+                <a class="btn btn-ghost btn-xs" href="/admin/tests.php?<?= http_build_query($nextQuery) ?>">下一页</a>
             <?php endif; ?>
         </div>
     <?php endif; ?>

@@ -14,11 +14,13 @@ if (!$test) {
     die('测试不存在或已下线。');
 }
 
+$answers = $_POST['q'] ?? [];
 $optionIds = [];
-foreach ($_POST as $key => $val) {
-    if (strpos($key, 'q_') === 0) {
-        $optionIds[] = (int)$val;
+foreach ($answers as $questionId => $optionId) {
+    if (!is_scalar($optionId)) {
+        continue;
     }
+    $optionIds[] = (int)$optionId;
 }
 
 if (!$optionIds) {
@@ -74,5 +76,8 @@ if ($codeCounts) {
         $finalResult = $resStmt->fetch(PDO::FETCH_ASSOC);
     }
 }
+
+$finalTest   = $test;
+$codeCounts  = $codeCounts;
 
 require __DIR__ . '/result.php';

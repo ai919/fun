@@ -2,9 +2,9 @@
 $testId   = isset($_GET['id']) && ctype_digit((string)$_GET['id']) ? (int)$_GET['id'] : null;
 $errors   = [];
 $statuses = [
-    'draft'     => '�׸�',
-    'published' => '�ѷ���',
-    'archived'  => '�ѹǼ�',
+    'draft'     => '草稿',
+    'published' => '已发布',
+    'archived'  => '已归档',
 ];
 
 $formData = [
@@ -24,7 +24,7 @@ if ($testId) {
     $stmt->execute([':id' => $testId]);
     $existingTest = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$existingTest) {
-        $errors[] = 'δ�ҵ������Բ��ԣ�';
+        $errors[] = '未找到对应的测试。';
     } else {
         foreach ($formData as $key => $defaultValue) {
             if (array_key_exists($key, $existingTest) && $existingTest[$key] !== null) {
@@ -48,20 +48,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
     $formData['sort_order']  = (int)($_POST['sort_order'] ?? 0);
 
     if ($formData['title'] === '') {
-        $errors[] = '�������Ʊ�����д��';
+        $errors[] = '测试标题不能为空。';
     }
     if ($formData['slug'] === '') {
-        $errors[] = 'Slug ������д��';
+        $errors[] = 'Slug 不能为空。';
     } elseif (!preg_match('/^[a-z0-9_-]+$/', $formData['slug'])) {
-        $errors[] = 'Slug ֻ��������ĸ�����ֺ�ƽ�ַ��';
+        $errors[] = 'Slug 只能包含小写字母、数字、短横线和下划线。';
     }
     if (!isset($statuses[$formData['status']])) {
-        $errors[] = '��ѡ����Ч��״ֵ̬��';
+        $errors[] = '请选择有效的状态。';
     }
     if ($formData['title_color'] === '') {
         $formData['title_color'] = '#4f46e5';
     } elseif (!preg_match('/^#[0-9a-fA-F]{6}$/', $formData['title_color'])) {
-        $errors[] = '��ѡ��Ч�Ŀ��� RGB ����ֵ��';
+        $errors[] = '请输入合法的颜色值，例如 #4f46e5。';
     }
 
     $tagsNormalized = '';
@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
             $slugStmt->execute([':slug' => $formData['slug']]);
         }
         if ((int)$slugStmt->fetchColumn() > 0) {
-            $errors[] = '�� slug �Ѵ��ڣ�������ѡһ���µľ���';
+            $errors[] = '该 slug 已存在，请换一个。';
         }
     }
 
@@ -127,8 +127,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
 ?>
 
 <?php if ($testId && !$existingTest): ?>
-    <div class="alert alert-danger">δ�ҵ�����������뻻һ��������ٴβ鿴��</div>
-    <a href="/admin/tests.php" class="btn btn-ghost btn-xs">���ذ����б�</a>
+    <div class="alert alert-danger">未找到需要编辑的测试。</div>
+    <a href="/admin/tests.php" class="btn btn-ghost btn-xs">返回列表</a>
     <?php return; ?>
 <?php endif; ?>
 
@@ -144,41 +144,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
     <form method="post">
         <div class="form-grid">
             <label>
-                <span>���� *</span>
+                <span>标题 *</span>
                 <input type="text" name="title" value="<?= htmlspecialchars($formData['title']) ?>" required>
             </label>
             <label>
                 <span>Slug *</span>
                 <input type="text" name="slug" value="<?= htmlspecialchars($formData['slug']) ?>" required>
-                <small class="muted">�� URL ��ʹ�ã�ֻ��Ӣ����ĸ�����ֺ͵����ַ���</small>
+                <small class="muted">用于 URL，只能包含小写英文字母、数字、短横线、下划线。</small>
             </label>
         </div>
 
         <div class="form-grid">
             <label>
-                <span>������</span>
+                <span>副标题</span>
                 <input type="text" name="subtitle" value="<?= htmlspecialchars($formData['subtitle']) ?>">
             </label>
             <label>
-                <span>������ɫ</span>
+                <span>标题颜色</span>
                 <input type="color" name="title_color" value="<?= htmlspecialchars($formData['title_color'] ?: '#4f46e5') ?>">
             </label>
         </div>
 
         <label>
-            <span>������� (�ɿ�)</span>
+            <span>测试介绍</span>
             <textarea name="description" rows="5"><?= htmlspecialchars($formData['description']) ?></textarea>
         </label>
 
         <label>
-            <span>��ǩ</span>
-            <input type="text" name="tags" value="<?= htmlspecialchars($formData['tags']) ?>" placeholder="�ö��ŷָ���ǩ��">
-            <small class="muted">ʾ��: ����,����,�˸�</small>
+            <span>标签（逗号分隔）</span>
+            <input type="text" name="tags" value="<?= htmlspecialchars($formData['tags']) ?>" placeholder="例如：性格, MBTI, 自我探索">
         </label>
 
         <div class="form-grid">
             <label>
-                <span>״̬ *</span>
+                <span>状态 *</span>
                 <select name="status">
                     <?php foreach ($statuses as $value => $label): ?>
                         <option value="<?= htmlspecialchars($value) ?>"<?= $formData['status'] === $value ? ' selected' : '' ?>>
@@ -188,14 +187,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
                 </select>
             </label>
             <label>
-                <span>���� sort_order</span>
+                <span>排序值</span>
                 <input type="number" name="sort_order" value="<?= (int)$formData['sort_order'] ?>" step="1">
             </label>
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary">����</button>
-            <a class="btn btn-ghost btn-xs" href="/admin/tests.php">���ذ����б�</a>
+            <button type="submit" class="btn btn-primary">保存</button>
+            <a class="btn btn-ghost btn-xs" href="/admin/tests.php">返回列表</a>
         </div>
     </form>
 </div>

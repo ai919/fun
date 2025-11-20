@@ -3,6 +3,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+if (!headers_sent()) {
+    header('Content-Type: text/html; charset=UTF-8');
+}
+
 $pageTitle    = $pageTitle    ?? 'DoFun 管理后台';
 $pageHeading  = $pageHeading  ?? '';
 $pageSubtitle = $pageSubtitle ?? '';
