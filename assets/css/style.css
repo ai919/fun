@@ -843,6 +843,8 @@ a:active {
     font-weight: 600;
     color: #111827;
     margin: 0;
+    line-height: 1.3;
+    min-height: 2.6em; /* 固定两行占位，确保高度一致 */
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -852,6 +854,11 @@ a:active {
 .card-title a,
 .card-title-link {
     color: inherit;
+    text-decoration: none;
+}
+
+.card-title-link:hover {
+    text-decoration: none;
 }
 
 .card-title-link {
