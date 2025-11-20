@@ -107,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
 <div class="card">
     <h1>DoFun 管理后台</h1>
-    <div class="sub">请登录以管理测试、结果与备份。</div>
+    <div class="sub">请登录以管理测验、结果与备份。</div>
     <form method="post">
         <div style="margin-bottom:10px;">
             <label>账号</label>

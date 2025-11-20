@@ -24,7 +24,7 @@ $testStmt = $pdo->prepare("SELECT * FROM tests WHERE id = ? LIMIT 1");
 $testStmt->execute([$testId]);
 $test = $testStmt->fetch(PDO::FETCH_ASSOC);
 if (!$test) {
-    die('测试不存在');
+    die('测验不存在');
 }
 
 $errors  = [];

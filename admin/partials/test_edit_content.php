@@ -48,7 +48,7 @@ if ($testId) {
     $stmt->execute([':id' => $testId]);
     $existingTest = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$existingTest) {
-        $errors[] = '未找到对应的测试。';
+        $errors[] = '未找到对应的测验。';
     } else {
         foreach ($formData as $key => $defaultValue) {
             if (array_key_exists($key, $existingTest)) {
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
     $formData['scoring_config'] = trim($_POST['scoring_config'] ?? '');
 
     if ($formData['title'] === '') {
-        $errors[] = '测试标题不能为空。';
+        $errors[] = '测验标题不能为空。';
     }
     if ($formData['slug'] === '') {
         $errors[] = 'Slug 不能为空。';
@@ -178,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
 ?>
 
 <?php if ($testId && !$existingTest): ?>
-    <div class="alert alert-danger">未找到需要编辑的测试。</div>
+    <div class="alert alert-danger">未找到需要编辑的测验。</div>
     <a href="/admin/tests.php" class="btn btn-ghost btn-xs">返回列表</a>
     <?php return; ?>
 <?php endif; ?>
@@ -252,7 +252,7 @@ $colorClearDefault = $formData['title_color'] === '' ? '1' : '0';
         </div>
 
         <label>
-            <span>测试介绍</span>
+            <span>测验介绍</span>
             <textarea name="description" rows="5"><?= htmlspecialchars($formData['description']) ?></textarea>
         </label>
 

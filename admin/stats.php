@@ -19,16 +19,16 @@ if (isset($_GET['test_id'])) {
 if (!$testId) {
     $statsTests = $pdo->query("SELECT id, title, slug FROM tests ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
 
-    $pageTitle    = '测试统计 - DoFun';
-    $pageHeading  = '测试统计';
-    $pageSubtitle = '选择一个测试查看运行数据。';
+    $pageTitle    = '测验统计 - DoFun';
+    $pageHeading  = '测验统计';
+    $pageSubtitle = '选择一个测验查看运行数据。';
     $activeMenu   = 'stats';
 
     require __DIR__ . '/layout.php';
     ?>
     <div class="section-card">
         <?php if (!$statsTests): ?>
-            <p class="hint">目前还没有可统计的测试，先去创建一个吧。</p>
+            <p class="hint">目前还没有可统计的测验，先去创建一个吧。</p>
         <?php else: ?>
             <ul>
                 <?php foreach ($statsTests as $row): ?>
@@ -51,7 +51,7 @@ $testStmt = $pdo->prepare("SELECT * FROM tests WHERE id = ? LIMIT 1");
 $testStmt->execute([$testId]);
 $test = $testStmt->fetch(PDO::FETCH_ASSOC);
 if (!$test) {
-    die('测试不存在');
+    die('测验不存在');
 }
 
 $totalRunsStmt = $pdo->prepare("SELECT COUNT(*) FROM test_runs WHERE test_id = ?");
@@ -95,7 +95,7 @@ $distStmt->execute([$testId]);
 $resultStats = $distStmt->fetchAll(PDO::FETCH_ASSOC);
 
 $pageTitle    = '统计 - ' . ($test['title'] ?? '');
-$pageHeading  = '测试统计：' . ($test['title'] ?? '');
+$pageHeading  = '测验统计：' . ($test['title'] ?? '');
 $pageSubtitle = 'slug: ' . ($test['slug'] ?? '');
 $activeMenu   = 'stats';
 

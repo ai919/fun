@@ -45,15 +45,15 @@ $orderOptions = [
 
 $msgKey = $_GET['msg'] ?? '';
 if ($msgKey === 'deleted') {
-    $successMsg = '测试已删除。';
+    $successMsg = '测验已删除。';
 } elseif ($msgKey === 'saved') {
-    $successMsg = '测试保存成功。';
+    $successMsg = '测验保存成功。';
 }
 
 if (($_GET['action'] ?? '') === 'delete') {
     $deleteId = (int)($_GET['id'] ?? 0);
     if ($deleteId <= 0) {
-        $errors[] = '缺少测试 ID。';
+        $errors[] = '缺少测验 ID。';
     } else {
         $delStmt = $pdo->prepare('DELETE FROM tests WHERE id = :id LIMIT 1');
         $delStmt->execute([':id' => $deleteId]);
@@ -168,13 +168,13 @@ $filterQuery = array_filter([
         <div class="filter-actions">
             <button type="submit" class="btn btn-primary">筛选</button>
             <a href="/admin/tests.php" class="btn btn-ghost btn-xs">重置</a>
-            <a href="/admin/test_edit.php" class="btn btn-success">+ 新建测试</a>
+            <a href="/admin/test_edit.php" class="btn btn-success">+ 新建测验</a>
         </div>
     </form>
 </div>
 
 <?php if (!$tests): ?>
-    <p class="hint">当前没有可展示的测试，点击“新建测试”开始创建吧。</p>
+    <p class="hint">当前没有可展示的测验，点击“新建测验”开始创建吧。</p>
 <?php else: ?>
     <table class="table-admin" style="margin-top:16px;">
         <thead>
@@ -247,7 +247,7 @@ $filterQuery = array_filter([
                     <a class="btn-mini" href="/<?= urlencode($test['slug']) ?>" target="_blank">前台预览</a>
                     <a class="btn-mini danger-btn"
                        href="/admin/tests.php?action=delete&id=<?= (int)$test['id'] ?>"
-                       onclick="return confirm('确认删除这个测试？其下题目也会被移除。');">删除</a>
+                       onclick="return confirm('确认删除这个测验？其下题目也会被移除。');">删除</a>
                 </td>
             </tr>
         <?php endforeach; ?>

@@ -4,9 +4,9 @@ require_admin_login();
 
 require __DIR__ . '/../lib/db_connect.php';
 
-$pageTitle    = '克隆测试 - DoFun';
-($pageHeading = '克隆一个测试') || true;
-$pageSubtitle = '复制题目、选项、结果配置，生成一个新的测试草稿。';
+$pageTitle    = '克隆测验 - DoFun';
+($pageHeading = '克隆一个测验') || true;
+$pageSubtitle = '复制题目、选项、结果配置，生成一个新的测验草稿。';
 $activeMenu   = 'clone';
 
 $errors  = [];
@@ -28,13 +28,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $descriptionInput = trim($_POST['description'] ?? '');
 
     if (!$sourceId) {
-        $errors[] = '请选择要克隆的测试。';
+        $errors[] = '请选择要克隆的测验。';
     }
     if ($slugInput === '' || !preg_match('/^[a-z0-9_-]+$/', $slugInput)) {
-        $errors[] = '新测试的 slug 只能包含小写字母、数字、下划线、短横线。';
+        $errors[] = '新测验的 slug 只能包含小写字母、数字、下划线、短横线。';
     }
     if ($titleInput === '') {
-        $errors[] = '新测试的标题不能为空。';
+        $errors[] = '新测验的标题不能为空。';
     }
 
     $srcTest = null;
@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $srcStmt->execute([$sourceId]);
         $srcTest = $srcStmt->fetch(PDO::FETCH_ASSOC);
         if (!$srcTest) {
-            $errors[] = '要克隆的测试不存在。';
+            $errors[] = '要克隆的测验不存在。';
         }
     }
 
@@ -150,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $pdo->commit();
-            $success = '测试克隆完成，可以进入编辑页面继续完善。';
+            $success = '测验克隆完成，可以进入编辑页面继续完善。';
             $newSlug = $slugInput;
         } catch (Throwable $e) {
             $pdo->rollBack();
@@ -182,7 +182,7 @@ require __DIR__ . '/layout.php';
 
     <form method="post" class="form-grid">
         <label>
-            <span>选择要克隆的测试</span>
+            <span>选择要克隆的测验</span>
             <select name="source_test_id" required>
                 <option value="">请选择</option>
                 <?php foreach ($tests as $row): ?>
@@ -193,15 +193,15 @@ require __DIR__ . '/layout.php';
             </select>
         </label>
         <label>
-            <span>新测试 slug</span>
+            <span>新测验 slug</span>
             <input type="text" name="slug" value="<?= htmlspecialchars($slugInput) ?>" required placeholder="例如 love-2024">
         </label>
         <label>
-            <span>新测试标题</span>
+            <span>新测验标题</span>
             <input type="text" name="title" value="<?= htmlspecialchars($titleInput) ?>" required>
         </label>
         <label>
-            <span>测试描述（可选，优先使用输入）</span>
+            <span>测验描述（可选，优先使用输入）</span>
             <textarea name="description" rows="3"><?= htmlspecialchars($descriptionInput) ?></textarea>
         </label>
         <button type="submit" class="btn btn-primary">开始克隆</button>

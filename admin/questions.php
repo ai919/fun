@@ -24,12 +24,12 @@ $testStmt = $pdo->prepare("SELECT * FROM tests WHERE id = ? LIMIT 1");
 $testStmt->execute([$testId]);
 $test = $testStmt->fetch(PDO::FETCH_ASSOC);
 if (!$test) {
-    die('测试不存在');
+    die('测验不存在');
 }
 
 $pageTitle    = '题目管理 · ' . ($test['title'] ?? '');
 $pageHeading  = '题目 & 选项';
-$pageSubtitle = '管理此测试的题目、选项、分数与维度，支持卡片化编辑。';
+$pageSubtitle = '管理此测验的题目、选项、分数与维度，支持卡片化编辑。';
 $activeMenu   = 'tests';
 
 $errors  = [];
@@ -222,7 +222,7 @@ require __DIR__ . '/layout.php';
 <?php endif; ?>
 
 <?php if (!$questions): ?>
-    <p class="hint">这个测试目前还没有题目，可以在下面添加第一道题。</p>
+    <p class="hint">这个测验目前还没有题目，可以在下面添加第一道题。</p>
 <?php else: ?>
     <?php foreach ($questions as $q): ?>
         <?php $qid = (int)$q['id']; $options = $optionsByQuestion[$qid] ?? []; ?>
