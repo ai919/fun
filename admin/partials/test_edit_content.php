@@ -241,27 +241,22 @@ $questions = [];
 $results = [];
 if ($testId && $existingTest) {
     $stmtQ = $pdo->prepare("
-        SELECT q.id,
-               q.question_text AS question_text,
-               q.sort_order,
-               COUNT(o.id) AS option_count
-        FROM questions q
-        LEFT JOIN question_options o ON o.question_id = q.id
-        WHERE q.test_id = :test_id
-        GROUP BY q.id
-        ORDER BY q.sort_order ASC, q.id ASC
+        SELECT id, question_text, sort_order
+        FROM questions
+        WHERE test_id = :test_id
+        ORDER BY sort_order ASC, id ASC
     ");
     $stmtQ->execute([':test_id' => $testId]);
     $questions = $stmtQ->fetchAll(PDO::FETCH_ASSOC);
 
     $stmtR = $pdo->prepare("
-        SELECT id, code, title, min_score, max_score
+        SELECT id, code, title, description, image_url, min_score, max_score
         FROM results
         WHERE test_id = :test_id
         ORDER BY id ASC
     ");
-$stmtR->execute([':test_id' => $testId]);
-$results = $stmtR->fetchAll(PDO::FETCH_ASSOC);
+    $stmtR->execute([':test_id' => $testId]);
+    $results = $stmtR->fetchAll(PDO::FETCH_ASSOC);
 }
 ?>
 
@@ -453,118 +448,151 @@ $results = $stmtR->fetchAll(PDO::FETCH_ASSOC);
         </form>
     </div>
 
-    <script>
-        (function() {
-            const textarea = document.getElementById('description-editor');
-            const preview = document.getElementById('description-preview');
-            if (!textarea || !preview) return;
-
-            function updatePreview() {
-                let text = textarea.value || '';
-                let html = text
-                    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
-                    .replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>')
-                    .replace(/_(.+?)_/g, '<em>$1</em>')
-                    .replace(/\\n/g, '<br>');
-                preview.innerHTML = html || '<span class=\"admin-table__muted\">预览区</span>';
-            }
-
-            document.querySelectorAll('.richtext-toolbar [data-md]').forEach(function(btn) {
-                btn.addEventListener('click', function () {
-                    const md = this.getAttribute('data-md');
-                    const start = textarea.selectionStart;
-                    const end = textarea.selectionEnd;
-                    const value = textarea.value;
-                    if (md === '> ') {
-                        const before = value.substring(0, start);
-                        const selected = value.substring(start, end) || '';
-                        const after = value.substring(end);
-                        textarea.value = before + '> ' + selected + after;
-                        textarea.selectionStart = start + 2;
-                        textarea.selectionEnd = start + 2 + selected.length;
-                    } else {
-                        const before = value.substring(0, start);
-                        const selected = value.substring(start, end) || '文本';
-                        const after = value.substring(end);
-                        textarea.value = before + md + selected + md + after;
-                        textarea.selectionStart = start + md.length;
-                        textarea.selectionEnd = start + md.length + selected.length;
-                    }
-                    textarea.focus();
-                    updatePreview();
-                });
-            });
-
-            textarea.addEventListener('input', updatePreview);
-            updatePreview();
-        })();
-    </script>
-
 <?php elseif ($section === 'questions'): ?>
     <div class="admin-card">
         <?php if (empty($questions)): ?>
-            <p class="admin-table__muted">当前测验还没有题目。</p>
+            <p class="admin-table__muted">当前测验还没有题目（如需新增/删除题目，请通过数据库脚本或单独工具操作）。</p>
         <?php else: ?>
-            <table class="admin-table">
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>排序</th>
-                    <th>题目内容</th>
-                    <th>选项数</th>
-                </tr>
-                </thead>
-                <tbody>
-                <?php foreach ($questions as $q): ?>
-                    <tr>
-                        <td><?= (int)$q['id'] ?></td>
-                        <td><span class="admin-table__muted"><?= (int)$q['sort_order'] ?></span></td>
-                        <td><?= htmlspecialchars($q['question_text']) ?></td>
-                        <td><span class="admin-table__muted"><?= (int)$q['option_count'] ?></span></td>
-                    </tr>
+            <div class="question-card-list">
+                <?php
+                $stmtOpt = $pdo->prepare("
+                    SELECT id, option_key, option_text
+                    FROM question_options
+                    WHERE question_id = :qid
+                    ORDER BY option_key ASC, id ASC
+                ");
+                foreach ($questions as $q):
+                    $qid = (int)$q['id'];
+                    $stmtOpt->execute([':qid' => $qid]);
+                    $opts = $stmtOpt->fetchAll(PDO::FETCH_ASSOC);
+                ?>
+                    <div class="question-card">
+                        <div class="question-card__header">
+                            <div class="question-card__meta">
+                                <span class="question-card__badge">#<?= (int)$q['sort_order'] ?></span>
+                                <span class="question-card__id">QID: <?= $qid ?></span>
+                            </div>
+                            <div class="question-card__title">题目文案</div>
+                        </div>
+
+                        <form method="post" class="question-card__form">
+                            <input type="hidden" name="edit_type" value="question_copy">
+                            <input type="hidden" name="question_id" value="<?= $qid ?>">
+
+                            <textarea
+                                name="question_text"
+                                class="form-textarea question-card__textarea"
+                            ><?= htmlspecialchars($q['question_text']) ?></textarea>
+
+                            <?php if (!empty($opts)): ?>
+                                <table class="admin-table question-card__options-table">
+                                    <thead>
+                                    <tr>
+                                        <th style="width:70px;">选项</th>
+                                        <th>文案</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <?php foreach ($opts as $opt): ?>
+                                        <tr>
+                                            <td class="admin-table__muted">
+                                                <?= htmlspecialchars($opt['option_key']) ?>
+                                            </td>
+                                            <td>
+                                                <input type="text"
+                                                       name="option_text[<?= (int)$opt['id'] ?>]"
+                                                       class="form-input"
+                                                       value="<?= htmlspecialchars($opt['option_text']) ?>">
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            <?php else: ?>
+                                <p class="admin-table__muted">暂无选项（如需新增选项，请通过数据库操作）。</p>
+                            <?php endif; ?>
+
+                            <div class="question-card__actions">
+                                <button type="submit" class="btn btn-primary btn-xs">
+                                    保存文案
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 <?php endforeach; ?>
-                </tbody>
-            </table>
+            </div>
         <?php endif; ?>
-        <p class="admin-table__muted" style="margin-top:8px;">* 目前仅为只读概览，题目与选项的维护后续在统一编辑入口完成。</p>
     </div>
 
 <?php elseif ($section === 'results'): ?>
     <div class="admin-card">
         <?php if (empty($results)): ?>
-            <p class="admin-table__muted">当前测验还没有结果配置。</p>
+            <p class="admin-table__muted">当前测验还没有结果配置（如需新增/删除结果，请通过数据库操作）。</p>
         <?php else: ?>
-            <table class="admin-table">
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>代码</th>
-                    <th>标题</th>
-                    <th>分数区间</th>
-                </tr>
-                </thead>
-                <tbody>
+            <div class="result-card-list">
                 <?php foreach ($results as $r): ?>
-                    <tr>
-                        <td><?= (int)$r['id'] ?></td>
-                        <td><code class="code-badge"><?= htmlspecialchars($r['code']) ?></code></td>
-                        <td><?= htmlspecialchars($r['title']) ?></td>
-                        <td>
-                            <?php
-                            $min = $r['min_score'];
-                            $max = $r['max_score'];
-                            if ($min === null && $max === null) {
-                                echo '<span class="admin-table__muted">无区间（simple 模式）</span>';
-                            } else {
-                                echo '<span class="admin-table__muted">' . htmlspecialchars((string)$min) . ' - ' . htmlspecialchars((string)$max) . '</span>';
-                            }
-                            ?>
-                        </td>
-                    </tr>
+                    <div class="result-card">
+                        <div class="result-card__header">
+                            <div class="result-card__meta">
+                                <span class="result-card__badge">
+                                    <?= htmlspecialchars($r['code']) ?>
+                                </span>
+                                <span class="result-card__id">RID: <?= (int)$r['id'] ?></span>
+                                <?php
+                                $min = $r['min_score'];
+                                $max = $r['max_score'];
+                                ?>
+                                <span class="result-card__range">
+                                    <?php if ($min === null && $max === null): ?>
+                                        无区间（simple 模式）
+                                    <?php else: ?>
+                                        区间：<?= htmlspecialchars((string)$min) ?> - <?= htmlspecialchars((string)$max) ?>
+                                    <?php endif; ?>
+                                </span>
+                            </div>
+                        </div>
+
+                        <form method="post" class="result-card__form">
+                            <input type="hidden" name="edit_type" value="result_copy">
+                            <input type="hidden" name="result_id" value="<?= (int)$r['id'] ?>">
+
+                            <div class="form-grid">
+                                <div class="form-field">
+                                    <label class="form-label">结果标题</label>
+                                    <input type="text"
+                                           name="title"
+                                           class="form-input"
+                                           value="<?= htmlspecialchars($r['title']) ?>">
+                                </div>
+
+                                <div class="form-field">
+                                    <label class="form-label">配图 URL（可选）</label>
+                                    <input type="text"
+                                           name="image_url"
+                                           class="form-input"
+                                           value="<?= htmlspecialchars($r['image_url'] ?? '') ?>">
+                                    <p class="form-help">如需在前台展示结果插图，可以填写一张图片的完整 URL。</p>
+                                </div>
+                            </div>
+
+                            <div class="form-field" style="margin-top:10px;">
+                                <label class="form-label">结果描述文案</label>
+                                <textarea
+                                    name="description"
+                                    class="form-textarea"
+                                    rows="4"
+                                ><?= htmlspecialchars($r['description'] ?? '') ?></textarea>
+                            </div>
+
+                            <div class="result-card__actions">
+                                <button type="submit" class="btn btn-primary btn-xs">
+                                    保存文案
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 <?php endforeach; ?>
-                </tbody>
-            </table>
+            </div>
         <?php endif; ?>
-        <p class="admin-table__muted" style="margin-top:8px;">* 目前仅为只读概览，结果文案与区间的维护后续在统一编辑入口完成。</p>
     </div>
 <?php endif; ?>

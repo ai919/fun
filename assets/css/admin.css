@@ -682,6 +682,129 @@ html, body {
     /* 只作为存储容器，不展示 */
 }
 
+/* 题目编辑卡片列表 */
+.question-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.question-card {
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    padding: 12px 14px;
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.question-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.question-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.question-card__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #4f46e5;
+    font-weight: 600;
+    font-size: 11px;
+}
+
+.question-card__id {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.question-card__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.question-card__textarea {
+    min-height: 80px;
+}
+
+.question-card__options-table {
+    margin-top: 10px;
+    font-size: 12px;
+}
+
+.question-card__actions {
+    margin-top: 8px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* 结果编辑卡片列表 */
+.result-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.result-card {
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    padding: 12px 14px;
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.result-card__header {
+    margin-bottom: 8px;
+}
+
+.result-card__meta {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.result-card__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: #ecfeff;
+    color: #06b6d4;
+    font-weight: 600;
+    font-size: 11px;
+}
+
+.result-card__id {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.result-card__range {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+.result-card__actions {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+}
+
 .alert {
     border-radius: 10px;
     padding: 10px 12px;
