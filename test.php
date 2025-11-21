@@ -111,6 +111,12 @@ if ($questionIds) {
 </head>
 <body>
 
+<?php if (!empty($test['display_mode']) && $test['display_mode'] === 'step_by_step'): ?>
+<div class="quiz-exit-bar">
+    <a class="exit-btn" href="/index.php">← 返回首页</a>
+</div>
+<?php endif; ?>
+
 <?php
 $heroSubtitle = '';
 if (!empty($test['subtitle'])) {

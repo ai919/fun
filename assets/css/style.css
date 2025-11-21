@@ -735,6 +735,38 @@ a:active {
     100% { transform: translateX(0); }
 }
 
+/* 逐题作答模式顶部退出栏 */
+.quiz-exit-bar {
+    width: 100%;
+    background: #ffffffcc;
+    backdrop-filter: blur(6px);
+    position: sticky;
+    top: 0;
+    z-index: 999;
+    padding: 10px 14px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.quiz-exit-bar .exit-btn {
+    font-size: 15px;
+    font-weight: 600;
+    color: #555;
+    text-decoration: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background: #fafafa;
+    transition: all 0.25s ease;
+}
+
+.quiz-exit-bar .exit-btn:hover {
+    background: #f0f0f0;
+    color: #222;
+}
+
 @media (max-width: 640px) {
     .test-page {
         margin: 12px auto 24px;
