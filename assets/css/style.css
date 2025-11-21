@@ -767,6 +767,81 @@ a:active {
     color: #222;
 }
 
+.page-auth .auth-container,
+.page-my-tests .my-tests-container {
+    max-width: 480px;
+    margin: 40px auto;
+    padding: 24px 20px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(15,23,42,0.08);
+}
+
+.auth-container h1,
+.my-tests-header h1 {
+    font-size: 22px;
+    margin-bottom: 16px;
+}
+
+.form-group {
+    margin-bottom: 14px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+.form-group input {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    font-size: 14px;
+}
+.auth-error {
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 8px 10px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 13px;
+}
+
+.my-tests-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.my-tests-user {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 13px;
+}
+
+.link-logout {
+    color: #ef4444;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.my-tests-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+.my-tests-table th,
+.my-tests-table td {
+    padding: 8px 6px;
+    border-bottom: 1px solid #e5e7eb;
+}
+.my-tests-table th {
+    text-align: left;
+    color: #6b7280;
+}
+
 @media (max-width: 640px) {
     .test-page {
         margin: 12px auto 24px;

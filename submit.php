@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/lib/db_connect.php';
 require __DIR__ . '/lib/ScoreEngine.php';
+require __DIR__ . '/lib/user_auth.php';
 
 $testId = isset($_POST['test_id']) ? (int)$_POST['test_id'] : 0;
 if ($testId <= 0) {
@@ -33,6 +34,8 @@ if (!$resultCode) {
 $detail      = ScoreEngine::getLastDetail();
 $totalScore  = isset($detail['total_score']) ? (float)$detail['total_score'] : 0.0;
 $dimScores   = $detail['dimension_scores'] ?? [];
+$currentUser = UserAuth::currentUser();
+$userId      = $currentUser ? (int)$currentUser['id'] : null;
 
 $resStmt = $pdo->prepare("SELECT * FROM results WHERE test_id = ? AND code = ? LIMIT 1");
 $resStmt->execute([$testId, $resultCode]);
@@ -54,15 +57,16 @@ try {
 $ipAddress = $_SERVER['REMOTE_ADDR'] ?? null;
 $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
 $runStmt = $pdo->prepare(
-    "INSERT INTO test_runs (test_id, result_id, user_identifier, ip_address, user_agent, total_score, share_token)
-     VALUES (:test_id, :result_id, NULL, :ip, :ua, :score, :share_token)"
+    "INSERT INTO test_runs (user_id, test_id, result_id, user_identifier, ip_address, user_agent, total_score, share_token)
+     VALUES (:user_id, :test_id, :result_id, NULL, :ip, :ua, :score, :share_token)"
 );
 $runStmt->execute([
-    ':test_id'  => $testId,
-    ':result_id'=> $resultId,
-    ':ip'       => $ipAddress,
-    ':ua'       => $userAgent,
-    ':score'    => $totalScore,
+    ':user_id'     => $userId,
+    ':test_id'     => $testId,
+    ':result_id'   => $resultId,
+    ':ip'          => $ipAddress,
+    ':ua'          => $userAgent,
+    ':score'       => $totalScore,
     ':share_token' => $shareToken,
 ]);
 $testRunId = (int)$pdo->lastInsertId();
