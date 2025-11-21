@@ -4,6 +4,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require __DIR__ . '/../lib/db_connect.php';
+$adminConfig = require __DIR__ . '/../config/admin.php';
 
 if (!empty($_SESSION['admin_id'])) {
     header('Location: /admin/index.php');
@@ -12,21 +13,36 @@ if (!empty($_SESSION['admin_id'])) {
 
 $error    = '';
 $username = '';
+$useDbAuth = (int)$pdo->query("SELECT COUNT(*) FROM admin_users")->fetchColumn() > 0;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = trim($_POST['password'] ?? '');
 
-    $stmt = $pdo->prepare("SELECT * FROM admin_users WHERE username = :u AND is_active = 1 LIMIT 1");
-    $stmt->execute([':u' => $username]);
-    $admin = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($useDbAuth) {
+        $stmt = $pdo->prepare("SELECT * FROM admin_users WHERE username = :u AND is_active = 1 LIMIT 1");
+        $stmt->execute([':u' => $username]);
+        $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($admin && password_verify($password, $admin['password_hash'])) {
-        $_SESSION['admin_id'] = (int)$admin['id'];
-        header('Location: /admin/index.php');
-        exit;
+        if ($admin && password_verify($password, $admin['password_hash'])) {
+            $_SESSION['admin_id'] = (int)$admin['id'];
+            unset($_SESSION['admin_legacy'], $_SESSION['admin_legacy_username'], $_SESSION['admin_legacy_display']);
+            header('Location: /admin/index.php');
+            exit;
+        } else {
+            $error = '账号或密码错误';
+        }
     } else {
-        $error = '账号或密码错误';
+        $configPwd = $adminConfig['password'] ?? '';
+        if ($configPwd !== '' && hash_equals($configPwd, $password)) {
+            $_SESSION['admin_legacy'] = true;
+            $_SESSION['admin_legacy_username'] = $username !== '' ? $username : 'admin';
+            $_SESSION['admin_legacy_display'] = $_SESSION['admin_legacy_username'];
+            header('Location: /admin/index.php');
+            exit;
+        } else {
+            $error = '账号或密码错误';
+        }
     }
 }
 ?>
@@ -120,6 +136,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <button class="btn" type="submit">登录</button>
         <?php if ($error): ?>
             <div class="error"><?= htmlspecialchars($error) ?></div>
+        <?php endif; ?>
+        <?php if (!$useDbAuth): ?>
+            <div class="sub" style="margin-top:6px;">当前使用配置文件登录，建议先在「管理员」页面创建账号。</div>
         <?php endif; ?>
     </form>
 </div>

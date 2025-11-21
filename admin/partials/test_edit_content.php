@@ -1,5 +1,9 @@
 <?php
 $testId   = isset($_GET['id']) && ctype_digit((string)$_GET['id']) ? (int)$_GET['id'] : null;
+$section  = isset($section) ? $section : (isset($_GET['section']) ? trim((string)$_GET['section']) : 'basic');
+if (!in_array($section, ['basic', 'questions', 'results'], true)) {
+    $section = 'basic';
+}
 $errors   = [];
 $statuses = [
     'draft'     => '草稿',
@@ -232,112 +236,335 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
 <?php
 $emojiSelectValue = array_key_exists($formData['emoji'], $emojiOptions) ? $formData['emoji'] : '';
 $colorClearDefault = $formData['title_color'] === '' ? '1' : '0';
+
+$questions = [];
+$results = [];
+if ($testId && $existingTest) {
+    $stmtQ = $pdo->prepare("
+        SELECT q.id,
+               q.question_text AS question_text,
+               q.sort_order,
+               COUNT(o.id) AS option_count
+        FROM questions q
+        LEFT JOIN question_options o ON o.question_id = q.id
+        WHERE q.test_id = :test_id
+        GROUP BY q.id
+        ORDER BY q.sort_order ASC, q.id ASC
+    ");
+    $stmtQ->execute([':test_id' => $testId]);
+    $questions = $stmtQ->fetchAll(PDO::FETCH_ASSOC);
+
+    $stmtR = $pdo->prepare("
+        SELECT id, code, title, min_score, max_score
+        FROM results
+        WHERE test_id = :test_id
+        ORDER BY id ASC
+    ");
+$stmtR->execute([':test_id' => $testId]);
+$results = $stmtR->fetchAll(PDO::FETCH_ASSOC);
+}
 ?>
 
-<div class="card">
-    <form method="post">
-        <div class="form-grid">
-            <label>
-                <span>标题 *</span>
-                <input type="text" name="title" value="<?= htmlspecialchars($formData['title']) ?>" required>
-            </label>
-            <label>
-                <span>Slug *</span>
-                <input type="text" name="slug" value="<?= htmlspecialchars($formData['slug']) ?>" required>
-                <small class="muted">用于 URL，只能包含小写英文字母、数字、短横线、下划线。</small>
-            </label>
-        </div>
-
-        <div class="form-grid">
-            <label>
-                <span>副标题</span>
-                <input type="text" name="subtitle" value="<?= htmlspecialchars($formData['subtitle']) ?>">
-            </label>
-            <label>
-                <span>标题颜色</span>
-                <input type="hidden" name="title_color_clear" value="<?= $colorClearDefault ?>">
-                <div class="color-input-row">
-                    <input type="color"
-                           name="title_color"
-                           value="<?= htmlspecialchars($formData['title_color'] !== '' ? $formData['title_color'] : '#6366F1') ?>"
-                           oninput="this.form.title_color_clear.value='0';">
-                    <button type="button" class="btn btn-ghost btn-xs"
-                            onclick="this.closest('form').title_color_clear.value='1'; this.closest('form').title_color.value='#6366F1';">
-                        清空
-                    </button>
-                </div>
-                <small class="muted">清空后前台使用默认颜色。</small>
-            </label>
-        </div>
-
-        <div class="form-grid">
-            <label>
-                <span>Emoji</span>
-                <select name="emoji">
-                    <?php foreach ($emojiOptions as $value => $label): ?>
-                        <option value="<?= htmlspecialchars($value) ?>"<?= $emojiSelectValue === $value ? ' selected' : '' ?>>
-                            <?= htmlspecialchars($label) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-                <small class="muted">可选填，为标题增加一个小图标。</small>
-            </label>
-            <label>
-                <span>自定义 Emoji</span>
-                <input type="text" name="emoji_custom" value="<?= htmlspecialchars($emojiSelectValue === '' ? $formData['emoji'] : '') ?>" maxlength="16" placeholder="也可手动输入">
-                <small class="muted">如果下拉没有想要的，可以在此输入（不超过 16 字符）。</small>
-            </label>
-        </div>
-
-        <label>
-            <span>测验介绍</span>
-            <textarea name="description" rows="5"><?= htmlspecialchars($formData['description']) ?></textarea>
-        </label>
-
-        <label>
-            <span>标签（逗号分隔）</span>
-            <input type="text" name="tags" value="<?= htmlspecialchars($formData['tags']) ?>" placeholder="例如：性格, MBTI, 自我探索">
-        </label>
-
-        <div class="form-grid">
-            <label>
-                <span>状态 *</span>
-                <select name="status">
-                    <?php foreach ($statuses as $value => $label): ?>
-                        <option value="<?= htmlspecialchars($value) ?>"<?= $formData['status'] === $value ? ' selected' : '' ?>>
-                            <?= htmlspecialchars($label) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </label>
-            <label>
-                <span>排序值</span>
-                <input type="number" name="sort_order" value="<?= (int)$formData['sort_order'] ?>" step="1">
-            </label>
-        </div>
-
-        <div class="form-grid">
-            <label>
-                <span>评分模式 *</span>
-                <select name="scoring_mode">
-                    <?php foreach ($scoringModes as $value => $label): ?>
-                        <option value="<?= htmlspecialchars($value) ?>"<?= $formData['scoring_mode'] === $value ? ' selected' : '' ?>>
-                            <?= htmlspecialchars($label) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </label>
-        </div>
-
-        <label>
-            <span>评分配置（JSON，可选）</span>
-            <textarea name="scoring_config" rows="5" placeholder='例如：{"dimensions":["I","E","R","F"]}'><?= htmlspecialchars($formData['scoring_config']) ?></textarea>
-            <small class="muted">仅在部分评分模式下有效，请输入合法的 JSON。</small>
-        </label>
-
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">保存</button>
-            <a class="btn btn-ghost btn-xs" href="/admin/tests.php">返回列表</a>
-        </div>
-    </form>
+<div class="admin-subtabs">
+    <a href="test_edit.php?id=<?= $testId ?>&section=basic"
+       class="admin-subtab__item <?= $section === 'basic' ? 'is-active' : '' ?>">基础信息</a>
+    <a href="test_edit.php?id=<?= $testId ?>&section=questions"
+       class="admin-subtab__item <?= $section === 'questions' ? 'is-active' : '' ?>">
+        题目概览
+        <?php if (!empty($questions)): ?>
+            <span class="admin-subtab__badge"><?= count($questions) ?></span>
+        <?php endif; ?>
+    </a>
+    <a href="test_edit.php?id=<?= $testId ?>&section=results"
+       class="admin-subtab__item <?= $section === 'results' ? 'is-active' : '' ?>">
+        结果概览
+        <?php if (!empty($results)): ?>
+            <span class="admin-subtab__badge"><?= count($results) ?></span>
+        <?php endif; ?>
+    </a>
 </div>
+
+<?php if ($section === 'basic'): ?>
+    <div class="admin-card admin-card--form">
+        <form method="post">
+            <div class="form-section">
+                <div class="form-section__title">基础信息</div>
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label class="form-label">标题 *</label>
+                        <input type="text" name="title" class="form-input" value="<?= htmlspecialchars($formData['title']) ?>" required>
+                        <p class="form-help">展示在前台卡片与测验页顶部。</p>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label">Slug *</label>
+                        <input type="text" name="slug" class="form-input" value="<?= htmlspecialchars($formData['slug']) ?>" required>
+                        <p class="form-help">用于 URL，只能包含小写英文字母、数字、短横线、下划线。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section__title">外观与标签</div>
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label class="form-label">副标题</label>
+                        <input type="text" name="subtitle" class="form-input" value="<?= htmlspecialchars($formData['subtitle']) ?>">
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label">标题颜色</label>
+                        <input type="hidden" name="title_color_clear" value="<?= $colorClearDefault ?>">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <input type="color"
+                                   class="form-input"
+                                   style="width:80px;padding:4px;"
+                                   name="title_color"
+                                   value="<?= htmlspecialchars($formData['title_color'] !== '' ? $formData['title_color'] : '#6366F1') ?>"
+                                   oninput="this.form.title_color_clear.value='0';">
+                            <button type="button" class="btn btn-ghost btn-xs"
+                                    onclick="this.closest('form').title_color_clear.value='1'; this.closest('form').title_color.value='#6366F1';">
+                                清空
+                            </button>
+                        </div>
+                        <p class="form-help">清空后前台使用默认颜色。</p>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label class="form-label">Emoji</label>
+                        <select name="emoji" class="form-select">
+                            <?php foreach ($emojiOptions as $value => $label): ?>
+                                <option value="<?= htmlspecialchars($value) ?>"<?= $emojiSelectValue === $value ? ' selected' : '' ?>>
+                                    <?= htmlspecialchars($label) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="form-help">可选填，为标题增加一个小图标。</p>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label">自定义 Emoji</label>
+                        <input type="text" name="emoji_custom" class="form-input"
+                               value="<?= htmlspecialchars($emojiSelectValue === '' ? $formData['emoji'] : '') ?>" maxlength="16" placeholder="也可手动输入">
+                        <p class="form-help">如果下拉没有想要的，可以在此输入（不超过 16 字符）。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section__title">描述与标签</div>
+                <div class="form-field">
+                    <label class="form-label">测验介绍（富文本）</label>
+
+                    <div class="rte-toolbar" data-rte-for="description-editor">
+                        <button type="button" class="btn btn-xs btn-ghost" data-cmd="bold">B</button>
+                        <button type="button" class="btn btn-xs btn-ghost" data-cmd="italic"><em>I</em></button>
+                        <button type="button" class="btn btn-xs btn-ghost" data-cmd="underline"><u>U</u></button>
+                        <button type="button" class="btn btn-xs btn-ghost" data-cmd="strikeThrough"><s>S</s></button>
+
+                        <span class="rte-toolbar__divider"></span>
+
+                        <button type="button" class="btn btn-xs btn-ghost" data-cmd="foreColor" data-value="#ef4444">文字红</button>
+                        <button type="button" class="btn btn-xs btn-ghost" data-cmd="foreColor" data-value="#22c55e">文字绿</button>
+                        <button type="button" class="btn btn-xs btn-ghost" data-cmd="backColor" data-value="#fef9c3">背景黄</button>
+
+                        <span class="rte-toolbar__divider"></span>
+
+                        <button type="button" class="btn btn-xs btn-ghost" data-cmd="createLink">链接</button>
+                        <button type="button" class="btn btn-xs btn-ghost" data-cmd="insertImage">图片</button>
+
+                        <span class="rte-toolbar__divider"></span>
+
+                        <select class="rte-emoji-picker">
+                            <option value="">Emoji</option>
+                            <option>😀</option>
+                            <option>😍</option>
+                            <option>🤔</option>
+                            <option>🥲</option>
+                            <option>👍</option>
+                            <option>🔥</option>
+                            <option>✨</option>
+                            <option>💤</option>
+                        </select>
+                    </div>
+
+                    <div id="description-editor"
+                         class="rte-editor"
+                         contenteditable="true"><?= !empty($formData['description']) ? $formData['description'] : '' ?></div>
+
+                    <textarea name="description"
+                              id="description-hidden"
+                              class="rte-hidden-textarea"
+                              style="display:none;"><?= $formData['description'] ?? '' ?></textarea>
+
+                    <p class="form-help">
+                        可输入段落、Emoji、链接和图片（通过 URL），颜色仅用于前台展示。内容将保存为 HTML。
+                    </p>
+                </div>
+
+                <div class="form-field">
+                    <label class="form-label">标签（逗号分隔）</label>
+                    <input type="text" name="tags" class="form-input" value="<?= htmlspecialchars($formData['tags']) ?>" placeholder="例如：性格, MBTI, 自我探索">
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section__title">发布与排序</div>
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label class="form-label">状态 *</label>
+                        <select name="status" class="form-select">
+                            <?php foreach ($statuses as $value => $label): ?>
+                                <option value="<?= htmlspecialchars($value) ?>"<?= $formData['status'] === $value ? ' selected' : '' ?>>
+                                    <?= htmlspecialchars($label) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label">排序值</label>
+                        <input type="number" name="sort_order" class="form-input" value="<?= (int)$formData['sort_order'] ?>" step="1">
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label class="form-label">评分模式 *</label>
+                        <select name="scoring_mode" class="form-select">
+                            <?php foreach ($scoringModes as $value => $label): ?>
+                                <option value="<?= htmlspecialchars($value) ?>"<?= $formData['scoring_mode'] === $value ? ' selected' : '' ?>>
+                                    <?= htmlspecialchars($label) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label class="form-label">评分配置（JSON，可选）</label>
+                    <textarea name="scoring_config" class="form-textarea" rows="5" placeholder='例如：{"dimensions":["I","E","R","F"]}'><?= htmlspecialchars($formData['scoring_config']) ?></textarea>
+                    <p class="form-help">仅在部分评分模式下有效，请输入合法的 JSON。</p>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">保存</button>
+                <a class="btn btn-ghost btn-xs" href="/admin/tests.php">返回列表</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        (function() {
+            const textarea = document.getElementById('description-editor');
+            const preview = document.getElementById('description-preview');
+            if (!textarea || !preview) return;
+
+            function updatePreview() {
+                let text = textarea.value || '';
+                let html = text
+                    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+                    .replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>')
+                    .replace(/_(.+?)_/g, '<em>$1</em>')
+                    .replace(/\\n/g, '<br>');
+                preview.innerHTML = html || '<span class=\"admin-table__muted\">预览区</span>';
+            }
+
+            document.querySelectorAll('.richtext-toolbar [data-md]').forEach(function(btn) {
+                btn.addEventListener('click', function () {
+                    const md = this.getAttribute('data-md');
+                    const start = textarea.selectionStart;
+                    const end = textarea.selectionEnd;
+                    const value = textarea.value;
+                    if (md === '> ') {
+                        const before = value.substring(0, start);
+                        const selected = value.substring(start, end) || '';
+                        const after = value.substring(end);
+                        textarea.value = before + '> ' + selected + after;
+                        textarea.selectionStart = start + 2;
+                        textarea.selectionEnd = start + 2 + selected.length;
+                    } else {
+                        const before = value.substring(0, start);
+                        const selected = value.substring(start, end) || '文本';
+                        const after = value.substring(end);
+                        textarea.value = before + md + selected + md + after;
+                        textarea.selectionStart = start + md.length;
+                        textarea.selectionEnd = start + md.length + selected.length;
+                    }
+                    textarea.focus();
+                    updatePreview();
+                });
+            });
+
+            textarea.addEventListener('input', updatePreview);
+            updatePreview();
+        })();
+    </script>
+
+<?php elseif ($section === 'questions'): ?>
+    <div class="admin-card">
+        <?php if (empty($questions)): ?>
+            <p class="admin-table__muted">当前测验还没有题目。</p>
+        <?php else: ?>
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>排序</th>
+                    <th>题目内容</th>
+                    <th>选项数</th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($questions as $q): ?>
+                    <tr>
+                        <td><?= (int)$q['id'] ?></td>
+                        <td><span class="admin-table__muted"><?= (int)$q['sort_order'] ?></span></td>
+                        <td><?= htmlspecialchars($q['question_text']) ?></td>
+                        <td><span class="admin-table__muted"><?= (int)$q['option_count'] ?></span></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+        <p class="admin-table__muted" style="margin-top:8px;">* 目前仅为只读概览，题目与选项的维护后续在统一编辑入口完成。</p>
+    </div>
+
+<?php elseif ($section === 'results'): ?>
+    <div class="admin-card">
+        <?php if (empty($results)): ?>
+            <p class="admin-table__muted">当前测验还没有结果配置。</p>
+        <?php else: ?>
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>代码</th>
+                    <th>标题</th>
+                    <th>分数区间</th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($results as $r): ?>
+                    <tr>
+                        <td><?= (int)$r['id'] ?></td>
+                        <td><code class="code-badge"><?= htmlspecialchars($r['code']) ?></code></td>
+                        <td><?= htmlspecialchars($r['title']) ?></td>
+                        <td>
+                            <?php
+                            $min = $r['min_score'];
+                            $max = $r['max_score'];
+                            if ($min === null && $max === null) {
+                                echo '<span class="admin-table__muted">无区间（simple 模式）</span>';
+                            } else {
+                                echo '<span class="admin-table__muted">' . htmlspecialchars((string)$min) . ' - ' . htmlspecialchars((string)$max) . '</span>';
+                            }
+                            ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+        <p class="admin-table__muted" style="margin-top:8px;">* 目前仅为只读概览，结果文案与区间的维护后续在统一编辑入口完成。</p>
+    </div>
+<?php endif; ?>

@@ -30,16 +30,28 @@ if (!$testId) {
         <?php if (!$statsTests): ?>
             <p class="admin-table__muted">目前还没有可统计的测验，先去创建一个吧。</p>
         <?php else: ?>
-            <ul>
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th style="width:70px;">ID</th>
+                    <th>标题</th>
+                    <th style="width:140px;">slug</th>
+                    <th style="width:120px;">操作</th>
+                </tr>
+                </thead>
+                <tbody>
                 <?php foreach ($statsTests as $row): ?>
-                    <li style="margin-bottom:6px;">
-                        <a href="/admin/stats.php?test_id=<?= (int)$row['id'] ?>">
-                            [#<?= (int)$row['id'] ?>] <?= htmlspecialchars($row['title']) ?>
-                            <span class="admin-table__muted">(<?= htmlspecialchars($row['slug']) ?>)</span>
-                        </a>
-                    </li>
+                    <tr>
+                        <td><?= (int)$row['id'] ?></td>
+                        <td><?= htmlspecialchars($row['title']) ?></td>
+                        <td><code class="code-badge code-badge--muted"><?= htmlspecialchars($row['slug']) ?></code></td>
+                        <td class="admin-table__actions">
+                            <a class="btn btn-xs" href="/admin/stats.php?test_id=<?= (int)$row['id'] ?>">查看统计</a>
+                        </td>
+                    </tr>
                 <?php endforeach; ?>
-            </ul>
+                </tbody>
+            </table>
         <?php endif; ?>
     </div>
     <?php
@@ -107,22 +119,22 @@ ob_start();
     <?php if ($totalRuns === 0): ?>
         <p class="admin-table__muted">还没有任何完成记录，先在前台跑一次吧。</p>
     <?php else: ?>
-        <div class="stat-cards">
-            <div class="stat-card">
-                <div class="stat-card-title">完成次数</div>
-                <div class="stat-card-value"><?= number_format($totalRuns) ?></div>
+        <div class="admin-toolbar" style="justify-content:flex-start; gap:12px; flex-wrap:wrap;">
+            <div class="admin-card" style="padding:10px 14px; min-width:160px; box-shadow:none; border:1px solid #e5e7eb;">
+                <div class="admin-table__subtitle">完成次数</div>
+                <div class="admin-table__title" style="font-size:18px;"><?= number_format($totalRuns) ?></div>
             </div>
-            <div class="stat-card">
-                <div class="stat-card-title">维度得分记录</div>
-                <div class="stat-card-value"><?= number_format($totalDims) ?></div>
+            <div class="admin-card" style="padding:10px 14px; min-width:160px; box-shadow:none; border:1px solid #e5e7eb;">
+                <div class="admin-table__subtitle">维度得分记录</div>
+                <div class="admin-table__title" style="font-size:18px;"><?= number_format($totalDims) ?></div>
             </div>
-            <div class="stat-card">
-                <div class="stat-card-title">匹配到结果的 run</div>
-                <div class="stat-card-value"><?= number_format($matchedRuns) ?></div>
+            <div class="admin-card" style="padding:10px 14px; min-width:160px; box-shadow:none; border:1px solid #e5e7eb;">
+                <div class="admin-table__subtitle">匹配到结果的 run</div>
+                <div class="admin-table__title" style="font-size:18px;"><?= number_format($matchedRuns) ?></div>
             </div>
-            <div class="stat-card">
-                <div class="stat-card-title">未匹配结果的 run</div>
-                <div class="stat-card-value"><?= number_format($unmatchedRuns) ?></div>
+            <div class="admin-card" style="padding:10px 14px; min-width:160px; box-shadow:none; border:1px solid #e5e7eb;">
+                <div class="admin-table__subtitle">未匹配结果的 run</div>
+                <div class="admin-table__title" style="font-size:18px;"><?= number_format($unmatchedRuns) ?></div>
             </div>
         </div>
         <p class="hint">
@@ -132,11 +144,11 @@ ob_start();
 </div>
 
 <div class="admin-card">
-    <h2>结果命中分布</h2>
+    <h2 class="admin-page-title" style="font-size:15px;margin:0 0 10px;">结果命中分布</h2>
     <?php if (!$resultStats): ?>
         <p class="admin-table__muted">暂无结果数据，先在上方添加结果区间吧。</p>
     <?php else: ?>
-        <table class="table-admin">
+        <table class="admin-table">
             <thead>
             <tr>
                 <th style="width:60px;">ID</th>

@@ -13,6 +13,17 @@ function current_admin(): ?array
     if ($cached !== null) {
         return $cached;
     }
+    if (!empty($_SESSION['admin_legacy'])) {
+        $username = $_SESSION['admin_legacy_username'] ?? 'admin';
+        $cached = [
+            'id'           => null,
+            'username'     => $username,
+            'display_name' => $_SESSION['admin_legacy_display'] ?? $username,
+            'is_active'    => 1,
+            'is_legacy'    => true,
+        ];
+        return $cached;
+    }
     if (empty($_SESSION['admin_id'])) {
         return null;
     }

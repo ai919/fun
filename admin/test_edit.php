@@ -7,5 +7,9 @@ $pageTitle   = $isEditing ? '编辑测验' : '新建测验';
 $pageHeading = $pageTitle;
 $activeMenu  = 'tests';
 $contentFile = __DIR__ . '/partials/test_edit_content.php';
+$section = isset($_GET['section']) ? trim((string)$_GET['section']) : 'basic';
+if (!in_array($section, ['basic', 'questions', 'results'], true)) {
+    $section = 'basic';
+}
 
 include __DIR__ . '/layout.php';

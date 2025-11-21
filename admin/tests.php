@@ -3,7 +3,7 @@ require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../lib/db_connect.php';
 
 $pageTitle = '测验管理';
-$pageSubtitle = '管理所有在线测验：标题、标签、颜色、排序、状态';
+$pageSubtitle = '管理所有在线测验：标题、标签、排序、状态与答题数';
 $activeMenu = 'tests';
 
 $stmt = $pdo->query("
@@ -24,7 +24,7 @@ ob_start();
                oninput="filterTests(this.value)">
     </div>
     <div class="admin-toolbar__right">
-        <a href="new_test.php" class="btn btn-primary">+ 新建测验</a>
+        <a href="new_test.php" class="btn btn-primary btn-lg">+ 新建测验</a>
     </div>
 </div>
 
@@ -48,7 +48,7 @@ ob_start();
             <tr data-test-row>
                 <td><?= (int)$test['id'] ?></td>
                 <td>
-                    <div class="admin-table__title">
+                    <div class="admin-table__title admin-table__title--lg">
                         <?= htmlspecialchars($test['title']) ?>
                     </div>
                     <?php if (!empty($test['subtitle'])): ?>
@@ -93,19 +93,16 @@ ob_start();
                     <?php endif; ?>
                 </td>
                 <td>
-                    <span class="admin-table__muted"><?= (int)$test['run_count'] ?> 次</span>
+                    <a class="admin-kpi-link admin-kpi-link--small" href="stats.php?test_id=<?= (int)$test['id'] ?>">
+                        <?= (int)$test['run_count'] ?> 次
+                    </a>
                 </td>
                 <td>
                     <span class="admin-table__muted"><?= (int)$test['sort_order'] ?></span>
                 </td>
                 <td class="admin-table__actions">
-                    <a href="test_edit.php?id=<?= (int)$test['id'] ?>" class="btn btn-xs">
-                        管理测验
-                    </a>
-                    <a href="../test.php?slug=<?= urlencode($test['slug']) ?>"
-                       class="btn btn-xs btn-ghost" target="_blank">
-                        预览
-                    </a>
+                    <a href="test_edit.php?id=<?= (int)$test['id'] ?>" class="btn btn-xs btn-primary">管理测验</a>
+                    <a href="../test.php?slug=<?= urlencode($test['slug']) ?>" class="btn btn-xs btn-ghost" target="_blank">预览</a>
                 </td>
             </tr>
         <?php endforeach; ?>

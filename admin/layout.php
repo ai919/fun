@@ -41,6 +41,11 @@ if (!isset($activeMenu)) {
                 <span class="admin-nav__icon">🧪</span>
                 <span class="admin-nav__label">测验管理</span>
             </a>
+            <a href="admin_users.php"
+               class="admin-nav__item <?= $activeMenu === 'admin_users' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">👥</span>
+                <span class="admin-nav__label">管理员</span>
+            </a>
             <a href="stats.php"
                class="admin-nav__item <?= $activeMenu === 'stats' ? 'is-active' : '' ?>">
                 <span class="admin-nav__icon">📈</span>
@@ -106,4 +111,69 @@ if (!isset($activeMenu)) {
 </div>
 
 </body>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var editor = document.getElementById('description-editor');
+    var hidden = document.getElementById('description-hidden');
+    if (!editor || !hidden) return;
+
+    if (hidden.value && editor.innerHTML.trim() === '') {
+        editor.innerHTML = hidden.value;
+    }
+
+    var toolbar = document.querySelector('.rte-toolbar[data-rte-for="description-editor"]');
+    function syncHidden() {
+        hidden.value = editor.innerHTML;
+    }
+
+    if (toolbar) {
+        toolbar.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-cmd]');
+            if (!btn) return;
+            var cmd = btn.getAttribute('data-cmd');
+            var val = btn.getAttribute('data-value') || null;
+            editor.focus();
+            if (cmd === 'createLink') {
+                var url = window.prompt('请输入链接URL（例如：https://example.com）');
+                if (url) {
+                    if (!/^https?:\/\//i.test(url)) {
+                        url = 'https://' + url;
+                    }
+                    document.execCommand('createLink', false, url);
+                }
+            } else if (cmd === 'insertImage') {
+                var imgUrl = window.prompt('请输入图片URL');
+                if (imgUrl) {
+                    document.execCommand('insertImage', false, imgUrl);
+                }
+            } else if (cmd === 'foreColor' || cmd === 'backColor') {
+                document.execCommand(cmd, false, val);
+            } else {
+                document.execCommand(cmd, false, null);
+            }
+            syncHidden();
+        });
+        var emojiPicker = toolbar.querySelector('.rte-emoji-picker');
+        if (emojiPicker) {
+            emojiPicker.addEventListener('change', function () {
+                var emoji = this.value;
+                if (!emoji) return;
+                editor.focus();
+                document.execCommand('insertText', false, emoji);
+                this.value = '';
+                syncHidden();
+            });
+        }
+    }
+
+    editor.addEventListener('input', syncHidden);
+    editor.addEventListener('blur', syncHidden);
+    var form = editor.closest('form');
+    if (form) {
+        form.addEventListener('submit', function () {
+            syncHidden();
+        });
+    }
+});
+</script>
 </html>

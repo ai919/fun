@@ -38,26 +38,23 @@ $backupUrl = '/backup.php?token=' . urlencode($token);
 ob_start();
 ?>
 
-<div class="section-card" style="background:#0f172a;color:#e5e7eb; border-color: rgba(148,163,184,0.4); box-shadow: 0 10px 25px rgba(15,23,42,0.5);">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
-        <div>
-            <div style="font-size:15px;font-weight:600;margin-bottom:4px;">一键备份 DoFun 网站</div>
-            <div style="font-size:12px;color:#9ca3af;max-width:420px;">
-                自动打包数据库与站点文件生成 ZIP，建议定期下载保存。
-            </div>
-        </div>
-        <div>
-            <button type="button" onclick="confirmBackup()" class="btn btn-primary">
-                立即备份
-            </button>
-        </div>
+<div class="admin-card admin-toolbar" style="align-items:flex-start; gap:12px; flex-wrap:wrap;">
+    <div>
+        <div class="admin-page-title" style="font-size:15px;margin:0;">一键备份 DoFun 网站</div>
+        <div class="admin-table__muted" style="max-width:520px;">自动打包数据库与站点文件生成 ZIP，建议定期下载保存。</div>
+    </div>
+    <div style="margin-left:auto;">
+        <button type="button" onclick="confirmBackup()" class="btn btn-primary">
+            立即备份
+        </button>
     </div>
 </div>
 
 <?php if (!$logs): ?>
     <div class="alert alert-danger">暂无备份记录。</div>
 <?php else: ?>
-    <table class="table-admin">
+    <div class="admin-card">
+        <table class="admin-table">
         <thead>
         <tr>
             <th style="width:60px;">ID</th>
@@ -91,8 +88,8 @@ ob_start();
                 <td><?= htmlspecialchars($log['ip']) ?></td>
                 <td>
                     <?php if ($log['status'] === 'success'): ?>
-                        <a class="btn btn-mini" href="/download_backup.php?id=<?= (int)$log['id'] ?>&token=<?= urlencode($token) ?>" target="_blank">下载</a>
-                        <a class="btn btn-mini" style="background:#b91c1c;color:#fff;border:none;"
+                        <a class="btn btn-xs" href="/download_backup.php?id=<?= (int)$log['id'] ?>&token=<?= urlencode($token) ?>" target="_blank">下载</a>
+                        <a class="btn btn-xs" style="background:#b91c1c;color:#fff;border:none;"
                            href="/delete_backup.php?id=<?= (int)$log['id'] ?>&token=<?= urlencode($token) ?>"
                            onclick="return confirm('确认删除这份备份及其记录？');">删除</a>
                     <?php else: ?>
@@ -103,6 +100,7 @@ ob_start();
         <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
 <?php endif; ?>
 
 <script>

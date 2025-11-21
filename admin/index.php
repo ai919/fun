@@ -19,7 +19,7 @@ $topTestsStmt = $pdo->query("
     LEFT JOIN test_runs r ON r.test_id = t.id
     GROUP BY t.id
     ORDER BY run_count DESC
-    LIMIT 3
+    LIMIT 10
 ");
 $topTests = $topTestsStmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -31,25 +31,25 @@ ob_start();
         <span class="admin-table__muted">欢迎回来，这里是 DoFun 测验后台概览。</span>
     </div>
     <div class="admin-toolbar__right">
-        <a href="new_test.php" class="btn btn-primary">+ 新建测验</a>
+        <a href="new_test.php" class="btn btn-primary btn-lg">+ 新建测验</a>
     </div>
 </div>
 
 <div class="admin-card" style="margin-bottom: 16px;">
-    <table class="admin-table">
+    <table class="admin-table admin-table--kpi">
         <tbody>
         <tr>
             <td>
-                <div class="admin-table__title"><?= $totalTests ?></div>
-                <div class="admin-table__subtitle">测验总数</div>
+                <div class="admin-kpi-number"><?= $totalTests ?></div>
+                <div class="admin-kpi-label">测验总数</div>
             </td>
             <td>
-                <div class="admin-table__title"><?= $totalRuns ?></div>
-                <div class="admin-table__subtitle">累计答题次数</div>
+                <div class="admin-kpi-number"><?= $totalRuns ?></div>
+                <div class="admin-kpi-label">累计答题次数</div>
             </td>
             <td>
-                <div class="admin-table__title"><?= $recentRuns ?></div>
-                <div class="admin-table__subtitle">最近 7 天答题次数</div>
+                <div class="admin-kpi-number"><?= $recentRuns ?></div>
+                <div class="admin-kpi-label">最近 7 天答题次数</div>
             </td>
         </tr>
         </tbody>
@@ -61,7 +61,7 @@ ob_start();
     <?php if (empty($topTests)): ?>
         <p class="admin-table__muted">暂无数据。</p>
     <?php else: ?>
-        <table class="admin-table">
+        <table class="admin-table admin-table--compact">
             <thead>
             <tr>
                 <th>ID</th>
@@ -82,9 +82,13 @@ ob_start();
                             <?= htmlspecialchars($test['slug']) ?>
                         </code>
                     </td>
-                    <td><span class="admin-table__muted"><?= (int)$test['run_count'] ?> 次</span></td>
+                    <td>
+                        <a href="stats.php?test_id=<?= (int)$test['id'] ?>" class="admin-kpi-link">
+                            <?= (int)$test['run_count'] ?> 次
+                        </a>
+                    </td>
                     <td class="admin-table__actions">
-                        <a href="test_edit.php?id=<?= (int)$test['id'] ?>" class="btn btn-xs">编辑</a>
+                        <a href="test_edit.php?id=<?= (int)$test['id'] ?>" class="btn btn-xs btn-primary">管理测验</a>
                         <a href="../test.php?slug=<?= urlencode($test['slug']) ?>"
                            class="btn btn-xs btn-ghost" target="_blank">预览</a>
                     </td>
