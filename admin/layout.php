@@ -113,26 +113,35 @@ if (!isset($activeMenu)) {
 </body>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    var editor = document.getElementById('description-editor');
-    var hidden = document.getElementById('description-hidden');
-    if (!editor || !hidden) return;
+    document.querySelectorAll('.rte-toolbar[data-rte-for]').forEach(function (toolbar) {
+        var editorId = toolbar.getAttribute('data-rte-for');
+        var editor = document.getElementById(editorId);
+        if (!editor) return;
 
-    if (hidden.value && editor.innerHTML.trim() === '') {
-        editor.innerHTML = hidden.value;
-    }
+        var form = editor.closest('form');
+        if (!form) return;
 
-    var toolbar = document.querySelector('.rte-toolbar[data-rte-for="description-editor"]');
-    function syncHidden() {
-        hidden.value = editor.innerHTML;
-    }
+        var hidden = form.querySelector('.rte-hidden-textarea[name="description"]');
+        if (!hidden) return;
 
-    if (toolbar) {
+        if (hidden.value && editor.innerHTML.trim() === '') {
+            editor.innerHTML = hidden.value;
+        } else if (!hidden.value && editor.innerHTML.trim() !== '') {
+            hidden.value = editor.innerHTML;
+        }
+
+        function syncHidden() {
+            hidden.value = editor.innerHTML;
+        }
+
         toolbar.addEventListener('click', function (e) {
             var btn = e.target.closest('[data-cmd]');
             if (!btn) return;
             var cmd = btn.getAttribute('data-cmd');
             var val = btn.getAttribute('data-value') || null;
+
             editor.focus();
+
             if (cmd === 'createLink') {
                 var url = window.prompt('请输入链接URL（例如：https://example.com）');
                 if (url) {
@@ -147,12 +156,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     document.execCommand('insertImage', false, imgUrl);
                 }
             } else if (cmd === 'foreColor' || cmd === 'backColor') {
-                document.execCommand(cmd, false, val);
+                if (val) {
+                    document.execCommand(cmd, false, val);
+                }
             } else {
                 document.execCommand(cmd, false, null);
             }
+
             syncHidden();
         });
+
         var emojiPicker = toolbar.querySelector('.rte-emoji-picker');
         if (emojiPicker) {
             emojiPicker.addEventListener('change', function () {
@@ -164,16 +177,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 syncHidden();
             });
         }
-    }
 
-    editor.addEventListener('input', syncHidden);
-    editor.addEventListener('blur', syncHidden);
-    var form = editor.closest('form');
-    if (form) {
+        editor.addEventListener('input', syncHidden);
+        editor.addEventListener('blur', syncHidden);
         form.addEventListener('submit', function () {
             syncHidden();
         });
-    }
+    });
 });
 </script>
 </html>

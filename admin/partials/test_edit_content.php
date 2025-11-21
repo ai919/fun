@@ -350,7 +350,7 @@ if ($testId && $existingTest) {
                 <div class="form-field">
                     <label class="form-label">测验介绍（富文本）</label>
 
-                    <div class="rte-toolbar" data-rte-for="description-editor">
+                    <div class="rte-toolbar" data-rte-for="description-editor-main">
                         <button type="button" class="btn btn-xs btn-ghost" data-cmd="bold">B</button>
                         <button type="button" class="btn btn-xs btn-ghost" data-cmd="italic"><em>I</em></button>
                         <button type="button" class="btn btn-xs btn-ghost" data-cmd="underline"><u>U</u></button>
@@ -382,17 +382,16 @@ if ($testId && $existingTest) {
                         </select>
                     </div>
 
-                    <div id="description-editor"
+                    <div id="description-editor-main"
                          class="rte-editor"
                          contenteditable="true"><?= !empty($formData['description']) ? $formData['description'] : '' ?></div>
 
                     <textarea name="description"
-                              id="description-hidden"
                               class="rte-hidden-textarea"
-                              style="display:none;"><?= $formData['description'] ?? '' ?></textarea>
+                              style="display:none;"><?= htmlspecialchars($formData['description'] ?? '') ?></textarea>
 
                     <p class="form-help">
-                        可输入段落、Emoji、链接和图片（通过 URL），颜色仅用于前台展示。内容将保存为 HTML。
+                        可输入段落、Emoji、链接和图片（通过 URL），内容保存为 HTML；前台渲染时请注意适度过滤标签。
                     </p>
                 </div>
 
@@ -576,12 +575,54 @@ if ($testId && $existingTest) {
                             </div>
 
                             <div class="form-field" style="margin-top:10px;">
-                                <label class="form-label">结果描述文案</label>
+                                <label class="form-label">结果描述文案（富文本）</label>
+                                <?php $editorId = 'result-desc-' . (int)$r['id']; ?>
+
+                                <div class="rte-toolbar" data-rte-for="<?= $editorId ?>">
+                                    <button type="button" class="btn btn-xs btn-ghost" data-cmd="bold">B</button>
+                                    <button type="button" class="btn btn-xs btn-ghost" data-cmd="italic"><em>I</em></button>
+                                    <button type="button" class="btn btn-xs btn-ghost" data-cmd="underline"><u>U</u></button>
+                                    <button type="button" class="btn btn-xs btn-ghost" data-cmd="strikeThrough"><s>S</s></button>
+
+                                    <span class="rte-toolbar__divider"></span>
+
+                                    <button type="button" class="btn btn-xs btn-ghost" data-cmd="foreColor" data-value="#ef4444">文字红</button>
+                                    <button type="button" class="btn btn-xs btn-ghost" data-cmd="foreColor" data-value="#22c55e">文字绿</button>
+                                    <button type="button" class="btn btn-xs btn-ghost" data-cmd="backColor" data-value="#fef9c3">背景黄</button>
+
+                                    <span class="rte-toolbar__divider"></span>
+
+                                    <button type="button" class="btn btn-xs btn-ghost" data-cmd="createLink">链接</button>
+                                    <button type="button" class="btn btn-xs btn-ghost" data-cmd="insertImage">图片</button>
+
+                                    <span class="rte-toolbar__divider"></span>
+
+                                    <select class="rte-emoji-picker">
+                                        <option value="">Emoji</option>
+                                        <option>😀</option>
+                                        <option>😍</option>
+                                        <option>🤔</option>
+                                        <option>🥲</option>
+                                        <option>👍</option>
+                                        <option>🔥</option>
+                                        <option>✨</option>
+                                        <option>💤</option>
+                                    </select>
+                                </div>
+
+                                <div id="<?= $editorId ?>"
+                                     class="rte-editor"
+                                     contenteditable="true"><?= !empty($r['description']) ? $r['description'] : '' ?></div>
+
                                 <textarea
                                     name="description"
-                                    class="form-textarea"
-                                    rows="4"
+                                    class="rte-hidden-textarea"
+                                    style="display:none;"
                                 ><?= htmlspecialchars($r['description'] ?? '') ?></textarea>
+
+                                <p class="form-help">
+                                    支持基础富文本（粗体、颜色、Emoji、链接、图片URL），仅编辑文案，不修改规则与区间。
+                                </p>
                             </div>
 
                             <div class="result-card__actions">
