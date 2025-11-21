@@ -76,6 +76,7 @@ $questionsStmt = $pdo->prepare("SELECT * FROM questions WHERE test_id = ? {$ques
 $questionsStmt->execute([$testId]);
 $questions = $questionsStmt->fetchAll(PDO::FETCH_ASSOC);
 $questionCount = count($questions);
+$isStepByStep = (!empty($test['display_mode']) && $test['display_mode'] === 'step_by_step');
 
 $playCountStmt = $pdo->prepare("SELECT COUNT(*) FROM test_runs WHERE test_id = ?");
 $playCountStmt->execute([$testId]);
@@ -164,16 +165,28 @@ $emoji = trim($test['emoji'] ?? ($test['title_emoji'] ?? ''));
     <?php if (!$questions): ?>
         <p>该测验还没有题目，请稍后再试。</p>
     <?php else: ?>
-        <form method="post" action="/submit.php" class="test-body">
+        <form method="post" action="/submit.php" class="test-body" id="quiz-form">
             <input type="hidden" name="test_id" value="<?= (int)$testId ?>">
+            <?php
+            $totalQuestions = count($questions);
+            $stepIndex = 0;
+            ?>
             <?php foreach ($questions as $idx => $question): ?>
                 <?php
                 $qid        = (int)$question['id'];
                 $questionNo = $question['sort_order'] ?? ($idx + 1);
                 $text       = pick_field($question, ['content', 'question_text', 'title', 'body'], '未命名问题');
                 $options    = $optionsByQuestion[$qid] ?? [];
+                $stepIndex++;
+                $stepClasses = 'question-block';
+                if ($isStepByStep) {
+                    $stepClasses .= ' question-step';
+                    if ($stepIndex === 1) {
+                        $stepClasses .= ' active';
+                    }
+                }
                 ?>
-                <div class="question-block">
+                <div class="<?= $stepClasses ?>" data-step="<?= $stepIndex ?>">
                     <div class="question-header">
                         <div class="question-index">Q<?= htmlspecialchars($questionNo) ?></div>
                         <div class="question-text"><?= htmlspecialchars($text) ?></div>
@@ -201,13 +214,29 @@ $emoji = trim($test['emoji'] ?? ($test['title_emoji'] ?? ''));
                             <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
+
+                    <?php if ($isStepByStep): ?>
+                        <div class="question-nav">
+                            <?php if ($stepIndex > 1): ?>
+                                <button type="button" class="btn-secondary btn-prev" data-prev="<?= $stepIndex - 1 ?>">上一题</button>
+                            <?php endif; ?>
+
+                            <?php if ($stepIndex < $totalQuestions): ?>
+                                <button type="button" class="btn-primary btn-next" data-next="<?= $stepIndex + 1 ?>">下一题</button>
+                            <?php else: ?>
+                                <button type="submit" class="btn-primary">提交结果</button>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
             <?php endforeach; ?>
 
-            <div class="test-actions">
-                <a href="/index.php" class="btn-secondary">返回测验列表</a>
-                <button type="submit" class="btn-primary">提交测验</button>
-            </div>
+            <?php if (!$isStepByStep): ?>
+                <div class="test-actions">
+                    <a href="/index.php" class="btn-secondary">返回测验列表</a>
+                    <button type="submit" class="btn-primary">提交测验</button>
+                </div>
+            <?php endif; ?>
         </form>
     <?php endif; ?>
 </div>
@@ -241,6 +270,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     updateProgress();
 });
+</script>
+<script src="/assets/js/main.js"></script>
 </script>
 </body>
 </html>

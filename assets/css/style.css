@@ -711,6 +711,30 @@ a:active {
     background-color: #f3f4f6;
 }
 
+/* 一题一页模式 */
+.question-step {
+    display: none;
+}
+.question-step.active {
+    display: block;
+}
+.question-nav {
+    margin-top: 16px;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+.question-step.shake {
+    animation: question-shake 0.3s;
+}
+@keyframes question-shake {
+    0%   { transform: translateX(0); }
+    25%  { transform: translateX(-4px); }
+    50%  { transform: translateX(4px); }
+    75%  { transform: translateX(-4px); }
+    100% { transform: translateX(0); }
+}
+
 @media (max-width: 640px) {
     .test-page {
         margin: 12px auto 24px;

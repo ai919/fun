@@ -65,6 +65,7 @@ $formData = [
     'sort_order'     => 0,
     'scoring_mode'   => 'simple',
     'scoring_config' => '',
+    'display_mode'   => 'single_page',
 ];
 
 $existingTest = null;
@@ -105,6 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
     $formData['sort_order']     = (int)($_POST['sort_order'] ?? 0);
     $formData['scoring_mode']   = $_POST['scoring_mode'] ?? 'simple';
     $formData['scoring_config'] = trim($_POST['scoring_config'] ?? '');
+    $formData['display_mode']   = ($_POST['display_mode'] ?? 'single_page') === 'step_by_step' ? 'step_by_step' : 'single_page';
 
     if ($formData['title'] === '') {
         $errors[] = '测验标题不能为空。';
@@ -165,6 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
             ':sort_order'     => $formData['sort_order'],
             ':scoring_mode'   => $formData['scoring_mode'],
             ':scoring_config' => $formData['scoring_config'] !== '' ? $formData['scoring_config'] : null,
+            ':display_mode'   => $formData['display_mode'],
         ];
         if ($hasEmojiCol) {
             $payload[':emoji'] = $formData['emoji'] !== '' ? $formData['emoji'] : null;
@@ -185,6 +188,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
                 'sort_order = :sort_order',
                 'scoring_mode = :scoring_mode',
                 'scoring_config = :scoring_config',
+                'display_mode = :display_mode',
                 'updated_at = NOW()',
             ];
             if ($hasEmojiCol) {
@@ -197,8 +201,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
             $updateStmt = $pdo->prepare($updateSql);
             $updateStmt->execute($payload);
         } else {
-            $columns = ['title', 'slug', 'subtitle', 'description', 'tags', 'status', 'sort_order', 'scoring_mode', 'scoring_config'];
-            $placeholders = [':title', ':slug', ':subtitle', ':description', ':tags', ':status', ':sort_order', ':scoring_mode', ':scoring_config'];
+            $columns = ['title', 'slug', 'subtitle', 'description', 'tags', 'status', 'sort_order', 'scoring_mode', 'scoring_config', 'display_mode'];
+            $placeholders = [':title', ':slug', ':subtitle', ':description', ':tags', ':status', ':sort_order', ':scoring_mode', ':scoring_config', ':display_mode'];
             if ($hasEmojiCol) {
                 $columns[] = 'emoji';
                 $placeholders[] = ':emoji';
@@ -301,6 +305,22 @@ if ($testId && $existingTest) {
             <div class="form-section">
                 <div class="form-section__title">外观与标签</div>
                 <div class="form-grid">
+                    <div class="form-field">
+                        <label class="form-label">展示方式</label>
+                        <div class="radio-group inline">
+                            <label>
+                                <input type="radio" name="display_mode" value="single_page"
+                                       <?= ($formData['display_mode'] ?? 'single_page') === 'single_page' ? 'checked' : '' ?>>
+                                一页显示全部题目
+                            </label>
+                            <label style="margin-left:16px;">
+                                <input type="radio" name="display_mode" value="step_by_step"
+                                       <?= ($formData['display_mode'] ?? '') === 'step_by_step' ? 'checked' : '' ?>>
+                                一题一页 · 逐题作答
+                            </label>
+                        </div>
+                        <p class="form-help">「一题一页」模式下，前台一次只显示一道题，答完点击下一题，最终仍然一次提交。</p>
+                    </div>
                     <div class="form-field">
                         <label class="form-label">副标题</label>
                         <input type="text" name="subtitle" class="form-input" value="<?= htmlspecialchars($formData['subtitle']) ?>">
