@@ -146,10 +146,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!$errors) {
             $insO = $pdo->prepare(
-                "INSERT INTO options (question_id, content, dimension_key, score)
-                 VALUES (?, ?, ?, ?)"
+                "INSERT INTO question_options (question_id, option_text, map_result_code, score_value)
+                 VALUES (:qid, :text, :result_code, :score)"
             );
-            $insO->execute([$questionId, $optContent, $dimensionKey, $score]);
+            $insO->execute([
+                ':qid'         => $questionId,
+                ':text'        => $optContent,
+                ':result_code' => $dimensionKey !== null ? $dimensionKey : null,
+                ':score'       => $score,
+            ]);
             $success = '选项已添加。';
         }
     }
@@ -217,12 +222,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!$errors) {
             $upd = $pdo->prepare(
-                "UPDATE options
-                 SET content = ?, dimension_key = ?, score = ?
-                 WHERE id = ?
-                   AND question_id IN (SELECT id FROM questions WHERE test_id = ?)"
+                "UPDATE question_options
+                 SET option_text = :text,
+                     map_result_code = :result_code,
+                     score_value = :score
+                 WHERE id = :id
+                   AND question_id IN (SELECT id FROM questions WHERE test_id = :tid)"
             );
-            $upd->execute([$optContent, $dimensionKey, $score, $oid, $testId]);
+            $upd->execute([
+                ':text'        => $optContent,
+                ':result_code' => $dimensionKey !== null ? $dimensionKey : null,
+                ':score'       => $score,
+                ':id'          => $oid,
+                ':tid'         => $testId,
+            ]);
             $success = '选项已更新。';
         }
     }
@@ -235,7 +248,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!$errors) {
             $del = $pdo->prepare(
-                "DELETE FROM options
+                "DELETE FROM question_options
                  WHERE id = ?
                    AND question_id IN (SELECT id FROM questions WHERE test_id = ?)"
             );
@@ -258,7 +271,7 @@ if ($questions) {
     $qIds = array_column($questions, 'id');
     $place = implode(',', array_fill(0, count($qIds), '?'));
     $oStmt = $pdo->prepare(
-        "SELECT * FROM options
+        "SELECT * FROM question_options
          WHERE question_id IN ($place)
          ORDER BY question_id ASC, id ASC"
     );

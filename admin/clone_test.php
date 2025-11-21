@@ -110,20 +110,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($questionIdMap) {
-                $optStmt = $pdo->prepare("SELECT * FROM options WHERE question_id IN (" . implode(',', array_keys($questionIdMap)) . ")");
+                $optStmt = $pdo->prepare("SELECT * FROM question_options WHERE question_id IN (" . implode(',', array_keys($questionIdMap)) . ")");
                 $optStmt->execute();
                 $options = $optStmt->fetchAll(PDO::FETCH_ASSOC);
                 if ($options) {
                     $insOpt = $pdo->prepare(
-                        "INSERT INTO options (question_id, content, dimension_key, score)
-                         VALUES (?, ?, ?, ?)"
+                        "INSERT INTO question_options (question_id, option_text, map_result_code, score_value)
+                         VALUES (:qid, :text, :result_code, :score)"
                     );
                     foreach ($options as $option) {
                         $insOpt->execute([
-                            $questionIdMap[$option['question_id']],
-                            $option['content'],
-                            $option['dimension_key'],
-                            $option['score'],
+                            ':qid'         => $questionIdMap[$option['question_id']],
+                            ':text'        => $option['option_text'] ?? ($option['content'] ?? ''),
+                            ':result_code' => $option['map_result_code'] ?? ($option['dimension_key'] ?? null),
+                            ':score'       => $option['score_value'] ?? ($option['score'] ?? 0),
                         ]);
                     }
                 }
