@@ -99,11 +99,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $questionIdMap = [];
             if ($questions) {
                 $insQ = $pdo->prepare(
-                    "INSERT INTO questions (test_id, order_number, content)
+                    "INSERT INTO questions (test_id, sort_order, content)
                      VALUES (?, ?, ?)"
                 );
                 foreach ($questions as $question) {
-                    $insQ->execute([$newTestId, $question['order_number'], $question['content']]);
+                    $sortOrder = $question['sort_order'] ?? ($question['order_number'] ?? null);
+                    $insQ->execute([$newTestId, $sortOrder, $question['content']]);
                     $questionIdMap[$question['id']] = (int)$pdo->lastInsertId();
                 }
             }

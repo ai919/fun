@@ -106,21 +106,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'add_question') {
         $content = trim($_POST['content'] ?? '');
-        $order   = (int)($_POST['order_number'] ?? 0);
+        $order   = (int)($_POST['sort_order'] ?? 0);
 
         if ($content === '') {
             $errors[] = '题目内容不能为空。';
         }
 
         if (!$order) {
-            $maxStmt = $pdo->prepare("SELECT COALESCE(MAX(order_number), 0) FROM questions WHERE test_id = ?");
+            $maxStmt = $pdo->prepare("SELECT COALESCE(MAX(sort_order), 0) FROM questions WHERE test_id = ?");
             $maxStmt->execute([$testId]);
             $order = (int)$maxStmt->fetchColumn() + 1;
         }
 
         if (!$errors) {
             $insQ = $pdo->prepare(
-                "INSERT INTO questions (test_id, order_number, content)
+                "INSERT INTO questions (test_id, sort_order, content)
                  VALUES (?, ?, ?)"
             );
             $insQ->execute([$testId, $order, $content]);
@@ -157,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'edit_question') {
         $qid     = (int)($_POST['question_id'] ?? 0);
         $content = trim($_POST['content'] ?? '');
-        $order   = (int)($_POST['order_number'] ?? 0);
+        $order   = (int)($_POST['sort_order'] ?? 0);
 
         if (!$qid) {
             $errors[] = '缺少题目 ID。';
@@ -168,7 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!$errors) {
             if (!$order) {
-                $oStmt = $pdo->prepare("SELECT order_number FROM questions WHERE id = ? AND test_id = ?");
+                $oStmt = $pdo->prepare("SELECT sort_order FROM questions WHERE id = ? AND test_id = ?");
                 $oStmt->execute([$qid, $testId]);
                 $order = (int)$oStmt->fetchColumn();
                 if (!$order) {
@@ -178,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $upd = $pdo->prepare(
                 "UPDATE questions
-                 SET content = ?, order_number = ?
+                 SET content = ?, sort_order = ?
                  WHERE id = ? AND test_id = ?"
             );
             $upd->execute([$content, $order, $qid, $testId]);
@@ -248,7 +248,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $qStmt = $pdo->prepare(
     "SELECT * FROM questions
      WHERE test_id = ?
-     ORDER BY order_number ASC, id ASC"
+     ORDER BY sort_order ASC, id ASC"
 );
 $qStmt->execute([$testId]);
 $questions = $qStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -296,7 +296,7 @@ ob_start();
             <div class="question-card-header">
                 <div>
                     <div class="question-card-title">
-                        Q<?= (int)$q['order_number'] ?>.
+                        Q<?= (int)($q['sort_order'] ?? 0) ?>.
                         <span class="question-card-meta">ID: <?= $qid ?></span>
                     </div>
                     <div><?= nl2br(htmlspecialchars($q['content'])) ?></div>
@@ -327,8 +327,8 @@ ob_start();
                         <tbody>
                         <?php foreach ($options as $op): ?>
                             <tr>
-                                <td><?= htmlspecialchars($op['content']) ?></td>
-                                <td><?= (int)$op['score'] ?></td>
+                    <td><?= htmlspecialchars($op['content']) ?></td>
+                    <td><?= (int)$op['score'] ?></td>
                                 <td><?= htmlspecialchars($op['dimension_key'] ?? '-') ?></td>
                                 <td class="option-actions">
                                     <details>
@@ -363,7 +363,7 @@ ob_start();
                     <input type="hidden" name="question_id" value="<?= $qid ?>">
                     <label>
                         排序号：
-                        <input type="number" name="order_number" value="<?= (int)$q['order_number'] ?>" style="width:80px;">
+                        <input type="number" name="sort_order" value="<?= (int)($q['sort_order'] ?? 0) ?>" style="width:80px;">
                     </label>
                     <label>
                         题目内容：
@@ -392,7 +392,7 @@ ob_start();
     <input type="hidden" name="action" value="add_question">
     <label>
         排序号（可选）：
-        <input type="number" name="order_number" placeholder="留空则自动排到最后">
+        <input type="number" name="sort_order" placeholder="留空则自动排到最后">
     </label>
     <label>
         题目内容（必填）：
