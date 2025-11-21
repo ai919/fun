@@ -13,26 +13,12 @@ $stmt = $pdo->prepare("
 $stmt->execute();
 $tests = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$seo = [
-    'title'       => 'DoFun 性格实验室 - 趣味测验中心',
-    'description' => 'DoFun 甄选的测验合集：关于金钱、安全感、亲密关系与自我探索的小实验。',
-    'url'         => df_current_url(),
-    'image'       => df_base_url() . '/og.php?scope=home',
-];
+$seo = build_seo_meta('home');
 ?>
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= htmlspecialchars($seo['title']) ?></title>
-    <meta name="description" content="<?= htmlspecialchars($seo['description']) ?>">
-    <link rel="canonical" href="<?= htmlspecialchars($seo['url']) ?>">
-    <meta property="og:title" content="<?= htmlspecialchars($seo['title']) ?>">
-    <meta property="og:description" content="<?= htmlspecialchars($seo['description']) ?>">
-    <meta property="og:image" content="<?= htmlspecialchars($seo['image']) ?>">
-    <meta property="og:url" content="<?= htmlspecialchars($seo['url']) ?>">
-    <meta property="og:type" content="website">
+<?php render_seo_head($seo); ?>
     <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="shortcut icon" href="/favicon.ico">
