@@ -70,31 +70,22 @@ if ($shareToken === '' && $pdoLoaded && isset($finalTest['id'], $finalResult['id
     }
 }
 
-$shareUrl = $shareToken !== '' ? (df_base_url() . '/result.php?token=' . urlencode($shareToken)) : df_current_url();
+$shareUrl = $shareToken !== ''
+    ? build_canonical_url('/result.php?token=' . urlencode($shareToken))
+    : build_canonical_url();
 
- $seo = [
-    'title'       => 'DoFun 性格实验室 - 测验结果',
-    'description' => '探索你的测验结果。',
-    'url'         => df_current_url(),
-    'image'       => df_base_url() . '/og.php?scope=result',
-];
-if ($finalTest && $finalResult) {
-    $seo = df_seo_for_result($finalTest, $finalResult);
-}
+$seo = $finalTest && $finalResult
+    ? build_seo_meta('result', ['test' => $finalTest, 'result' => $finalResult])
+    : build_seo_meta('generic', [
+        'title' => '测验结果',
+        'description' => '探索你的测验结果。',
+        'canonical' => $shareUrl,
+    ]);
 ?>
 <!doctype html>
 <html lang="zh-CN">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= htmlspecialchars($seo['title']) ?></title>
-    <meta name="description" content="<?= htmlspecialchars($seo['description']) ?>">
-    <link rel="canonical" href="<?= htmlspecialchars($seo['url']) ?>">
-    <meta property="og:title" content="<?= htmlspecialchars($seo['title']) ?>">
-    <meta property="og:description" content="<?= htmlspecialchars($seo['description']) ?>">
-    <meta property="og:image" content="<?= htmlspecialchars($seo['image']) ?>">
-    <meta property="og:url" content="<?= htmlspecialchars($seo['url']) ?>">
-    <meta property="og:type" content="website">
+<?php render_seo_head($seo); ?>
     <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>
@@ -153,7 +144,7 @@ $emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
 <div id="result-poster" class="result-poster">
   <div class="result-poster-inner">
     <div class="poster-header">
-      <div class="poster-brand">DoFun空间 · 测验结果</div>
+    <div class="poster-brand">DoFun心理实验空间 · 测验结果</div>
       <div class="poster-test-title">来自测验：<?= htmlspecialchars($finalTest['title'] ?? '') ?></div>
     </div>
 
@@ -187,7 +178,7 @@ $emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
     var toastEl = document.getElementById('copy-toast');
     if (!copyLinkBtn && !copyTextBtn) return;
 
-    var shareUrl = <?php echo json_encode($shareUrl); ?> || window.location.href;
+var shareUrl = <?php echo json_encode($shareUrl); ?> || window.location.href;
 
     var toastTimer = null;
     function showToast(text) {
@@ -222,7 +213,7 @@ $emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
 
     if (copyTextBtn) {
         var shareText = <?php
-            $shareTemplate = '我在「DoFun空间」做了《' . ($finalTest['title'] ?? '') . '》测验，结果是：' . ($finalResult['title'] ?? '') . '。你也可以来测测看：';
+        $shareTemplate = '我在「DoFun心理实验空间」做了《' . ($finalTest['title'] ?? '') . '》测验，结果是：' . ($finalResult['title'] ?? '') . '。你也可以来测测看：';
             echo json_encode($shareTemplate);
         ?> + shareUrl;
         copyTextBtn.addEventListener('click', function () {

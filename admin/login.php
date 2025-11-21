@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="zh-CN">
 <head>
     <meta charset="utf-8">
-    <title>DoFun 管理登录</title>
+    <title>DoFun心理实验空间 管理登录</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body {
@@ -122,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 <div class="card">
-    <h1>DoFun 管理后台</h1>
+    <h1>DoFun心理实验空间 管理后台</h1>
     <div class="sub">请登录以管理测验、结果与备份。</div>
     <form method="post">
         <div style="margin-bottom:10px;">

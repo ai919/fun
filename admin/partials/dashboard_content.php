@@ -2,9 +2,9 @@
 $config = require __DIR__ . '/../../backup_config.php';
 $backupUrl = '/backup.php?token=' . urlencode($config['token']);
 ?>
-<h2 style="margin-top:0;font-size:18px;margin-bottom:10px;">欢迎来到 DoFun 控制台</h2>
+<h2 style="margin-top:0;font-size:18px;margin-bottom:10px;">欢迎来到 DoFun心理实验空间 控制台</h2>
 <p style="font-size:13px;color:#9ca3af;margin-bottom:16px;">
-    在这里你可以管理测验、查看备份记录，并逐步把 DoFun 打磨成一个真正的性格实验平台。
+    在这里你可以管理测验、查看备份记录，并逐步把 DoFun心理实验空间 打磨成一个真正的性格实验平台。
     建议定期点击「立即备份」保存一份完整的 ZIP。
 </p>
 

@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_type'])) {
         if ($testId > 0 && $questionId > 0 && $questionText !== '') {
             $stmt = $pdo->prepare("
                 UPDATE questions
-                SET question_text = :qt, updated_at = NOW()
+                SET question_text = :qt
                 WHERE id = :id AND test_id = :test_id
             ");
             $stmt->execute([
@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_type'])) {
             if (is_array($options)) {
                 $stmtOpt = $pdo->prepare("
                     UPDATE question_options
-                    SET option_text = :ot, updated_at = NOW()
+                    SET option_text = :ot
                     WHERE id = :oid AND question_id = :qid
                 ");
                 foreach ($options as $optId => $text) {
@@ -69,8 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_type'])) {
                 UPDATE results
                 SET title = :title,
                     description = :description,
-                    image_url = :image_url,
-                    updated_at = NOW()
+                    image_url = :image_url
                 WHERE id = :id AND test_id = :test_id
             ");
             $stmt->execute([

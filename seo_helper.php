@@ -32,20 +32,20 @@ function build_canonical_url(string $path = ''): string
  */
 function build_seo_meta(string $pageType, array $data = []): array
 {
-    $siteName = 'DoFun 测验空间';
+    $siteName = 'DoFun心理实验空间';
     $baseUrl  = get_base_url();
     $defaultImage = $baseUrl . '/assets/img/dofun-poster-bg.jpg';
 
     $title = $siteName;
-    $desc  = '在线趣味测验空间，发现更有趣的自己。';
+    $desc  = '心理 性格 性情：更专业的在线测验实验室。';
     $canonical = build_canonical_url();
     $image = $defaultImage;
     $type  = 'website';
     $robots = 'index,follow';
 
     if ($pageType === 'home') {
-        $title = $siteName . '｜在线趣味测试更好发现自己';
-        $desc  = 'DoFun 是一个轻量、有趣的在线测验空间，提供人格、情感、社交、生活方式等多个方向的心理小测试，帮你以更轻松的方式认识自己。';
+        $title = $siteName . '｜心理 性格 性情：更专业的在线测验实验室';
+        $desc  = 'DoFun心理实验空间，是一个轻量、有趣的在线测验实验室，提供人格、情感、社交、生活方式等多个方向的心理小测试，帮你以更轻松的方式认识自己。';
         $canonical = build_canonical_url('/');
         $type = 'website';
     } elseif ($pageType === 'test') {
@@ -166,7 +166,7 @@ function render_seo_head(array $seo): void
     $type        = htmlspecialchars($seo['type'] ?? 'website', ENT_QUOTES, 'UTF-8');
     $robots      = htmlspecialchars($seo['robots'] ?? 'index,follow', ENT_QUOTES, 'UTF-8');
     $jsonLd      = $seo['json_ld'] ?? '';
-    $siteName    = 'DoFun 测验空间';
+    $siteName    = 'DoFun心理实验空间';
     $siteNameEsc = htmlspecialchars($siteName, ENT_QUOTES, 'UTF-8');
 
     echo "<title>{$title}</title>\n";

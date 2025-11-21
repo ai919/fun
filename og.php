@@ -4,7 +4,7 @@ require __DIR__ . '/lib/db_connect.php';
 
 $scope = $_GET['scope'] ?? 'test';
 
-$title    = 'DoFun 性格实验室';
+$title    = 'DoFun心理实验空间';
 $subtitle = '小小的题目，关于你的大方向。';
 
 if ($scope === 'test') {
@@ -87,7 +87,7 @@ $accent = imagecolorallocate($image, 196, 181, 253);
 $logoDot = imagecolorallocate($image, 129, 140, 248);
 imagefilledellipse($image, 120, 140, 16, 16, $logoDot);
 
-imagettftext($image, 22, 0, 150, 148, $white, $fontBold, 'DoFun 性格实验室');
+imagettftext($image, 22, 0, 150, 148, $white, $fontBold, 'DoFun心理实验空间');
 imagettftext($image, 16, 0, 150, 180, $muted, $fontRegular, 'Small psychological experiments about you.');
 
 $titleLines = df_wrap_text($title, $fontBold, 42, 900);

@@ -4,7 +4,7 @@ require_admin_login();
 
 require __DIR__ . '/../lib/db_connect.php';
 
-$pageTitle    = '克隆测验 - DoFun';
+$pageTitle    = '克隆测验 - DoFun心理实验空间';
 ($pageHeading = '克隆一个测验') || true;
 $pageSubtitle = '复制题目、选项、结果配置，生成一个新的测验草稿。';
 $activeMenu   = 'clone';

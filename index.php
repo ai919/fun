@@ -28,9 +28,9 @@ $seo = build_seo_meta('home');
     <div class="page-container">
         <header class="site-header">
             <div class="site-title-wrap">
-                <h1 class="site-title">DoFun空间</h1>
+                <h1 class="site-title">DoFun心理实验空间</h1>
             </div>
-            <p class="site-subtitle">在线趣味测试更好发现自己</p>
+            <p class="site-subtitle">心理 性格 性情：更专业的在线测验实验室</p>
         </header>
 
         <div class="quiz-grid tests-grid">

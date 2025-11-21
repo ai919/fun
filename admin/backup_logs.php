@@ -40,7 +40,7 @@ ob_start();
 
 <div class="admin-card admin-toolbar" style="align-items:flex-start; gap:12px; flex-wrap:wrap;">
     <div>
-        <div class="admin-page-title" style="font-size:15px;margin:0;">一键备份 DoFun 网站</div>
+        <div class="admin-page-title" style="font-size:15px;margin:0;">一键备份 DoFun心理实验空间</div>
         <div class="admin-table__muted" style="max-width:520px;">自动打包数据库与站点文件生成 ZIP，建议定期下载保存。</div>
     </div>
     <div style="margin-left:auto;">

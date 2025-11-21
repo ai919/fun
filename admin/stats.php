@@ -19,7 +19,7 @@ if (isset($_GET['test_id'])) {
 if (!$testId) {
     $statsTests = $pdo->query("SELECT id, title, slug FROM tests ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
 
-    $pageTitle    = '测验统计 - DoFun';
+$pageTitle    = '测验统计 - DoFun心理实验空间';
     $pageHeading  = '测验统计';
     $pageSubtitle = '选择一个测验查看运行数据。';
     $activeMenu   = 'stats';

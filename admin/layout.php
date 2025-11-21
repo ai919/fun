@@ -2,7 +2,7 @@
 require_once __DIR__ . '/auth.php';
 
 if (!isset($pageTitle)) {
-    $pageTitle = 'DoFun 后台';
+    $pageTitle = 'DoFun心理实验空间 后台';
 }
 if (!isset($activeMenu)) {
     $activeMenu = '';
@@ -12,7 +12,7 @@ if (!isset($activeMenu)) {
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title><?= htmlspecialchars($pageTitle) ?> · DoFun Admin</title>
+    <title><?= htmlspecialchars($pageTitle) ?> · DoFun心理实验空间 Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="../favicon.ico">
     <link rel="stylesheet" href="../assets/css/admin.css?v=20251120">
@@ -25,8 +25,8 @@ if (!isset($activeMenu)) {
         <div class="admin-sidebar__logo">
             <div class="admin-logo-mark">DF</div>
             <div class="admin-logo-text">
-                <div class="admin-logo-text__title">DoFun 后台</div>
-                <div class="admin-logo-text__sub">在线趣味测试管理</div>
+                <div class="admin-logo-text__title">DoFun心理实验空间 后台</div>
+                <div class="admin-logo-text__sub">在线测验实验室管理</div>
             </div>
         </div>
 
@@ -103,7 +103,7 @@ if (!isset($activeMenu)) {
         </main>
 
         <footer class="admin-footer">
-            <span>DoFun Admin · <?= date('Y') ?></span>
+            <span>DoFun心理实验空间 Admin · <?= date('Y') ?></span>
             <span class="admin-footer__dot">·</span>
             <span>轻量测验管理后台</span>
         </footer>

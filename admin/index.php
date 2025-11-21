@@ -28,7 +28,7 @@ ob_start();
 
 <div class="admin-toolbar">
     <div class="admin-toolbar__left">
-        <span class="admin-table__muted">欢迎回来，这里是 DoFun 测验后台概览。</span>
+        <span class="admin-table__muted">欢迎回来，这里是 DoFun心理实验空间后台概览。</span>
     </div>
     <div class="admin-toolbar__right">
         <a href="new_test.php" class="btn btn-primary btn-lg">+ 新建测验</a>

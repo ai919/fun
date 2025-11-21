@@ -16,7 +16,7 @@ REM set PHP_EXE="C:\laragon\bin\php\php-8.3.0-Win32-vs16-x64\php.exe"
 cd /d "%PROJECT_DIR%"
 
 echo ========================================
-echo  启动 DoFun 本地开发服务器
+echo  启动 DoFun心理实验空间 本地开发服务器
 echo  地址: http://localhost:%PORT%/
 echo  关闭窗口即可停止服务
 echo ========================================
