@@ -773,8 +773,8 @@ a:active {
     margin: 40px auto;
     padding: 24px 20px;
     background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(15,23,42,0.08);
+    border-radius: 18px;
+    box-shadow: 0 10px 40px rgba(15,23,42,0.10);
 }
 
 .auth-container h1,
@@ -797,6 +797,7 @@ a:active {
     border-radius: 8px;
     border: 1px solid #e5e7eb;
     font-size: 14px;
+    box-sizing: border-box;
 }
 .auth-error {
     background: #fee2e2;
@@ -840,6 +841,69 @@ a:active {
 .my-tests-table th {
     text-align: left;
     color: #6b7280;
+}
+
+.my-tests-actions {
+    margin: 0 0 12px;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.auth-submit-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px 0;
+    border-radius: 999px;
+    font-size: 15px;
+}
+
+.auth-footer {
+    margin-top: 16px;
+    font-size: 13px;
+    color: #6b7280;
+}
+.auth-footer a {
+    color: #4f46e5;
+    text-decoration: none;
+}
+.auth-footer a:hover {
+    text-decoration: underline;
+}
+
+.top-user-bar {
+    width: 100%;
+    background: #ffffffdd;
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid #eee;
+}
+
+.top-user-bar-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 10px 16px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 16px;
+    font-size: 14px;
+}
+
+.tub-nickname {
+    font-weight: 600;
+    color: #333;
+}
+
+.tub-link {
+    color: #555;
+    text-decoration: none;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: 0.2s;
+}
+
+.tub-link:hover {
+    background: #f7f7f7;
+    color: #111;
 }
 
 @media (max-width: 640px) {

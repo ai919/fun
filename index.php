@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/lib/db_connect.php';
 require_once __DIR__ . '/seo_helper.php';
+require_once __DIR__ . '/lib/user_auth.php';
 
 $stmt = $pdo->prepare("
     SELECT
@@ -14,6 +15,7 @@ $stmt->execute();
 $tests = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $seo = build_seo_meta('home');
+$user = UserAuth::currentUser();
 ?>
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -24,6 +26,22 @@ $seo = build_seo_meta('home');
     <link rel="shortcut icon" href="/favicon.ico">
 </head>
 <body>
+<?php if (!defined('IN_ADMIN')): ?>
+<div class="top-user-bar">
+    <div class="top-user-bar-inner">
+        <?php if ($user): ?>
+            <span class="tub-nickname">
+                <?php echo htmlspecialchars($user['nickname'] ?: $user['email']); ?>
+            </span>
+            <a href="/my_tests.php" class="tub-link">我的测验</a>
+            <a href="/logout.php" class="tub-link">退出</a>
+        <?php else: ?>
+            <a href="/login.php" class="tub-link">登录</a>
+            <a href="/register.php" class="tub-link">注册</a>
+        <?php endif; ?>
+    </div>
+</div>
+<?php endif; ?>
 <main class="home">
     <div class="page-container">
         <header class="site-header">

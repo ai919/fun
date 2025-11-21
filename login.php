@@ -3,10 +3,10 @@ require_once __DIR__ . '/lib/user_auth.php';
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = $_POST['email'] ?? '';
+    $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
 
-    $result = UserAuth::login($email, $password);
+    $result = UserAuth::login($username, $password);
     if ($result['success']) {
         header('Location: /my_tests.php');
         exit;
@@ -16,9 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $user = UserAuth::currentUser();
-$redirectTarget = '/my_tests.php';
 if ($user) {
-    header('Location: ' . $redirectTarget);
+    header('Location: /my_tests.php');
     exit;
 }
 ?>
@@ -37,19 +36,18 @@ if ($user) {
     <?php endif; ?>
     <form method="post">
         <div class="form-group">
-            <label>邮箱</label>
-            <input type="email" name="email" required placeholder="you@example.com">
+            <label>用户名</label>
+            <input type="text" name="username" required placeholder="注册时设置的用户名" maxlength="25" minlength="3">
         </div>
         <div class="form-group">
             <label>密码</label>
-            <input type="password" name="password" required>
+            <input type="password" name="password" required maxlength="20" minlength="6">
         </div>
-        <button type="submit" class="btn btn-primary">登录</button>
+        <button type="submit" class="btn btn-primary auth-submit-btn">登录</button>
     </form>
     <p class="auth-footer">
-        还没有账号？<a href="/register.php">免费注册</a>
-    </p>
-    <p class="auth-footer">
+        还没有账号？ <a href="/register.php">立即注册</a>
+        &nbsp;&nbsp;&nbsp;
         <a href="/">返回首页</a>
     </p>
 </div>

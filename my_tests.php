@@ -9,6 +9,7 @@ $stmt = $pdo->prepare("
         r.id,
         r.created_at,
         r.total_score,
+        r.share_token,
         t.title AS test_title,
         t.slug   AS test_slug,
         res.title AS result_title
@@ -38,6 +39,9 @@ $runs = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <a href="/logout.php" class="link-logout">退出</a>
         </div>
     </header>
+    <div class="my-tests-actions">
+        <a href="/" class="btn-secondary">← 返回首页</a>
+    </div>
 
     <?php if (empty($runs)): ?>
         <p>你还没有任何测验记录，去首页找一个喜欢的测验试试吧～</p>
@@ -60,7 +64,20 @@ $runs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <?php echo htmlspecialchars($run['test_title']); ?>
                             </a>
                         </td>
-                        <td><?php echo htmlspecialchars($run['result_title'] ?: '-'); ?></td>
+                        <td>
+                            <?php
+                            $shareLink = !empty($run['share_token'])
+                                ? '/result.php?token=' . urlencode($run['share_token'])
+                                : '';
+                            ?>
+                            <?php if ($shareLink): ?>
+                                <a href="<?php echo $shareLink; ?>">
+                                    <?php echo htmlspecialchars($run['result_title'] ?: '查看结果'); ?>
+                                </a>
+                            <?php else: ?>
+                                <?php echo htmlspecialchars($run['result_title'] ?: '-'); ?>
+                            <?php endif; ?>
+                        </td>
                         <td><?php echo $run['total_score'] !== null ? (int)$run['total_score'] : '-'; ?></td>
                         <td><?php echo htmlspecialchars($run['created_at']); ?></td>
                     </tr>

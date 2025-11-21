@@ -129,13 +129,18 @@ if (!empty($test['description'])) {
     $heroDescription = $test['description'];
 }
 $emoji = trim($test['emoji'] ?? ($test['title_emoji'] ?? ''));
+$titleColor = '#111827';
+$titleColorField = trim($test['title_color'] ?? '');
+if ($titleColorField !== '' && preg_match('/^#[0-9a-fA-F]{6}$/', $titleColorField)) {
+    $titleColor = $titleColorField;
+}
 ?>
 
 <div class="test-page">
     <header class="test-hero">
         <div class="test-hero-meta">
             <div class="test-hero-text">
-                <h1 class="test-title">
+                <h1 class="test-title" style="color: <?= htmlspecialchars($titleColor) ?>">
                     <?php if ($emoji !== ''): ?>
                         <span class="test-title-emoji"><?= htmlspecialchars($emoji) ?></span>
                     <?php endif; ?>

@@ -13,18 +13,28 @@ class UserAuth
     {
         global $pdo;
 
-        $email = trim(strtolower($email));
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return ['success' => false, 'message' => '邮箱格式不正确'];
+        // 这里的 $email 实际用于用户名
+        $username = trim($email);
+
+        // 用户名规则：英文 + 数字，6 位
+        if (!preg_match('/^[A-Za-z0-9]{3,25}$/', $username)) {
+            return ['success' => false, 'message' => '用户名需为 3-25 位英文和数字组合'];
         }
-        if (mb_strlen($password) < 6) {
-            return ['success' => false, 'message' => '密码至少 6 位'];
+        $pwdLen = mb_strlen($password);
+        if ($pwdLen < 6 || $pwdLen > 20) {
+            return ['success' => false, 'message' => '密码长度需在 6-20 位'];
+        }
+        if ($nickname !== null && $nickname !== '') {
+            $nLen = mb_strlen($nickname);
+            if ($nLen < 3 || $nLen > 15) {
+                return ['success' => false, 'message' => '昵称长度需在 3-15 位'];
+            }
         }
 
         $stmt = $pdo->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
-        $stmt->execute([':email' => $email]);
+        $stmt->execute([':email' => $username]);
         if ($stmt->fetch()) {
-            return ['success' => false, 'message' => '这个邮箱已经注册过了'];
+            return ['success' => false, 'message' => '该用户名已被注册'];
         }
 
         $hash = password_hash($password, PASSWORD_DEFAULT);
@@ -33,7 +43,7 @@ class UserAuth
             VALUES (:email, :hash, :nickname)
         ");
         $stmt->execute([
-            ':email'    => $email,
+            ':email'    => $username,
             ':hash'     => $hash,
             ':nickname' => $nickname ?: null,
         ]);
@@ -47,13 +57,13 @@ class UserAuth
     public static function login($email, $password)
     {
         global $pdo;
-        $email = trim(strtolower($email));
+        $username = trim($email);
         $stmt = $pdo->prepare("SELECT * FROM users WHERE email = :email LIMIT 1");
-        $stmt->execute([':email' => $email]);
+        $stmt->execute([':email' => $username]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$user || empty($user['password_hash']) || !password_verify($password, $user['password_hash'])) {
-            return ['success' => false, 'message' => '邮箱或密码不正确'];
+            return ['success' => false, 'message' => '用户名或密码不正确'];
         }
 
         $_SESSION['user_id'] = (int)$user['id'];

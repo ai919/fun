@@ -3,11 +3,11 @@ require_once __DIR__ . '/lib/user_auth.php';
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = $_POST['email'] ?? '';
+    $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
     $nickname = $_POST['nickname'] ?? null;
 
-    $result = UserAuth::register($email, $password, $nickname);
+    $result = UserAuth::register($username, $password, $nickname);
     if ($result['success']) {
         header('Location: /my_tests.php');
         exit;
@@ -37,23 +37,22 @@ if ($user) {
     <?php endif; ?>
     <form method="post">
         <div class="form-group">
-            <label>邮箱</label>
-            <input type="email" name="email" required placeholder="you@example.com">
+            <label>用户名（英文+数字 3-25 位）</label>
+            <input type="text" name="username" required maxlength="25" minlength="3" placeholder="如：df1234">
         </div>
         <div class="form-group">
-            <label>密码（至少 6 位）</label>
-            <input type="password" name="password" required minlength="6">
+            <label>密码（6-20 位）</label>
+            <input type="password" name="password" required minlength="6" maxlength="20">
         </div>
         <div class="form-group">
-            <label>昵称（可选）</label>
-            <input type="text" name="nickname" placeholder="怎么称呼你">
+            <label>昵称（可选，3-15 位）</label>
+            <input type="text" name="nickname" placeholder="怎么称呼你" minlength="3" maxlength="15">
         </div>
-        <button type="submit" class="btn btn-primary">注册并开始测验</button>
+        <button type="submit" class="btn btn-primary auth-submit-btn">注册</button>
     </form>
     <p class="auth-footer">
-        已有账号？<a href="/login.php">直接登录</a>
-    </p>
-    <p class="auth-footer">
+        已有账号？ <a href="/login.php">直接登录</a>
+        &nbsp;&nbsp;&nbsp;
         <a href="/">返回首页</a>
     </p>
 </div>

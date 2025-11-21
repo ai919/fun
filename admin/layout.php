@@ -187,3 +187,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 </html>
+<?php
+if (!defined('IN_ADMIN')) {
+    define('IN_ADMIN', true);
+}
