@@ -41,16 +41,6 @@ if (!isset($activeMenu)) {
                 <span class="admin-nav__icon">🧪</span>
                 <span class="admin-nav__label">测验管理</span>
             </a>
-            <a href="questions.php"
-               class="admin-nav__item <?= $activeMenu === 'questions' ? 'is-active' : '' ?>">
-                <span class="admin-nav__icon">❓</span>
-                <span class="admin-nav__label">题目管理</span>
-            </a>
-            <a href="results.php"
-               class="admin-nav__item <?= $activeMenu === 'results' ? 'is-active' : '' ?>">
-                <span class="admin-nav__icon">🎯</span>
-                <span class="admin-nav__label">结果管理</span>
-            </a>
             <a href="stats.php"
                class="admin-nav__item <?= $activeMenu === 'stats' ? 'is-active' : '' ?>">
                 <span class="admin-nav__icon">📈</span>

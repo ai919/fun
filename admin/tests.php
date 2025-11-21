@@ -100,7 +100,7 @@ ob_start();
                 </td>
                 <td class="admin-table__actions">
                     <a href="test_edit.php?id=<?= (int)$test['id'] ?>" class="btn btn-xs">
-                        编辑
+                        管理测验
                     </a>
                     <a href="../test.php?slug=<?= urlencode($test['slug']) ?>"
                        class="btn btn-xs btn-ghost" target="_blank">
