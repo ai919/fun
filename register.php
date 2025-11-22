@@ -1,18 +1,23 @@
 <?php
 require_once __DIR__ . '/lib/user_auth.php';
+require_once __DIR__ . '/lib/csrf.php';
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = $_POST['username'] ?? '';
-    $password = $_POST['password'] ?? '';
-    $nickname = $_POST['nickname'] ?? null;
-
-    $result = UserAuth::register($username, $password, $nickname);
-    if ($result['success']) {
-        header('Location: /my_tests.php');
-        exit;
+    if (!CSRF::validateToken()) {
+        $error = 'CSRF token 验证失败，请刷新页面后重试';
     } else {
-        $error = $result['message'] ?? '注册失败，请稍后再试';
+        $username = $_POST['username'] ?? '';
+        $password = $_POST['password'] ?? '';
+        $nickname = $_POST['nickname'] ?? null;
+
+        $result = UserAuth::register($username, $password, $nickname);
+        if ($result['success']) {
+            header('Location: /my_tests.php');
+            exit;
+        } else {
+            $error = $result['message'] ?? '注册失败，请稍后再试';
+        }
     }
 }
 
@@ -36,6 +41,7 @@ if ($user) {
         <div class="auth-error"><?php echo htmlspecialchars($error); ?></div>
     <?php endif; ?>
     <form method="post">
+        <?php echo CSRF::getTokenField(); ?>
         <div class="form-group">
             <label>用户名（英文+数字 3-25 位）</label>
             <input type="text" name="username" required maxlength="25" minlength="3" placeholder="如：df1234">

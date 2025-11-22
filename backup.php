@@ -42,18 +42,38 @@ $zipFile = $backupDir . DIRECTORY_SEPARATOR . $baseName . '.zip';
 
 $dumpPath = $config['mysqldump_path'];
 
+// 创建临时 MySQL 配置文件，避免密码出现在进程列表中
+$mysqlConfigFile = $tempDir . DIRECTORY_SEPARATOR . 'mysql_config_' . uniqid() . '.cnf';
+$mysqlConfigContent = sprintf(
+    "[client]\nhost=%s\nport=%s\nuser=%s\npassword=%s\n",
+    $dbConf['host'],
+    $dbConf['port'],
+    $dbConf['user'],
+    $dbConf['password']
+);
+
+if (file_put_contents($mysqlConfigFile, $mysqlConfigContent) === false) {
+    http_response_code(500);
+    echo "无法创建 MySQL 配置文件";
+    exit;
+}
+
+// 设置文件权限为 600（仅所有者可读）
+@chmod($mysqlConfigFile, 0600);
+
+// 使用 --defaults-file 选项，密码不会出现在进程列表中
 $cmd = sprintf(
-    '%s --host=%s --port=%s --user=%s --password=%s --default-character-set=utf8mb4 %s > %s',
+    '%s --defaults-file=%s --default-character-set=utf8mb4 %s > %s',
     escapeshellcmd($dumpPath),
-    escapeshellarg($dbConf['host']),
-    escapeshellarg($dbConf['port']),
-    escapeshellarg($dbConf['user']),
-    escapeshellarg($dbConf['password']),
+    escapeshellarg($mysqlConfigFile),
     escapeshellarg($dbConf['name']),
     escapeshellarg($sqlFile)
 );
 
 exec($cmd, $output, $returnVar);
+
+// 立即删除临时配置文件
+@unlink($mysqlConfigFile);
 
 if ($returnVar !== 0 || !file_exists($sqlFile)) {
     http_response_code(500);

@@ -1,17 +1,22 @@
 <?php
 require_once __DIR__ . '/lib/user_auth.php';
+require_once __DIR__ . '/lib/csrf.php';
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = $_POST['username'] ?? '';
-    $password = $_POST['password'] ?? '';
-
-    $result = UserAuth::login($username, $password);
-    if ($result['success']) {
-        header('Location: /my_tests.php');
-        exit;
+    if (!CSRF::validateToken()) {
+        $error = 'CSRF token 验证失败，请刷新页面后重试';
     } else {
-        $error = $result['message'] ?? '登录失败，请稍后再试';
+        $username = $_POST['username'] ?? '';
+        $password = $_POST['password'] ?? '';
+
+        $result = UserAuth::login($username, $password);
+        if ($result['success']) {
+            header('Location: /my_tests.php');
+            exit;
+        } else {
+            $error = $result['message'] ?? '登录失败，请稍后再试';
+        }
     }
 }
 
@@ -35,6 +40,7 @@ if ($user) {
         <div class="auth-error"><?php echo htmlspecialchars($error); ?></div>
     <?php endif; ?>
     <form method="post">
+        <?php echo CSRF::getTokenField(); ?>
         <div class="form-group">
             <label>用户名</label>
             <input type="text" name="username" required placeholder="注册时设置的用户名" maxlength="25" minlength="3">

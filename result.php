@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/seo_helper.php';
 require_once __DIR__ . '/lib/db_connect.php';
+require_once __DIR__ . '/lib/html_purifier.php';
 
 $shareTokenParam = isset($_GET['token']) ? trim((string)$_GET['token']) : '';
 $runIdParam      = isset($_GET['run']) ? (int)$_GET['run'] : 0;
@@ -108,7 +109,7 @@ $emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
                 <strong><?= htmlspecialchars($finalResult['title']) ?></strong>
             </p>
             <div class="result-description">
-                <?= nl2br(htmlspecialchars($finalResult['description'] ?? '')) ?>
+                <?= HTMLPurifier::purifyWithBreaks($finalResult['description'] ?? '', true) ?>
             </div>
             <?php if (!empty($dimensionScores)): ?>
                 <div class="result-description" style="margin-top:12px;">
@@ -160,7 +161,7 @@ $emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
     </div>
 
     <div class="poster-description">
-      <?= nl2br(htmlspecialchars($finalResult['description'] ?? '')) ?>
+      <?= HTMLPurifier::purifyWithBreaks($finalResult['description'] ?? '', true) ?>
     </div>
 
     <div class="poster-footer">

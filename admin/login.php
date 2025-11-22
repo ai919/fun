@@ -4,6 +4,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require __DIR__ . '/../lib/db_connect.php';
+require_once __DIR__ . '/../lib/csrf.php';
 $adminConfig = require __DIR__ . '/../config/admin.php';
 
 if (!empty($_SESSION['admin_id'])) {
@@ -16,6 +17,9 @@ $username = '';
 $useDbAuth = (int)$pdo->query("SELECT COUNT(*) FROM admin_users")->fetchColumn() > 0;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!CSRF::validateToken()) {
+        $error = 'CSRF token 验证失败，请刷新页面后重试';
+    } else {
     $username = trim($_POST['username'] ?? '');
     $password = trim($_POST['password'] ?? '');
 
@@ -43,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $error = '账号或密码错误';
         }
+    }
     }
 }
 ?>
@@ -125,6 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <h1>DoFun心理实验空间 管理后台</h1>
     <div class="sub">请登录以管理测验、结果与备份。</div>
     <form method="post">
+        <?php echo CSRF::getTokenField(); ?>
         <div style="margin-bottom:10px;">
             <label>账号</label>
             <input type="text" name="username" value="<?= htmlspecialchars($username) ?>" required>

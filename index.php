@@ -2,6 +2,7 @@
 require __DIR__ . '/lib/db_connect.php';
 require_once __DIR__ . '/seo_helper.php';
 require_once __DIR__ . '/lib/user_auth.php';
+require_once __DIR__ . '/lib/html_purifier.php';
 
 $stmt = $pdo->prepare("
     SELECT
@@ -105,7 +106,7 @@ $user = UserAuth::currentUser();
                         </p>
                     <?php elseif (!empty($test['description'])): ?>
                         <p class="card-description">
-                            <?= htmlspecialchars(mb_substr($test['description'], 0, 80), ENT_QUOTES, 'UTF-8') ?>
+                            <?= htmlspecialchars(mb_substr(strip_tags($test['description']), 0, 80), ENT_QUOTES, 'UTF-8') ?>
                         </p>
                     <?php else: ?>
                         <p class="card-description">&nbsp;</p>

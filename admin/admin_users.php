@@ -2,6 +2,7 @@
 require_once __DIR__ . '/auth.php';
 require_admin_login();
 require_once __DIR__ . '/../lib/db_connect.php';
+require_once __DIR__ . '/../lib/csrf.php';
 
 $pageTitle  = '管理员';
 $pageSubtitle = '管理后台账号，支持新增、修改、启用/禁用与重置密码';
@@ -12,6 +13,9 @@ $success = '';
 
 // Handle create/update
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!CSRF::validateToken()) {
+        $errors[] = 'CSRF token 验证失败，请刷新页面后重试';
+    } else {
     $action   = $_POST['action'] ?? '';
     $username = trim($_POST['username'] ?? '');
     $display  = trim($_POST['display_name'] ?? '');
@@ -74,6 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+    }
 }
 
 $admins = $pdo->query('SELECT * FROM admin_users ORDER BY id ASC')->fetchAll(PDO::FETCH_ASSOC);
@@ -96,6 +101,7 @@ ob_start();
     <div class="form-section">
         <div class="form-section__title">新增管理员</div>
         <form method="post" class="form-grid">
+            <?php echo CSRF::getTokenField(); ?>
             <input type="hidden" name="action" value="create">
             <div class="form-field">
                 <label class="form-label">用户名 *</label>
@@ -144,6 +150,7 @@ ob_start();
                     </td>
                     <td>
                         <form method="post" class="admin-table__actions" style="gap:6px; flex-wrap:wrap; align-items:center;">
+                            <?php echo CSRF::getTokenField(); ?>
                             <input type="hidden" name="action" value="update">
                             <input type="hidden" name="user_id" value="<?= (int)$admin['id'] ?>">
                             <input type="text" name="username" class="form-input" style="width:120px;"

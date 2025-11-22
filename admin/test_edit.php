@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../lib/db_connect.php';
+require_once __DIR__ . '/../lib/csrf.php';
 require_admin_login();
 
 $isEditing   = isset($_GET['id']) && ctype_digit((string)$_GET['id']);
@@ -16,6 +17,10 @@ if (!in_array($section, ['basic', 'questions', 'results'], true)) {
 $testId = isset($_GET['id']) && ctype_digit((string)$_GET['id']) ? (int)$_GET['id'] : 0;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_type'])) {
+    if (!CSRF::validateToken()) {
+        http_response_code(403);
+        die('CSRF token 验证失败，请刷新页面后重试');
+    }
     $editType = $_POST['edit_type'];
 
     if ($editType === 'question_copy') {

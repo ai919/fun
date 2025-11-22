@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主机： localhost
--- 生成日期： 2025-11-20 10:39:41
+-- 生成日期： 2025-11-22 09:19:33
 -- 服务器版本： 5.7.39
 -- PHP 版本： 8.3.25
 
@@ -70,6 +70,21 @@ CREATE TABLE `questions` (
 -- --------------------------------------------------------
 
 --
+-- 表的结构 `question_answers`
+--
+
+CREATE TABLE `question_answers` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `test_run_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `test_id` int(10) UNSIGNED NOT NULL,
+  `question_id` int(10) UNSIGNED NOT NULL,
+  `option_key` char(1) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- 表的结构 `question_options`
 --
 
@@ -79,7 +94,7 @@ CREATE TABLE `question_options` (
   `option_key` char(1) COLLATE utf8mb4_unicode_ci NOT NULL,
   `option_text` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `map_result_code` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `score_value` int(11) NOT NULL DEFAULT '1',
+  `score_value` int(11) NOT NULL DEFAULT '0',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -122,7 +137,8 @@ CREATE TABLE `tests` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `scoring_mode` enum('simple','dimensions','range','custom') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'simple',
-  `scoring_config` json DEFAULT NULL
+  `scoring_config` json DEFAULT NULL,
+  `display_mode` enum('single_page','step_by_step') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'single_page'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -133,13 +149,15 @@ CREATE TABLE `tests` (
 
 CREATE TABLE `test_runs` (
   `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED DEFAULT NULL,
   `test_id` int(10) UNSIGNED NOT NULL,
   `result_id` int(10) UNSIGNED DEFAULT NULL,
   `user_identifier` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `ip_address` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `user_agent` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `total_score` int(11) DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `share_token` char(16) COLLATE utf8mb4_unicode_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -153,6 +171,21 @@ CREATE TABLE `test_run_scores` (
   `test_run_id` bigint(20) UNSIGNED NOT NULL,
   `dimension_key` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `score_value` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `users`
+--
+
+CREATE TABLE `users` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `password_hash` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `nickname` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_login_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -178,6 +211,14 @@ ALTER TABLE `backup_logs`
 ALTER TABLE `questions`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_questions_test_id` (`test_id`);
+
+--
+-- 表的索引 `question_answers`
+--
+ALTER TABLE `question_answers`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_test_run_id` (`test_run_id`),
+  ADD KEY `idx_test_question` (`test_id`,`question_id`);
 
 --
 -- 表的索引 `question_options`
@@ -206,7 +247,8 @@ ALTER TABLE `tests`
 ALTER TABLE `test_runs`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_runs_test_id` (`test_id`),
-  ADD KEY `idx_runs_result_id` (`result_id`);
+  ADD KEY `idx_runs_result_id` (`result_id`),
+  ADD KEY `idx_runs_user_id` (`user_id`);
 
 --
 -- 表的索引 `test_run_scores`
@@ -214,6 +256,13 @@ ALTER TABLE `test_runs`
 ALTER TABLE `test_run_scores`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_scores_run_id` (`test_run_id`);
+
+--
+-- 表的索引 `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uniq_users_email` (`email`);
 
 --
 -- 在导出的表使用AUTO_INCREMENT
@@ -236,6 +285,12 @@ ALTER TABLE `backup_logs`
 --
 ALTER TABLE `questions`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- 使用表AUTO_INCREMENT `question_answers`
+--
+ALTER TABLE `question_answers`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- 使用表AUTO_INCREMENT `question_options`
@@ -266,6 +321,12 @@ ALTER TABLE `test_runs`
 --
 ALTER TABLE `test_run_scores`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- 使用表AUTO_INCREMENT `users`
+--
+ALTER TABLE `users`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- 限制导出的表

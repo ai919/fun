@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/lib/db_connect.php';
+require_once __DIR__ . '/lib/html_purifier.php';
 
 function pick_field(array $row, array $candidates, $default = '')
 {
@@ -151,7 +152,7 @@ if ($titleColorField !== '' && preg_match('/^#[0-9a-fA-F]{6}$/', $titleColorFiel
                 <?php endif; ?>
                 <?php if ($heroDescription !== ''): ?>
                     <div class="test-description">
-                        <?= nl2br(htmlspecialchars($heroDescription)) ?>
+                        <?= HTMLPurifier::purifyWithBreaks($heroDescription, true) ?>
                     </div>
                 <?php endif; ?>
             </div>
@@ -177,6 +178,7 @@ if ($titleColorField !== '' && preg_match('/^#[0-9a-fA-F]{6}$/', $titleColorFiel
         <p>该测验还没有题目，请稍后再试。</p>
     <?php else: ?>
         <form method="post" action="/submit.php" class="quiz-form test-body" id="quiz-form">
+            <?php require_once __DIR__ . '/lib/csrf.php'; echo CSRF::getTokenField(); ?>
             <input type="hidden" name="test_id" value="<?= (int)$testId ?>">
 
             <div class="quiz-questions-wrapper <?= $isStepByStep ? 'step-mode' : 'single-page-mode' ?>"
@@ -185,7 +187,7 @@ if ($titleColorField !== '' && preg_match('/^#[0-9a-fA-F]{6}$/', $titleColorFiel
                     <?php
                     $qid        = (int)$question['id'];
                     $questionNo = $question['sort_order'] ?? ($idx + 1);
-                    $text       = pick_field($question, ['content', 'question_text', 'title', 'body'], '未命名问题');
+                    $text       = $question['question_text'] ?? '未命名问题';
                     $options    = $optionsByQuestion[$qid] ?? [];
                     $stepIndex  = $idx + 1;
                     ?>

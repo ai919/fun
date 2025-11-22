@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../lib/csrf.php';
 $testId   = isset($_GET['id']) && ctype_digit((string)$_GET['id']) ? (int)$_GET['id'] : null;
 $section  = isset($section) ? $section : (isset($_GET['section']) ? trim((string)$_GET['section']) : 'basic');
 if (!in_array($section, ['basic', 'questions', 'results'], true)) {
@@ -92,6 +93,9 @@ if (!$testId && $formData['title_color'] === '') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingTest))) {
+    if (!CSRF::validateToken()) {
+        $errors[] = 'CSRF token 验证失败，请刷新页面后重试';
+    } else {
     $formData['title']          = trim($_POST['title'] ?? '');
     $formData['slug']           = strtolower(trim($_POST['slug'] ?? ''));
     $formData['subtitle']       = trim($_POST['subtitle'] ?? '');
@@ -220,6 +224,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
         header('Location: /admin/tests.php?msg=saved');
         exit;
     }
+    }
 }
 ?>
 
@@ -286,6 +291,7 @@ if ($testId && $existingTest) {
 <?php if ($section === 'basic'): ?>
     <div class="admin-card admin-card--form">
         <form method="post">
+            <?php require_once __DIR__ . '/../../lib/csrf.php'; echo CSRF::getTokenField(); ?>
             <div class="form-section">
                 <div class="form-section__title">基础信息</div>
                 <div class="form-grid">
@@ -495,6 +501,7 @@ if ($testId && $existingTest) {
                         </div>
 
                         <form method="post" class="question-card__form">
+                            <?php require_once __DIR__ . '/../../lib/csrf.php'; echo CSRF::getTokenField(); ?>
                             <input type="hidden" name="edit_type" value="question_copy">
                             <input type="hidden" name="question_id" value="<?= $qid ?>">
 
@@ -572,6 +579,7 @@ if ($testId && $existingTest) {
                         </div>
 
                         <form method="post" class="result-card__form">
+                            <?php require_once __DIR__ . '/../../lib/csrf.php'; echo CSRF::getTokenField(); ?>
                             <input type="hidden" name="edit_type" value="result_copy">
                             <input type="hidden" name="result_id" value="<?= (int)$r['id'] ?>">
 

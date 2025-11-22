@@ -3,6 +3,7 @@ require __DIR__ . '/auth.php';
 require_admin_login();
 
 require __DIR__ . '/../lib/db_connect.php';
+require_once __DIR__ . '/../lib/csrf.php';
 
 $pageTitle    = '克隆测验 - DoFun心理实验空间';
 ($pageHeading = '克隆一个测验') || true;
@@ -22,6 +23,9 @@ $titleInput        = '';
 $descriptionInput  = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!CSRF::validateToken()) {
+        $errors[] = 'CSRF token 验证失败，请刷新页面后重试';
+    } else {
     $sourceId         = (int)($_POST['source_test_id'] ?? 0);
     $slugInput        = trim($_POST['slug'] ?? '');
     $titleInput       = trim($_POST['title'] ?? '');
@@ -60,8 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->beginTransaction();
 
             $insertTest = $pdo->prepare(
-                "INSERT INTO tests (slug, title, subtitle, description, title_color, tags, status, sort_order)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+                "INSERT INTO tests (slug, title, subtitle, description, title_color, tags, status, sort_order, scoring_mode, scoring_config)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             );
             $insertTest->execute([
                 $slugInput,
@@ -72,26 +76,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $srcTest['tags'] ?? null,
                 'draft',
                 (int)$srcTest['sort_order'],
+                $srcTest['scoring_mode'] ?? 'simple',
+                $srcTest['scoring_config'] ?? null,
             ]);
             $newTestId = (int)$pdo->lastInsertId();
-
-            $dimStmt = $pdo->prepare("SELECT * FROM dimensions WHERE test_id = ?");
-            $dimStmt->execute([$sourceId]);
-            $dimensions = $dimStmt->fetchAll(PDO::FETCH_ASSOC);
-            if ($dimensions) {
-                $insDim = $pdo->prepare(
-                    "INSERT INTO dimensions (test_id, key_name, title, description)
-                     VALUES (?, ?, ?, ?)"
-                );
-                foreach ($dimensions as $dim) {
-                    $insDim->execute([
-                        $newTestId,
-                        $dim['key_name'],
-                        $dim['title'],
-                        $dim['description'],
-                    ]);
-                }
-            }
 
             $qStmt = $pdo->prepare("SELECT * FROM questions WHERE test_id = ?");
             $qStmt->execute([$sourceId]);
@@ -99,19 +87,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $questionIdMap = [];
             if ($questions) {
                 $insQ = $pdo->prepare(
-                    "INSERT INTO questions (test_id, sort_order, content)
+                    "INSERT INTO questions (test_id, sort_order, question_text)
                      VALUES (?, ?, ?)"
                 );
                 foreach ($questions as $question) {
                     $sortOrder = $question['sort_order'] ?? ($question['order_number'] ?? null);
-                    $insQ->execute([$newTestId, $sortOrder, $question['content']]);
+                    $insQ->execute([$newTestId, $sortOrder, $question['question_text'] ?? '']);
                     $questionIdMap[$question['id']] = (int)$pdo->lastInsertId();
                 }
             }
 
             if ($questionIdMap) {
-                $optStmt = $pdo->prepare("SELECT * FROM question_options WHERE question_id IN (" . implode(',', array_keys($questionIdMap)) . ")");
-                $optStmt->execute();
+                // 使用占位符防止SQL注入
+                $sourceQuestionIds = array_keys($questionIdMap);
+                $placeholders = implode(',', array_fill(0, count($sourceQuestionIds), '?'));
+                $optStmt = $pdo->prepare("SELECT * FROM question_options WHERE question_id IN ($placeholders)");
+                $optStmt->execute($sourceQuestionIds);
                 $options = $optStmt->fetchAll(PDO::FETCH_ASSOC);
                 if ($options) {
                     $insOpt = $pdo->prepare(
@@ -158,6 +149,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = '克隆过程中出现错误：' . $e->getMessage();
         }
     }
+    }
 }
 
 require __DIR__ . '/layout.php';
@@ -182,6 +174,7 @@ require __DIR__ . '/layout.php';
     <?php endif; ?>
 
     <form method="post" class="form-grid">
+        <?php echo CSRF::getTokenField(); ?>
         <label>
             <span>选择要克隆的测验</span>
             <select name="source_test_id" required>
