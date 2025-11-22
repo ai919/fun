@@ -99,6 +99,22 @@ ob_start();
             </div>
         </div>
     </a>
+    
+    <!-- 数据库迁移 -->
+    <a href="migrations.php" style="text-decoration: none;">
+        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
+             onmouseover="this.style.transform='translateY(-2px)'" 
+             onmouseout="this.style.transform='translateY(0)'">
+            <div style="font-size: 32px; margin-bottom: 12px;">🗄️</div>
+            <h3 style="font-size: 16px; font-weight: 600; color: #e5e7eb; margin-bottom: 8px;">数据库迁移</h3>
+            <p style="font-size: 13px; color: #9ca3af; margin-bottom: 12px; line-height: 1.5;">
+                管理数据库结构变更，支持版本控制和回滚
+            </p>
+            <div style="font-size: 12px; color: #60a5fa;">
+                迁移管理 · 版本控制
+            </div>
+        </div>
+    </a>
 </div>
 
 <!-- 系统状态 -->

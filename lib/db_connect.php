@@ -1,21 +1,19 @@
 <?php
+/**
+ * 数据库连接文件
+ * 
+ * 使用 DatabaseConnection 类管理连接，支持连接池和持久连接
+ */
+
 // 加载错误处理类（如果尚未加载）
 if (!class_exists('ErrorHandler')) {
     require_once __DIR__ . '/ErrorHandler.php';
 }
 
-$config = require __DIR__ . '/../config/db.php';
-
-$dsn = "mysql:host={$config['host']};dbname={$config['dbname']};charset={$config['charset']}";
-
-try {
-    $pdo = new PDO($dsn, $config['user'], $config['pass'], [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-    ]);
-} catch (PDOException $e) {
-    // 使用统一的错误处理
-    ErrorHandler::handleException(
-        $e,
-        sprintf('数据库连接失败: host=%s, dbname=%s', $config['host'], $config['dbname'])
-    );
+// 加载数据库连接管理类
+if (!class_exists('DatabaseConnection')) {
+    require_once __DIR__ . '/DatabaseConnection.php';
 }
+
+// 获取数据库连接实例（单例模式，支持连接池）
+$pdo = DatabaseConnection::getInstance();
