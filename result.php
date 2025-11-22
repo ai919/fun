@@ -1,54 +1,40 @@
 <?php
 require_once __DIR__ . '/seo_helper.php';
+require_once __DIR__ . '/lib/db_connect.php';
 
-$finalTest   = $finalTest ?? null;
-$finalResult = $finalResult ?? null;
-$codeCounts  = $codeCounts ?? [];
 $shareTokenParam = isset($_GET['token']) ? trim((string)$_GET['token']) : '';
-$shareRun    = null;
-$pdoLoaded   = false;
+$runIdParam      = isset($_GET['run']) ? (int)$_GET['run'] : 0;
 
+$runStmt = null;
+$runRow  = null;
 if ($shareTokenParam !== '') {
-    require __DIR__ . '/lib/db_connect.php';
-    $pdoLoaded = true;
     $runStmt = $pdo->prepare("SELECT * FROM test_runs WHERE share_token = :token LIMIT 1");
     $runStmt->execute([':token' => $shareTokenParam]);
-    $shareRun = $runStmt->fetch(PDO::FETCH_ASSOC);
-    if (!$shareRun) {
-        http_response_code(404);
-        echo '结果链接已失效或不存在。';
-        exit;
-    }
-    $testId   = (int)$shareRun['test_id'];
-    $resultId = isset($shareRun['result_id']) ? (int)$shareRun['result_id'] : 0;
-
-    $testStmt = $pdo->prepare("SELECT * FROM tests WHERE id = ? LIMIT 1");
-    $testStmt->execute([$testId]);
-    $finalTest = $testStmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($resultId > 0) {
-        $resStmt = $pdo->prepare("SELECT * FROM results WHERE id = ? AND test_id = ? LIMIT 1");
-        $resStmt->execute([$resultId, $testId]);
-        $finalResult = $resStmt->fetch(PDO::FETCH_ASSOC);
-    }
+    $runRow = $runStmt->fetch(PDO::FETCH_ASSOC);
+} elseif ($runIdParam > 0) {
+    $runStmt = $pdo->prepare("SELECT * FROM test_runs WHERE id = :id LIMIT 1");
+    $runStmt->execute([':id' => $runIdParam]);
+    $runRow = $runStmt->fetch(PDO::FETCH_ASSOC);
 }
 
-if ((!$finalTest || !$finalResult) && isset($_GET['test_id'], $_GET['code'])) {
-    if (!$pdoLoaded) {
-        require __DIR__ . '/lib/db_connect.php';
-        $pdoLoaded = true;
-    }
-    $testId = (int)$_GET['test_id'];
-    $code   = trim($_GET['code']);
-    if ($testId > 0 && $code !== '') {
-        $testStmt = $pdo->prepare("SELECT * FROM tests WHERE id = ? LIMIT 1");
-        $testStmt->execute([$testId]);
-        $finalTest = $testStmt->fetch(PDO::FETCH_ASSOC);
+if (!$runRow) {
+    http_response_code(404);
+    echo '结果链接已失效或不存在。';
+    exit;
+}
 
-        $resStmt = $pdo->prepare("SELECT * FROM results WHERE test_id = ? AND code = ? LIMIT 1");
-        $resStmt->execute([$testId, $code]);
-        $finalResult = $resStmt->fetch(PDO::FETCH_ASSOC);
-    }
+$testId   = (int)$runRow['test_id'];
+$resultId = isset($runRow['result_id']) ? (int)$runRow['result_id'] : 0;
+
+$testStmt = $pdo->prepare("SELECT * FROM tests WHERE id = ? LIMIT 1");
+$testStmt->execute([$testId]);
+$finalTest = $testStmt->fetch(PDO::FETCH_ASSOC);
+
+$finalResult = null;
+if ($resultId > 0) {
+    $resStmt = $pdo->prepare("SELECT * FROM results WHERE id = ? AND test_id = ? LIMIT 1");
+    $resStmt->execute([$resultId, $testId]);
+    $finalResult = $resStmt->fetch(PDO::FETCH_ASSOC);
 }
 
 if (!$finalTest || !$finalResult) {
@@ -57,19 +43,24 @@ if (!$finalTest || !$finalResult) {
     exit;
 }
 
-$shareToken = $shareTokenParam;
-if ($shareToken === '' && $shareRun && !empty($shareRun['share_token'])) {
-    $shareToken = $shareRun['share_token'];
-}
-if ($shareToken === '' && $pdoLoaded && isset($finalTest['id'], $finalResult['id'])) {
-    $tokenStmt = $pdo->prepare("SELECT share_token FROM test_runs WHERE test_id = ? AND result_id = ? AND share_token IS NOT NULL ORDER BY id DESC LIMIT 1");
-    $tokenStmt->execute([(int)$finalTest['id'], (int)$finalResult['id']]);
-    $existingToken = $tokenStmt->fetchColumn();
-    if ($existingToken) {
-        $shareToken = $existingToken;
+$dimensionScores = [];
+if (strtolower($finalTest['scoring_mode'] ?? 'simple') === 'dimensions') {
+    $dimStmt = $pdo->prepare(
+        "SELECT dimension_key, score_value
+         FROM test_run_scores
+         WHERE test_run_id = :rid
+         ORDER BY dimension_key ASC"
+    );
+    $dimStmt->execute([':rid' => (int)$runRow['id']]);
+    while ($row = $dimStmt->fetch(PDO::FETCH_ASSOC)) {
+        $dimensionScores[$row['dimension_key']] = (float)$row['score_value'];
     }
 }
 
+$shareToken = $shareTokenParam;
+if ($shareToken === '' && !empty($runRow['share_token'])) {
+    $shareToken = $runRow['share_token'];
+}
 $shareUrl = $shareToken !== ''
     ? build_canonical_url('/result.php?token=' . urlencode($shareToken))
     : build_canonical_url();
@@ -119,6 +110,16 @@ $emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
             <div class="result-description">
                 <?= nl2br(htmlspecialchars($finalResult['description'] ?? '')) ?>
             </div>
+            <?php if (!empty($dimensionScores)): ?>
+                <div class="result-description" style="margin-top:12px;">
+                    <strong>你的维度分布：</strong>
+                    <?php foreach ($dimensionScores as $dimKey => $dimScore): ?>
+                        <span style="display:inline-block;margin-right:8px;">
+                            <?= htmlspecialchars($dimKey) ?> <?= htmlspecialchars((string)$dimScore) ?>
+                        </span>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
             <?php if (!empty($finalResult['image_url'])): ?>
                 <div style="margin-top:12px;">
                     <img src="<?= htmlspecialchars($finalResult['image_url']) ?>" alt="result image" style="max-width:100%;border-radius:12px;">

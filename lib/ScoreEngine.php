@@ -5,22 +5,37 @@ class ScoreEngine
     private static array $lastDetail = [
         'total_score'      => 0,
         'dimension_scores' => [],
+        'result'           => null,
+        'answers'          => [],
     ];
 
-    public static function score(array $test, array $answers, PDO $pdo): ?string
+    /**
+     * Calculate result based on scoring_mode.
+     * Returns detail array with keys:
+     * - result (result row or null)
+     * - total_score (float)
+     * - dimension_scores (for dimensions mode)
+     */
+    public static function score(array $test, array $answers, PDO $pdo): ?array
     {
         self::$lastDetail = [
             'total_score'      => 0,
             'dimension_scores' => [],
+            'result'           => null,
+            'answers'          => [],
         ];
 
         $mode = strtolower($test['scoring_mode'] ?? 'simple');
-        return match ($mode) {
+        $detail = match ($mode) {
             'dimensions' => self::scoreDimensions($test, $answers, $pdo),
             'range'      => self::scoreRange($test, $answers, $pdo),
             'custom'     => self::scoreCustom($test, $answers, $pdo),
             default      => self::scoreSimple($test, $answers, $pdo),
         };
+        if ($detail !== null) {
+            self::$lastDetail = array_merge(self::$lastDetail, $detail);
+        }
+        return $detail;
     }
 
     public static function getLastDetail(): array
@@ -28,54 +43,64 @@ class ScoreEngine
         return self::$lastDetail;
     }
 
-    private static function scoreSimple(array $test, array $answers, PDO $pdo): ?string
+    private static function scoreSimple(array $test, array $answers, PDO $pdo): ?array
     {
         $options = self::loadSelectedOptions($answers, (int)$test['id'], $pdo);
         if (!$options) {
             return null;
         }
-        $scores = [];
+
+        $totalScore = 0.0;
         foreach ($options as $row) {
-            $code = strtoupper(trim((string)$row['map_result_code']));
-            if ($code === '') {
-                continue;
+            $value = isset($row['score_value']) ? (float)$row['score_value'] : 0.0;
+            $totalScore += $value;
+            $qid = isset($row['question_id']) ? (int)$row['question_id'] : 0;
+            $optKey = isset($row['option_key']) ? strtoupper(trim((string)$row['option_key'])) : '';
+            if ($qid > 0 && $optKey !== '') {
+                $answerMap[$qid] = $optKey;
             }
-            $value = isset($row['score_value']) ? (float)$row['score_value'] : 1.0;
-            if (!isset($scores[$code])) {
-                $scores[$code] = 0.0;
-            }
-            $scores[$code] += $value;
         }
-        if (!$scores) {
+
+        $resultRow = self::findResultByScore((int)$test['id'], $totalScore, $pdo);
+        if ($resultRow === null) {
             return null;
         }
-        $bestCode  = null;
-        $bestScore = -INF;
-        foreach ($scores as $code => $score) {
-            if ($score > $bestScore) {
-                $bestScore = $score;
-                $bestCode  = $code;
-            }
-        }
-        self::$lastDetail['total_score'] = $bestScore > 0 ? $bestScore : array_sum($scores);
-        return $bestCode;
+
+        return [
+            'total_score'      => $totalScore,
+            'dimension_scores' => [],
+            'result'           => $resultRow,
+            'answers'          => $answerMap,
+        ];
     }
 
-    private static function scoreDimensions(array $test, array $answers, PDO $pdo): ?string
+    private static function scoreDimensions(array $test, array $answers, PDO $pdo): ?array
     {
         $calc = self::calculateDimensions($test, $answers, $pdo);
-        self::$lastDetail['dimension_scores'] = $calc['dimensions'] ?? [];
-        self::$lastDetail['total_score']      = isset($calc['dimensions']) ? array_sum($calc['dimensions']) : 0;
-        return $calc['code'] ?? null;
+        $dimensions = $calc['dimensions'] ?? [];
+        $total = array_sum($dimensions);
+
+        $code = $calc['code'] ?? null;
+        $resultRow = $code ? self::findResultByCode((int)$test['id'], $code, $pdo) : null;
+        if ($resultRow === null) {
+            return null;
+        }
+
+        return [
+            'total_score'      => $total,
+            'dimension_scores' => $dimensions,
+            'result'           => $resultRow,
+            'answers'          => $calc['answers'] ?? [],
+        ];
     }
 
-    private static function scoreRange(array $test, array $answers, PDO $pdo): ?string
+    private static function scoreRange(array $test, array $answers, PDO $pdo): ?array
     {
         // TODO: implement range-based scoring
         return null;
     }
 
-    private static function scoreCustom(array $test, array $answers, PDO $pdo): ?string
+    private static function scoreCustom(array $test, array $answers, PDO $pdo): ?array
     {
         // Placeholder for custom scripts
         return null;
@@ -126,6 +151,41 @@ class ScoreEngine
             }
         }
         return [];
+    }
+
+    private static function findResultByScore(int $testId, float $score, PDO $pdo): ?array
+    {
+        $stmt = $pdo->prepare(
+            "SELECT *
+             FROM results
+             WHERE test_id = :tid
+               AND (min_score IS NULL OR min_score <= :score)
+               AND (max_score IS NULL OR max_score >= :score)
+             ORDER BY id ASC
+             LIMIT 1"
+        );
+        $stmt->execute([
+            ':tid'   => $testId,
+            ':score' => $score,
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
+    private static function findResultByCode(int $testId, string $code, PDO $pdo): ?array
+    {
+        $stmt = $pdo->prepare(
+            "SELECT *
+             FROM results
+             WHERE test_id = :tid AND code = :code
+             LIMIT 1"
+        );
+        $stmt->execute([
+            ':tid'  => $testId,
+            ':code' => $code,
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
     }
 
     public static function calculateDimensions(array $test, array $answers, PDO $pdo): array
@@ -301,6 +361,7 @@ class ScoreEngine
             'secondary_dimension' => $secondary,
             'lowest_dimension' => $lowest,
             'raw_profile' => $selectedProfile,
+            'answers' => $answerOptionKey,
         ];
     }
 }

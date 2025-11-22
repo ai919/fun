@@ -1390,3 +1390,77 @@ a:active {
 .card-button:hover {
     opacity: 0.95;
 }
+
+/* 逐题作答结构化样式（基础） */
+.quiz-question-block {
+    margin-bottom: 24px;
+}
+
+.quiz-question-heading {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    gap: 8px;
+}
+
+.quiz-q-number {
+    color: #5B6FFF;
+}
+
+.quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.quiz-option-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.quiz-option-item input[type="radio"] {
+    margin-top: 3px;
+}
+
+.quiz-option-key {
+    font-weight: 600;
+    color: #666;
+}
+
+.quiz-step-footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.quiz-progress {
+    font-size: 14px;
+    color: #555;
+}
+
+.quiz-step-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+@media (max-width: 768px) {
+    .quiz-step-footer {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .quiz-step-buttons {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+}

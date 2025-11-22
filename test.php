@@ -176,73 +176,68 @@ if ($titleColorField !== '' && preg_match('/^#[0-9a-fA-F]{6}$/', $titleColorFiel
     <?php if (!$questions): ?>
         <p>该测验还没有题目，请稍后再试。</p>
     <?php else: ?>
-        <form method="post" action="/submit.php" class="test-body" id="quiz-form">
+        <form method="post" action="/submit.php" class="quiz-form test-body" id="quiz-form">
             <input type="hidden" name="test_id" value="<?= (int)$testId ?>">
-            <?php
-            $totalQuestions = count($questions);
-            $stepIndex = 0;
-            ?>
-            <?php foreach ($questions as $idx => $question): ?>
-                <?php
-                $qid        = (int)$question['id'];
-                $questionNo = $question['sort_order'] ?? ($idx + 1);
-                $text       = pick_field($question, ['content', 'question_text', 'title', 'body'], '未命名问题');
-                $options    = $optionsByQuestion[$qid] ?? [];
-                $stepIndex++;
-                $stepClasses = 'question-block';
-                if ($isStepByStep) {
-                    $stepClasses .= ' question-step';
-                    if ($stepIndex === 1) {
-                        $stepClasses .= ' active';
-                    }
-                }
-                ?>
-                <div class="<?= $stepClasses ?>" data-step="<?= $stepIndex ?>">
-                    <div class="question-header">
-                        <div class="question-index">Q<?= htmlspecialchars($questionNo) ?></div>
-                        <div class="question-text"><?= htmlspecialchars($text) ?></div>
-                    </div>
-                    <?php if (!$options): ?>
-                        <p style="color:#ef4444;">该题暂无可选项。</p>
-                    <?php else: ?>
-                        <div class="question-options">
-                            <?php foreach ($options as $optionIndex => $option): ?>
-                                <?php
-                                $optionId    = (int)$option['id'];
-                                $label       = pick_field($option, ['option_label', 'label', 'letter'], null);
-                                $optionText  = pick_field($option, ['text', 'content', 'option_text', 'body', 'description'], '选项');
-                                if ($label === null) {
-                                    $label = chr(ord('A') + $optionIndex);
-                                }
-                                ?>
-                                <label class="option-card">
-                                    <input type="radio" name="q[<?= $qid ?>]" value="<?= $optionId ?>" required>
-                                    <div class="option-inner">
-                                        <span class="option-key"><?= htmlspecialchars($label) ?></span>
-                                        <span class="option-text"><?= nl2br(htmlspecialchars($optionText)) ?></span>
-                                    </div>
-                                </label>
-                            <?php endforeach; ?>
+
+            <div class="quiz-questions-wrapper <?= $isStepByStep ? 'step-mode' : 'single-page-mode' ?>"
+                 data-total="<?= count($questions) ?>">
+                <?php foreach ($questions as $idx => $question): ?>
+                    <?php
+                    $qid        = (int)$question['id'];
+                    $questionNo = $question['sort_order'] ?? ($idx + 1);
+                    $text       = pick_field($question, ['content', 'question_text', 'title', 'body'], '未命名问题');
+                    $options    = $optionsByQuestion[$qid] ?? [];
+                    $stepIndex  = $idx + 1;
+                    ?>
+                    <div class="quiz-question-block question-block<?= $isStepByStep ? ' question-step' : '' ?>"
+                         data-step="<?= $stepIndex ?>">
+                        <div class="quiz-question-heading question-header">
+                            <span class="quiz-q-number question-index">Q<?= htmlspecialchars($questionNo) ?></span>
+                            <span class="quiz-q-text question-text"><?= htmlspecialchars($text) ?></span>
                         </div>
-                    <?php endif; ?>
 
-                    <?php if ($isStepByStep): ?>
-                        <div class="question-nav">
-                            <?php if ($stepIndex > 1): ?>
-                                <button type="button" class="btn-secondary btn-prev" data-prev="<?= $stepIndex - 1 ?>">上一题</button>
-                            <?php endif; ?>
-
-                            <?php if ($stepIndex < $totalQuestions): ?>
-                                <button type="button" class="btn-primary btn-next" data-next="<?= $stepIndex + 1 ?>">下一题</button>
+                        <div class="quiz-options question-options">
+                            <?php if (!$options): ?>
+                                <p style="color:#ef4444;">该题暂无可选项。</p>
                             <?php else: ?>
-                                <button type="submit" class="btn-primary">提交结果</button>
+                                <?php foreach ($options as $optionIndex => $option): ?>
+                                    <?php
+                                    $optionId    = (int)$option['id'];
+                                    $label       = pick_field($option, ['option_label', 'label', 'letter'], null);
+                                    $optionText  = pick_field($option, ['text', 'content', 'option_text', 'body', 'description'], '选项');
+                                    if ($label === null) {
+                                        $label = chr(ord('A') + $optionIndex);
+                                    }
+                                    ?>
+                                    <label class="quiz-option-item option-card">
+                                        <input
+                                            type="radio"
+                                            name="q[<?= $qid ?>]"
+                                            value="<?= $optionId ?>"
+                                            required
+                                        >
+                                        <span class="quiz-option-key option-key"><?= htmlspecialchars($label) ?>.</span>
+                                        <span class="quiz-option-text option-text"><?= nl2br(htmlspecialchars($optionText)) ?></span>
+                                    </label>
+                                <?php endforeach; ?>
                             <?php endif; ?>
                         </div>
-                    <?php endif; ?>
-                </div>
-            <?php endforeach; ?>
+                    </div>
+                <?php endforeach; ?>
+            </div>
 
-            <?php if (!$isStepByStep): ?>
+            <?php if ($isStepByStep): ?>
+                <div class="quiz-step-footer">
+                    <div class="quiz-progress">
+                        <span id="quiz-progress-text">0 / <?= count($questions) ?> 题已作答</span>
+                    </div>
+                    <div class="quiz-step-buttons">
+                        <button type="button" class="btn-secondary" id="btn-prev-question">上一题</button>
+                        <button type="button" class="btn-primary" id="btn-next-question">下一题</button>
+                        <button type="submit" class="btn-primary" id="btn-submit-quiz">提交结果</button>
+                    </div>
+                </div>
+            <?php else: ?>
                 <div class="test-actions">
                     <a href="/index.php" class="btn-secondary">返回测验列表</a>
                     <button type="submit" class="btn-primary">提交测验</button>
@@ -282,7 +277,8 @@ document.addEventListener('DOMContentLoaded', function () {
     updateProgress();
 });
 </script>
-<script src="/assets/js/main.js"></script>
-</script>
+<?php if ($isStepByStep): ?>
+<script src="/assets/js/quiz_step_mode.js"></script>
+<?php endif; ?>
 </body>
 </html>

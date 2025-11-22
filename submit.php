@@ -24,8 +24,8 @@ if (!$answers || !is_array($answers)) {
     exit;
 }
 
-$resultCode = ScoreEngine::score($test, $answers, $pdo);
-if (!$resultCode) {
+$detail = ScoreEngine::score($test, $answers, $pdo);
+if (!$detail || empty($detail['result'])) {
     $target = $test['slug'] ? '/test.php?slug=' . urlencode($test['slug']) : '/test.php?id=' . $testId;
     header('Location: ' . $target);
     exit;
@@ -34,12 +34,11 @@ if (!$resultCode) {
 $detail      = ScoreEngine::getLastDetail();
 $totalScore  = isset($detail['total_score']) ? (float)$detail['total_score'] : 0.0;
 $dimScores   = $detail['dimension_scores'] ?? [];
+$answerMap   = $detail['answers'] ?? [];
 $currentUser = UserAuth::currentUser();
 $userId      = $currentUser ? (int)$currentUser['id'] : null;
 
-$resStmt = $pdo->prepare("SELECT * FROM results WHERE test_id = ? AND code = ? LIMIT 1");
-$resStmt->execute([$testId, $resultCode]);
-$resultRow = $resStmt->fetch(PDO::FETCH_ASSOC);
+$resultRow = $detail['result'] ?? null;
 $resultId  = $resultRow ? (int)$resultRow['id'] : null;
 
 // 生成分享用 token（16位十六进制字符串）
@@ -81,6 +80,21 @@ if (strtolower($test['scoring_mode'] ?? 'simple') === 'dimensions' && $testRunId
             ':run_id' => $testRunId,
             ':dim'    => $dim,
             ':score'  => $score,
+        ]);
+    }
+}
+
+if ($testRunId > 0 && !empty($answerMap)) {
+    $insAns = $pdo->prepare("
+        INSERT INTO question_answers (test_run_id, test_id, question_id, option_key)
+        VALUES (:run_id, :test_id, :q_id, :opt)
+    ");
+    foreach ($answerMap as $qId => $optKey) {
+        $insAns->execute([
+            ':run_id'  => $testRunId,
+            ':test_id' => $testId,
+            ':q_id'    => (int)$qId,
+            ':opt'     => $optKey,
         ]);
     }
 }
