@@ -118,12 +118,12 @@ $retryCount = 0;
 while ($retryCount < $maxRetries) {
     try {
         if (function_exists('random_bytes')) {
-            $shareToken = bin2hex(random_bytes(8));
+            $shareToken = bin2hex(random_bytes(16)); // 32 字符（16字节的十六进制）
         } else {
-            $shareToken = substr(md5(uniqid(mt_rand(), true)), 0, 16);
+            $shareToken = md5(uniqid(mt_rand(), true)); // 32 字符（MD5 哈希）
         }
     } catch (Exception $e) {
-        $shareToken = substr(md5(uniqid(mt_rand(), true)), 0, 16);
+        $shareToken = md5(uniqid(mt_rand(), true)); // 32 字符（MD5 哈希）
     }
     
     // 检查数据库中是否已存在该 token

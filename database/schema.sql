@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主机： localhost
--- 生成日期： 2025-11-22 09:19:33
+-- 生成日期： 2025-11-22 11:24:44
 -- 服务器版本： 5.7.39
 -- PHP 版本： 8.3.25
 
@@ -111,8 +111,8 @@ CREATE TABLE `results` (
   `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `description` text COLLATE utf8mb4_unicode_ci,
   `image_url` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `min_score` int(11) DEFAULT NULL,
-  `max_score` int(11) DEFAULT NULL,
+  `min_score` decimal(10,2) DEFAULT NULL,
+  `max_score` decimal(10,2) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -155,9 +155,9 @@ CREATE TABLE `test_runs` (
   `user_identifier` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `ip_address` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `user_agent` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `total_score` int(11) DEFAULT NULL,
+  `total_score` decimal(10,2) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `share_token` char(16) COLLATE utf8mb4_unicode_ci DEFAULT NULL
+  `share_token` char(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -170,7 +170,7 @@ CREATE TABLE `test_run_scores` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `test_run_id` bigint(20) UNSIGNED NOT NULL,
   `dimension_key` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `score_value` int(11) NOT NULL
+  `score_value` decimal(10,2) NOT NULL DEFAULT '0.00'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -181,7 +181,7 @@ CREATE TABLE `test_run_scores` (
 
 CREATE TABLE `users` (
   `id` int(10) UNSIGNED NOT NULL,
-  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `password_hash` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `nickname` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -218,7 +218,8 @@ ALTER TABLE `questions`
 ALTER TABLE `question_answers`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_test_run_id` (`test_run_id`),
-  ADD KEY `idx_test_question` (`test_id`,`question_id`);
+  ADD KEY `idx_test_question` (`test_id`,`question_id`),
+  ADD KEY `fk_answers_question` (`question_id`);
 
 --
 -- 表的索引 `question_options`
@@ -246,9 +247,12 @@ ALTER TABLE `tests`
 --
 ALTER TABLE `test_runs`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_share_token` (`share_token`),
   ADD KEY `idx_runs_test_id` (`test_id`),
   ADD KEY `idx_runs_result_id` (`result_id`),
-  ADD KEY `idx_runs_user_id` (`user_id`);
+  ADD KEY `idx_runs_user_id` (`user_id`),
+  ADD KEY `idx_share_token` (`share_token`),
+  ADD KEY `idx_created_at` (`created_at`);
 
 --
 -- 表的索引 `test_run_scores`
@@ -339,6 +343,14 @@ ALTER TABLE `questions`
   ADD CONSTRAINT `fk_questions_test` FOREIGN KEY (`test_id`) REFERENCES `tests` (`id`) ON DELETE CASCADE;
 
 --
+-- 限制表 `question_answers`
+--
+ALTER TABLE `question_answers`
+  ADD CONSTRAINT `fk_answers_question` FOREIGN KEY (`question_id`) REFERENCES `questions` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_answers_run` FOREIGN KEY (`test_run_id`) REFERENCES `test_runs` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_answers_test` FOREIGN KEY (`test_id`) REFERENCES `tests` (`id`) ON DELETE CASCADE;
+
+--
 -- 限制表 `question_options`
 --
 ALTER TABLE `question_options`
@@ -355,7 +367,8 @@ ALTER TABLE `results`
 --
 ALTER TABLE `test_runs`
   ADD CONSTRAINT `fk_runs_result` FOREIGN KEY (`result_id`) REFERENCES `results` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_runs_test` FOREIGN KEY (`test_id`) REFERENCES `tests` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_runs_test` FOREIGN KEY (`test_id`) REFERENCES `tests` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_runs_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- 限制表 `test_run_scores`
