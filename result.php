@@ -45,7 +45,8 @@ if (!$finalTest || !$finalResult) {
 }
 
 $dimensionScores = [];
-if (strtolower($finalTest['scoring_mode'] ?? 'simple') === 'dimensions') {
+require_once __DIR__ . '/lib/Constants.php';
+if (strtolower($finalTest['scoring_mode'] ?? Constants::SCORING_MODE_SIMPLE) === Constants::SCORING_MODE_DIMENSIONS) {
     $dimStmt = $pdo->prepare(
         "SELECT dimension_key, score_value
          FROM test_run_scores

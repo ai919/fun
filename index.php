@@ -3,17 +3,29 @@ require __DIR__ . '/lib/db_connect.php';
 require_once __DIR__ . '/seo_helper.php';
 require_once __DIR__ . '/lib/user_auth.php';
 require_once __DIR__ . '/lib/html_purifier.php';
+require_once __DIR__ . '/lib/Constants.php';
+require_once __DIR__ . '/lib/CacheHelper.php';
 
-$stmt = $pdo->prepare("
-    SELECT
-        t.*,
-        (SELECT COUNT(*) FROM test_runs r WHERE r.test_id = t.id) AS play_count
-    FROM tests t
-    WHERE (t.status = 'published' OR t.status = 1)
-    ORDER BY t.sort_order DESC, t.id DESC
-");
-$stmt->execute();
-$tests = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// 尝试从缓存获取测验列表（缓存5分钟）
+$cacheKey = 'published_tests_list';
+$tests = CacheHelper::get($cacheKey, 300);
+
+if ($tests === null) {
+    // 缓存未命中，从数据库查询
+    $stmt = $pdo->prepare("
+        SELECT
+            t.*,
+            (SELECT COUNT(*) FROM test_runs r WHERE r.test_id = t.id) AS play_count
+        FROM tests t
+        WHERE (t.status = ? OR t.status = 1)
+        ORDER BY t.sort_order DESC, t.id DESC
+    ");
+    $stmt->execute([Constants::TEST_STATUS_PUBLISHED]);
+    $tests = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // 存入缓存
+    CacheHelper::set($cacheKey, $tests);
+}
 
 $seo = build_seo_meta('home');
 $user = UserAuth::currentUser();

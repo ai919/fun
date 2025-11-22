@@ -1,6 +1,7 @@
 <?php
 $config = require __DIR__ . '/backup_config.php';
 require __DIR__ . '/lib/backup_helpers.php';
+require_once __DIR__ . '/lib/Constants.php';
 
 $userToken = $_GET['token'] ?? '';
 backup_require_token($config, $userToken);
@@ -136,18 +137,20 @@ $fileSize = filesize($zipFile);
 $ip       = $_SERVER['REMOTE_ADDR'] ?? null;
 
 $stmt = $pdo->prepare("INSERT INTO backup_logs (filename, file_path, file_size, status, message, ip)
-                       VALUES (:filename, :file_path, :file_size, 'success', :message, :ip)");
+                       VALUES (:filename, :file_path, :file_size, :status, :message, :ip)");
 $stmt->execute([
     ':filename'  => basename($zipFile),
     ':file_path' => $zipFile,
     ':file_size' => $fileSize,
+    ':status'    => Constants::BACKUP_STATUS_SUCCESS,
     ':message'   => 'Backup created via backup.php',
     ':ip'        => $ip,
 ]);
 
 $maxKeep = (int)($config['max_keep'] ?? 5);
 if ($maxKeep > 0) {
-    $stmt = $pdo->prepare("SELECT id, file_path FROM backup_logs WHERE status = 'success' ORDER BY created_at DESC");
+    $stmt = $pdo->prepare("SELECT id, file_path FROM backup_logs WHERE status = ? ORDER BY created_at DESC");
+    $stmt->execute([Constants::BACKUP_STATUS_SUCCESS]);
     $stmt->execute();
     $all = $stmt->fetchAll(PDO::FETCH_ASSOC);
     if (count($all) > $maxKeep) {

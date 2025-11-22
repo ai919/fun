@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../lib/Constants.php';
 $errors      = [];
 $successMsg  = null;
 
@@ -24,17 +25,18 @@ function admin_column_exists(PDO $pdo, string $table, string $column): bool
     return $cache[$key];
 }
 
+$statusLabels = Constants::getTestStatusLabels();
 $statusLabel = [
-    'draft'     => ['label' => '草稿', 'class' => 'badge-muted'],
-    'published' => ['label' => '已发布', 'class' => 'badge-success'],
-    'archived'  => ['label' => '已归档', 'class' => 'badge-warning'],
+    Constants::TEST_STATUS_DRAFT     => ['label' => $statusLabels[Constants::TEST_STATUS_DRAFT], 'class' => 'badge-muted'],
+    Constants::TEST_STATUS_PUBLISHED  => ['label' => $statusLabels[Constants::TEST_STATUS_PUBLISHED], 'class' => 'badge-success'],
+    Constants::TEST_STATUS_ARCHIVED   => ['label' => $statusLabels[Constants::TEST_STATUS_ARCHIVED], 'class' => 'badge-warning'],
 ];
 
 $statusFilterOptions = [
-    ''           => '全部状态',
-    'draft'      => '草稿',
-    'published'  => '已发布',
-    'archived'   => '已归档',
+    ''                                => '全部状态',
+    Constants::TEST_STATUS_DRAFT      => $statusLabels[Constants::TEST_STATUS_DRAFT],
+    Constants::TEST_STATUS_PUBLISHED  => $statusLabels[Constants::TEST_STATUS_PUBLISHED],
+    Constants::TEST_STATUS_ARCHIVED   => $statusLabels[Constants::TEST_STATUS_ARCHIVED],
 ];
 
 $orderOptions = [
@@ -194,11 +196,7 @@ $filterQuery = array_filter([
         <tbody>
         <?php foreach ($tests as $test): ?>
             <?php
-            $statusValue = (string)$test['status'];
-            if (!isset($statusLabel[$statusValue]) && in_array($statusValue, ['0', '1', '2'], true)) {
-                $map = ['0' => 'draft', '1' => 'published', '2' => 'archived'];
-                $statusValue = $map[$statusValue] ?? 'draft';
-            }
+            $statusValue = Constants::normalizeTestStatus($test['status']);
             $badgeInfo = $statusLabel[$statusValue] ?? ['label' => '未知', 'class' => 'badge-muted'];
             $tags = array_filter(array_map('trim', explode(',', (string)$test['tags'])));
             $tags = array_slice($tags, 0, 3);
@@ -229,7 +227,7 @@ $filterQuery = array_filter([
                         <?= htmlspecialchars($badgeInfo['label']) ?>
                     </span>
                 </td>
-                <td><?= htmlspecialchars($test['scoring_mode'] ?? 'simple') ?></td>
+                <td><?= htmlspecialchars($test['scoring_mode'] ?? Constants::SCORING_MODE_SIMPLE) ?></td>
                 <td>
                     <?php if ($tags): ?>
                         <div class="tag-list">

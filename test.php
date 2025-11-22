@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/lib/db_connect.php';
 require_once __DIR__ . '/lib/html_purifier.php';
+require_once __DIR__ . '/lib/CacheHelper.php';
 
 function pick_field(array $row, array $candidates, $default = '')
 {
@@ -51,9 +52,20 @@ $slug   = trim($_GET['slug'] ?? '');
 if (isset($_GET['id']) && ctype_digit((string)$_GET['id'])) {
     $testId = (int)$_GET['id'];
 } elseif ($slug !== '') {
-    $stmt = $pdo->prepare("SELECT id FROM tests WHERE slug = ? LIMIT 1");
-    $stmt->execute([$slug]);
-    $testId = (int)$stmt->fetchColumn();
+    // 尝试从缓存获取 slug 到 id 的映射
+    $slugCacheKey = 'test_slug_id_' . md5($slug);
+    $cachedTestId = CacheHelper::get($slugCacheKey, 300);
+    
+    if ($cachedTestId !== null) {
+        $testId = (int)$cachedTestId;
+    } else {
+        $stmt = $pdo->prepare("SELECT id FROM tests WHERE slug = ? LIMIT 1");
+        $stmt->execute([$slug]);
+        $testId = (int)$stmt->fetchColumn();
+        if ($testId) {
+            CacheHelper::set($slugCacheKey, $testId);
+        }
+    }
 }
 
 if (!$testId) {
@@ -62,43 +74,70 @@ if (!$testId) {
     exit;
 }
 
-$testStmt = $pdo->prepare("SELECT * FROM tests WHERE id = ? LIMIT 1");
-$testStmt->execute([$testId]);
-$test = $testStmt->fetch(PDO::FETCH_ASSOC);
-if (!$test) {
-    http_response_code(404);
-    echo '测验不存在。';
-    exit;
+// 尝试从缓存获取测验完整数据（缓存5分钟）
+$testCacheKey = 'test_full_' . $testId;
+$cachedData = CacheHelper::get($testCacheKey, 300);
+
+if ($cachedData !== null && is_array($cachedData)) {
+    $test = $cachedData['test'];
+    $questions = $cachedData['questions'];
+    $optionsByQuestion = $cachedData['options'];
+} else {
+    // 缓存未命中，从数据库查询
+    $testStmt = $pdo->prepare("SELECT * FROM tests WHERE id = ? LIMIT 1");
+    $testStmt->execute([$testId]);
+    $test = $testStmt->fetch(PDO::FETCH_ASSOC);
+    if (!$test) {
+        http_response_code(404);
+        echo '测验不存在。';
+        exit;
+    }
+
+    $questionOrderField = choose_order_field($pdo, 'questions');
+    $questionOrderSql = $questionOrderField ? "ORDER BY {$questionOrderField} ASC, id ASC" : "ORDER BY id ASC";
+    $questionsStmt = $pdo->prepare("SELECT * FROM questions WHERE test_id = ? {$questionOrderSql}");
+    $questionsStmt->execute([$testId]);
+    $questions = $questionsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $questionIds = array_column($questions, 'id');
+    $optionsByQuestion = [];
+    if ($questionIds) {
+        $placeholders = implode(',', array_fill(0, count($questionIds), '?'));
+        $optionOrderField = choose_order_field($pdo, 'question_options');
+        $optionOrderSql = $optionOrderField ? "ORDER BY {$optionOrderField} ASC, id ASC" : "ORDER BY id ASC";
+        $optStmt = $pdo->prepare(
+            "SELECT * FROM question_options
+             WHERE question_id IN ($placeholders)
+             {$optionOrderSql}"
+        );
+        $optStmt->execute($questionIds);
+        while ($opt = $optStmt->fetch(PDO::FETCH_ASSOC)) {
+            $qid = (int)$opt['question_id'];
+            $optionsByQuestion[$qid][] = $opt;
+        }
+    }
+    
+    // 存入缓存
+    CacheHelper::set($testCacheKey, [
+        'test' => $test,
+        'questions' => $questions,
+        'options' => $optionsByQuestion,
+    ]);
 }
 
-$questionOrderField = choose_order_field($pdo, 'questions');
-$questionOrderSql = $questionOrderField ? "ORDER BY {$questionOrderField} ASC, id ASC" : "ORDER BY id ASC";
-$questionsStmt = $pdo->prepare("SELECT * FROM questions WHERE test_id = ? {$questionOrderSql}");
-$questionsStmt->execute([$testId]);
-$questions = $questionsStmt->fetchAll(PDO::FETCH_ASSOC);
 $questionCount = count($questions);
-$isStepByStep = (!empty($test['display_mode']) && $test['display_mode'] === 'step_by_step');
+require_once __DIR__ . '/lib/Constants.php';
+$isStepByStep = (!empty($test['display_mode']) && $test['display_mode'] === Constants::DISPLAY_MODE_STEP_BY_STEP);
 
-$playCountStmt = $pdo->prepare("SELECT COUNT(*) FROM test_runs WHERE test_id = ?");
-$playCountStmt->execute([$testId]);
-$playCount = (int)$playCountStmt->fetchColumn();
+// play_count 变化频繁，使用较短的缓存时间（1分钟）
+$playCountCacheKey = 'test_play_count_' . $testId;
+$playCount = CacheHelper::get($playCountCacheKey, 60);
 
-$questionIds = array_column($questions, 'id');
-$optionsByQuestion = [];
-if ($questionIds) {
-    $placeholders = implode(',', array_fill(0, count($questionIds), '?'));
-    $optionOrderField = choose_order_field($pdo, 'question_options');
-    $optionOrderSql = $optionOrderField ? "ORDER BY {$optionOrderField} ASC, id ASC" : "ORDER BY id ASC";
-    $optStmt = $pdo->prepare(
-        "SELECT * FROM question_options
-         WHERE question_id IN ($placeholders)
-         {$optionOrderSql}"
-    );
-    $optStmt->execute($questionIds);
-    while ($opt = $optStmt->fetch(PDO::FETCH_ASSOC)) {
-        $qid = (int)$opt['question_id'];
-        $optionsByQuestion[$qid][] = $opt;
-    }
+if ($playCount === null) {
+    $playCountStmt = $pdo->prepare("SELECT COUNT(*) FROM test_runs WHERE test_id = ?");
+    $playCountStmt->execute([$testId]);
+    $playCount = (int)$playCountStmt->fetchColumn();
+    CacheHelper::set($playCountCacheKey, $playCount);
 }
 
 ?>
@@ -112,7 +151,7 @@ if ($questionIds) {
 </head>
 <body>
 
-<?php if (!empty($test['display_mode']) && $test['display_mode'] === 'step_by_step'): ?>
+<?php if (!empty($test['display_mode']) && $test['display_mode'] === Constants::DISPLAY_MODE_STEP_BY_STEP): ?>
 <div class="quiz-exit-bar">
     <a class="exit-btn" href="/index.php">← 返回首页</a>
 </div>
@@ -206,7 +245,7 @@ if ($titleColorField !== '' && preg_match('/^#[0-9a-fA-F]{6}$/', $titleColorFiel
                                     <?php
                                     $optionId    = (int)$option['id'];
                                     $label       = pick_field($option, ['option_label', 'label', 'letter'], null);
-                                    $optionText  = pick_field($option, ['text', 'content', 'option_text', 'body', 'description'], '选项');
+                                    $optionText  = pick_field($option, ['text', 'option_text', 'body', 'description'], '选项');
                                     if ($label === null) {
                                         $label = chr(ord('A') + $optionIndex);
                                     }
@@ -218,8 +257,10 @@ if ($titleColorField !== '' && preg_match('/^#[0-9a-fA-F]{6}$/', $titleColorFiel
                                             value="<?= $optionId ?>"
                                             required
                                         >
-                                        <span class="quiz-option-key option-key"><?= htmlspecialchars($label) ?>.</span>
-                                        <span class="quiz-option-text option-text"><?= nl2br(htmlspecialchars($optionText)) ?></span>
+                                        <div class="option-inner">
+                                            <span class="quiz-option-key option-key"><?= htmlspecialchars($label) ?>.</span>
+                                            <span class="quiz-option-text option-text"><?= nl2br(htmlspecialchars($optionText)) ?></span>
+                                        </div>
                                     </label>
                                 <?php endforeach; ?>
                             <?php endif; ?>

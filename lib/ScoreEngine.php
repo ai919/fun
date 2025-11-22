@@ -36,7 +36,8 @@ class ScoreEngine
         self::$lastDetail = null;
 
         $testId      = isset($test['id']) ? (int)$test['id'] : 0;
-        $scoringMode = $test['scoring_mode'] ?? 'simple';
+        require_once __DIR__ . '/Constants.php';
+        $scoringMode = $test['scoring_mode'] ?? Constants::SCORING_MODE_SIMPLE;
         $configRaw   = $test['scoring_config'] ?? null;
         $config      = null;
 
@@ -112,15 +113,15 @@ class ScoreEngine
         }
 
         // 根据 scoring_mode 分派
-        $mode = strtolower($scoringMode ?: 'simple');
+        $mode = strtolower($scoringMode ?: Constants::SCORING_MODE_SIMPLE);
         switch ($mode) {
-            case 'dimensions':
+            case Constants::SCORING_MODE_DIMENSIONS:
                 $detail = self::scoreDimensions($testId, $normalizedAnswers, $optionsByQuestion, $config, $pdo);
                 break;
 
-            case 'simple':
-            case 'range':
-            case 'custom':
+            case Constants::SCORING_MODE_SIMPLE:
+            case Constants::SCORING_MODE_RANGE:
+            case Constants::SCORING_MODE_CUSTOM:
             default:
                 // 目前 range / custom 也先退化为 simple，保证系统不会炸
                 $detail = self::scoreSimple($testId, $normalizedAnswers, $optionsByQuestion, $pdo);

@@ -65,12 +65,10 @@ ob_start();
                 </td>
                 <td>
                     <?php
-                    $status = $test['status'];
-                    $statusLabel = [
-                        'draft'     => '草稿',
-                        'published' => '已发布',
-                        'archived'  => '已归档',
-                    ][$status] ?? $status;
+                    require_once __DIR__ . '/../lib/Constants.php';
+                    $status = Constants::normalizeTestStatus($test['status']);
+                    $statusLabels = Constants::getTestStatusLabels();
+                    $statusLabel = $statusLabels[$status] ?? $status;
                     ?>
                     <span class="badge badge--<?= htmlspecialchars($status) ?>">
                         <?= htmlspecialchars($statusLabel) ?>

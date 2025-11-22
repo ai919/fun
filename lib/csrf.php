@@ -4,6 +4,7 @@
  * 
  * 提供 CSRF token 生成和验证功能
  */
+require_once __DIR__ . '/Constants.php';
 
 class CSRF
 {
@@ -19,7 +20,7 @@ class CSRF
         }
         
         if (!isset($_SESSION['csrf_token'])) {
-            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(Constants::CSRF_TOKEN_BYTES));
         }
         
         return $_SESSION['csrf_token'];
@@ -89,7 +90,7 @@ class CSRF
             session_start();
         }
         
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(Constants::CSRF_TOKEN_BYTES));
         return $_SESSION['csrf_token'];
     }
 }

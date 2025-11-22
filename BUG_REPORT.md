@@ -704,8 +704,8 @@ LIMIT 100
 
 ## 六、性能优化建议
 
-### 21. N+1查询问题
-**位置**: `admin/partials/test_edit_content.php:477-485`
+### 21. N+1查询问题 ✅ **已修复**
+**位置**: `admin/partials/test_edit_content.php:484-512`
 
 **问题**: 在循环中执行SQL查询：
 ```php
@@ -713,7 +713,48 @@ foreach ($questions as $q):
     $stmtOpt->execute([':qid' => $qid]);
 ```
 
-**修复建议**: 一次性查询所有题目的选项，然后在内存中分组。
+**影响**: 如果有 N 个题目，就会执行 N+1 次查询（1次查询题目 + N次查询选项），性能很差。
+
+**修复方案**: 
+- 在循环之前，一次性查询所有题目的选项（使用 IN 查询）
+- 将选项按 `question_id` 分组存储在数组中
+- 在循环中直接从内存中的分组数组获取选项
+- 从 N+1 次查询优化为 2 次查询（1次查询题目 + 1次查询所有选项）
+
+**修复代码**:
+```php
+// 一次性查询所有题目的选项，避免 N+1 查询问题
+$questionIds = array_column($questions, 'id');
+$optionsByQuestionId = [];
+
+if (!empty($questionIds)) {
+    // 使用占位符构建 IN 查询
+    $placeholders = implode(',', array_fill(0, count($questionIds), '?'));
+    $stmtOpt = $pdo->prepare("
+        SELECT id, question_id, option_key, option_text
+        FROM question_options
+        WHERE question_id IN ($placeholders)
+        ORDER BY question_id ASC, option_key ASC, id ASC
+    ");
+    $stmtOpt->execute($questionIds);
+    $allOptions = $stmtOpt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // 按 question_id 分组
+    foreach ($allOptions as $opt) {
+        $qid = (int)$opt['question_id'];
+        if (!isset($optionsByQuestionId[$qid])) {
+            $optionsByQuestionId[$qid] = [];
+        }
+        $optionsByQuestionId[$qid][] = $opt;
+    }
+}
+
+foreach ($questions as $q):
+    $qid = (int)$q['id'];
+    $opts = $optionsByQuestionId[$qid] ?? [];
+```
+
+**修复状态**: ✅ 已修复（2024-12-19）
 
 ### 22. 缺少查询缓存
 **位置**: 多处
@@ -721,6 +762,16 @@ foreach ($questions as $q):
 **问题**: 一些不经常变化的数据（如测验列表）每次都查询数据库。
 
 **修复建议**: 对热点数据实现缓存机制（Redis或文件缓存）。
+
+**修复状态**: ✅ 已修复（2024-12-19）
+
+**修复内容**:
+- 创建了 `lib/CacheHelper.php` 文件缓存工具类
+- 在 `index.php` 中为已发布测验列表添加缓存（5分钟）
+- 在 `router.php` 中为 slug 查询添加缓存（5分钟）
+- 在 `test.php` 中为测验详情、问题、选项添加缓存（5分钟），play_count 使用较短缓存（1分钟）
+- 在管理员保存/更新测验、问题、结果时自动清除相关缓存
+- 缓存使用文件系统存储，无需额外依赖
 
 ## 七、总结
 

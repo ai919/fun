@@ -25,7 +25,9 @@ try {
     exit;
 }
 
-$stmt = $pdo->prepare("SELECT * FROM backup_logs WHERE id = :id AND status = 'success' LIMIT 1");
+require_once __DIR__ . '/lib/Constants.php';
+$stmt = $pdo->prepare("SELECT * FROM backup_logs WHERE id = :id AND status = :status LIMIT 1");
+$stmt->execute([':id' => $id, ':status' => Constants::BACKUP_STATUS_SUCCESS]);
 $stmt->execute([':id' => $id]);
 $row = $stmt->fetch(PDO::FETCH_ASSOC);
 

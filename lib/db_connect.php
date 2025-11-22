@@ -8,5 +8,26 @@ try {
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     ]);
 } catch (PDOException $e) {
-    die('数据库连接失败：' . $e->getMessage());
+    // 记录详细错误到日志
+    $logMessage = sprintf(
+        '[db_connect.php] 数据库连接失败: host=%s, dbname=%s, error=%s',
+        $config['host'],
+        $config['dbname'],
+        $e->getMessage()
+    );
+    $logDir = __DIR__ . '/../logs';
+    $logFile = $logDir . '/db_error.log';
+    if (is_dir($logDir) || @mkdir($logDir, 0755, true)) {
+        @error_log($logMessage . PHP_EOL, 3, $logFile);
+    } else {
+        error_log($logMessage);
+    }
+    
+    // 根据 DEBUG 模式决定是否显示详细错误
+    $isDebug = defined('DEBUG') && DEBUG;
+    if ($isDebug) {
+        die('数据库连接失败：' . htmlspecialchars($e->getMessage()));
+    } else {
+        die('数据库连接失败，请稍后再试');
+    }
 }

@@ -9,6 +9,8 @@ if (php_sapi_name() === 'cli-server') {
 }
 
 require __DIR__ . '/lib/db_connect.php';
+require_once __DIR__ . '/lib/Constants.php';
+require_once __DIR__ . '/lib/CacheHelper.php';
 
 $uri  = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $slug = trim($uri, '/');
@@ -19,10 +21,20 @@ if ($slug === '' || $slug === 'index.php') {
     exit;
 }
 
-// 根据 slug 找测试
-$stmt = $pdo->prepare("SELECT id FROM tests WHERE slug = ? AND (status = 'published' OR status = 1) LIMIT 1");
-$stmt->execute([$slug]);
-$test = $stmt->fetch(PDO::FETCH_ASSOC);
+// 根据 slug 找测试（使用缓存）
+$cacheKey = 'test_slug_' . md5($slug);
+$test = CacheHelper::get($cacheKey, 300);
+
+if ($test === null) {
+    $stmt = $pdo->prepare("SELECT id FROM tests WHERE slug = ? AND (status = ? OR status = 1) LIMIT 1");
+    $stmt->execute([$slug, Constants::TEST_STATUS_PUBLISHED]);
+    $test = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($test) {
+        // 存入缓存
+        CacheHelper::set($cacheKey, $test);
+    }
+}
 
 if ($test) {
     $_GET['id'] = $test['id'];

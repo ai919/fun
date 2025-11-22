@@ -2,6 +2,7 @@
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../lib/db_connect.php';
 require_once __DIR__ . '/../lib/csrf.php';
+require_once __DIR__ . '/../lib/CacheHelper.php';
 require_admin_login();
 
 $isEditing   = isset($_GET['id']) && ctype_digit((string)$_GET['id']);
@@ -58,6 +59,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_type'])) {
                     }
                 }
             }
+            
+            // 清除测验缓存
+            CacheHelper::clearTestCache($testId);
         }
         header('Location: test_edit.php?id=' . $testId . '&section=questions');
         exit;
@@ -84,6 +88,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_type'])) {
                 ':id'          => $resultId,
                 ':test_id'     => $testId,
             ]);
+            
+            // 清除测验缓存
+            CacheHelper::clearTestCache($testId);
         }
         header('Location: test_edit.php?id=' . $testId . '&section=results');
         exit;

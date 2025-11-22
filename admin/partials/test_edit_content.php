@@ -1,16 +1,14 @@
 <?php
 require_once __DIR__ . '/../../lib/csrf.php';
+require_once __DIR__ . '/../../lib/Constants.php';
+require_once __DIR__ . '/../../lib/CacheHelper.php';
 $testId   = isset($_GET['id']) && ctype_digit((string)$_GET['id']) ? (int)$_GET['id'] : null;
 $section  = isset($section) ? $section : (isset($_GET['section']) ? trim((string)$_GET['section']) : 'basic');
 if (!in_array($section, ['basic', 'questions', 'results'], true)) {
     $section = 'basic';
 }
 $errors   = [];
-$statuses = [
-    'draft'     => '草稿',
-    'published' => '已发布',
-    'archived'  => '已归档',
-];
+$statuses = Constants::getTestStatusLabels();
 
 function admin_column_exists(PDO $pdo, string $table, string $column): bool
 {
@@ -47,12 +45,7 @@ $emojiOptions = [
     '🎧' => '🎧 耳机',
     '🪐' => '🪐 行星',
 ];
-$scoringModes = [
-    'simple'     => 'Simple（单结果）',
-    'dimensions' => 'Dimensions（维度组合）',
-    'range'      => 'Range（区间）',
-    'custom'     => 'Custom（自定义）',
-];
+$scoringModes = Constants::getScoringModeLabels();
 
 $formData = [
     'title'          => '',
@@ -62,11 +55,11 @@ $formData = [
     'emoji'          => '',
     'title_color'    => '#6366F1',
     'tags'           => '',
-    'status'         => 'draft',
+    'status'         => Constants::TEST_STATUS_DRAFT,
     'sort_order'     => 0,
-    'scoring_mode'   => 'simple',
+    'scoring_mode'   => Constants::SCORING_MODE_SIMPLE,
     'scoring_config' => '',
-    'display_mode'   => 'single_page',
+    'display_mode'   => Constants::DISPLAY_MODE_SINGLE_PAGE,
 ];
 
 $existingTest = null;
@@ -106,19 +99,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
     $customEmoji                = trim($_POST['emoji_custom'] ?? '');
     $formData['emoji']          = $customEmoji !== '' ? $customEmoji : $selectedEmoji;
     $formData['tags']           = trim($_POST['tags'] ?? '');
-    $formData['status']         = $_POST['status'] ?? 'draft';
+    $formData['status']         = $_POST['status'] ?? Constants::TEST_STATUS_DRAFT;
     $formData['sort_order']     = (int)($_POST['sort_order'] ?? 0);
-    $formData['scoring_mode']   = $_POST['scoring_mode'] ?? 'simple';
+    $formData['scoring_mode']   = $_POST['scoring_mode'] ?? Constants::SCORING_MODE_SIMPLE;
     $formData['scoring_config'] = trim($_POST['scoring_config'] ?? '');
-    $formData['display_mode']   = ($_POST['display_mode'] ?? 'single_page') === 'step_by_step' ? 'step_by_step' : 'single_page';
+    $formData['display_mode']   = ($_POST['display_mode'] ?? Constants::DISPLAY_MODE_SINGLE_PAGE) === Constants::DISPLAY_MODE_STEP_BY_STEP ? Constants::DISPLAY_MODE_STEP_BY_STEP : Constants::DISPLAY_MODE_SINGLE_PAGE;
 
     if ($formData['title'] === '') {
         $errors[] = '测验标题不能为空。';
+    } elseif (mb_strlen($formData['title']) > 255) {
+        $errors[] = '测验标题最长支持 255 个字符。';
     }
     if ($formData['slug'] === '') {
         $errors[] = 'Slug 不能为空。';
     } elseif (!preg_match('/^[a-z0-9_-]+$/', $formData['slug'])) {
         $errors[] = 'Slug 只能包含小写字母、数字、短横线和下划线。';
+    } elseif (mb_strlen($formData['slug']) > 100) {
+        $errors[] = 'Slug 最长支持 100 个字符。';
+    }
+    if (mb_strlen($formData['subtitle']) > 255) {
+        $errors[] = '副标题最长支持 255 个字符。';
     }
     if (!isset($statuses[$formData['status']])) {
         $errors[] = '请选择有效的状态。';
@@ -137,6 +137,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
     if ($formData['tags'] !== '') {
         $tagPieces = array_unique(array_filter(array_map('trim', explode(',', $formData['tags']))));
         $tagsNormalized = implode(', ', $tagPieces);
+        if (mb_strlen($tagsNormalized) > 255) {
+            $errors[] = '标签总长度最长支持 255 个字符。';
+        }
     }
     $formData['tags'] = $tagsNormalized;
 
@@ -219,6 +222,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingT
                 VALUES (" . implode(', ', $placeholders) . ")";
             $insertStmt = $pdo->prepare($insertSql);
             $insertStmt->execute($payload);
+            $testId = (int)$pdo->lastInsertId();
+        }
+
+        // 清除相关缓存
+        CacheHelper::clearTestCache($testId);
+        // 如果 slug 改变了，也需要清除旧的 slug 缓存
+        if ($testId && isset($formData['slug'])) {
+            CacheHelper::delete('test_slug_' . md5($formData['slug']));
+            CacheHelper::delete('test_slug_id_' . md5($formData['slug']));
         }
 
         header('Location: /admin/tests.php?msg=saved');
@@ -315,13 +327,13 @@ if ($testId && $existingTest) {
                         <label class="form-label">展示方式</label>
                         <div class="radio-group inline">
                             <label>
-                                <input type="radio" name="display_mode" value="single_page"
-                                       <?= ($formData['display_mode'] ?? 'single_page') === 'single_page' ? 'checked' : '' ?>>
+                                <input type="radio" name="display_mode" value="<?= Constants::DISPLAY_MODE_SINGLE_PAGE ?>"
+                                       <?= ($formData['display_mode'] ?? Constants::DISPLAY_MODE_SINGLE_PAGE) === Constants::DISPLAY_MODE_SINGLE_PAGE ? 'checked' : '' ?>>
                                 一页显示全部题目
                             </label>
                             <label style="margin-left:16px;">
-                                <input type="radio" name="display_mode" value="step_by_step"
-                                       <?= ($formData['display_mode'] ?? '') === 'step_by_step' ? 'checked' : '' ?>>
+                                <input type="radio" name="display_mode" value="<?= Constants::DISPLAY_MODE_STEP_BY_STEP ?>"
+                                       <?= ($formData['display_mode'] ?? '') === Constants::DISPLAY_MODE_STEP_BY_STEP ? 'checked' : '' ?>>
                                 一题一页 · 逐题作答
                             </label>
                         </div>
@@ -480,16 +492,35 @@ if ($testId && $existingTest) {
         <?php else: ?>
             <div class="question-card-list">
                 <?php
-                $stmtOpt = $pdo->prepare("
-                    SELECT id, option_key, option_text
-                    FROM question_options
-                    WHERE question_id = :qid
-                    ORDER BY option_key ASC, id ASC
-                ");
+                // 一次性查询所有题目的选项，避免 N+1 查询问题
+                $questionIds = array_column($questions, 'id');
+                $optionsByQuestionId = [];
+                
+                if (!empty($questionIds)) {
+                    // 使用占位符构建 IN 查询
+                    $placeholders = implode(',', array_fill(0, count($questionIds), '?'));
+                    $stmtOpt = $pdo->prepare("
+                        SELECT id, question_id, option_key, option_text
+                        FROM question_options
+                        WHERE question_id IN ($placeholders)
+                        ORDER BY question_id ASC, option_key ASC, id ASC
+                    ");
+                    $stmtOpt->execute($questionIds);
+                    $allOptions = $stmtOpt->fetchAll(PDO::FETCH_ASSOC);
+                    
+                    // 按 question_id 分组
+                    foreach ($allOptions as $opt) {
+                        $qid = (int)$opt['question_id'];
+                        if (!isset($optionsByQuestionId[$qid])) {
+                            $optionsByQuestionId[$qid] = [];
+                        }
+                        $optionsByQuestionId[$qid][] = $opt;
+                    }
+                }
+                
                 foreach ($questions as $q):
                     $qid = (int)$q['id'];
-                    $stmtOpt->execute([':qid' => $qid]);
-                    $opts = $stmtOpt->fetchAll(PDO::FETCH_ASSOC);
+                    $opts = $optionsByQuestionId[$qid] ?? [];
                 ?>
                     <div class="question-card">
                         <div class="question-card__header">

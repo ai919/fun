@@ -4,6 +4,7 @@ require_admin_login();
 
 require __DIR__ . '/../lib/db_connect.php';
 require_once __DIR__ . '/../lib/csrf.php';
+require_once __DIR__ . '/../lib/Constants.php';
 
 $pageTitle    = '克隆测验 - DoFun心理实验空间';
 ($pageHeading = '克隆一个测验') || true;
@@ -74,9 +75,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $descriptionInput !== '' ? $descriptionInput : ($srcTest['description'] ?? ''),
                 $srcTest['title_color'] ?? '#4f46e5',
                 $srcTest['tags'] ?? null,
-                'draft',
+                Constants::TEST_STATUS_DRAFT,
                 (int)$srcTest['sort_order'],
-                $srcTest['scoring_mode'] ?? 'simple',
+                $srcTest['scoring_mode'] ?? Constants::SCORING_MODE_SIMPLE,
                 $srcTest['scoring_config'] ?? null,
             ]);
             $newTestId = (int)$pdo->lastInsertId();
@@ -112,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     foreach ($options as $option) {
                         $insOpt->execute([
                             ':qid'         => $questionIdMap[$option['question_id']],
-                            ':text'        => $option['option_text'] ?? ($option['content'] ?? ''),
+                            ':text'        => $option['option_text'] ?? '',
                             ':result_code' => $option['map_result_code'] ?? ($option['dimension_key'] ?? null),
                             ':score'       => $option['score_value'] ?? ($option['score'] ?? 0),
                         ]);

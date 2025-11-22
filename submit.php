@@ -1,8 +1,10 @@
 <?php
-require __DIR__ . '/lib/db_connect.php';
-require __DIR__ . '/lib/ScoreEngine.php';
-require __DIR__ . '/lib/user_auth.php';
-require __DIR__ . '/lib/csrf.php';
+require_once __DIR__ . '/lib/db_connect.php';
+require_once __DIR__ . '/lib/ScoreEngine.php';
+require_once __DIR__ . '/lib/user_auth.php';
+require_once __DIR__ . '/lib/csrf.php';
+require_once __DIR__ . '/lib/Constants.php';
+require_once __DIR__ . '/lib/CacheHelper.php';
 
 // 验证 CSRF token
 if (!CSRF::validateToken()) {
@@ -17,8 +19,8 @@ if ($testId <= 0) {
 }
 
 // 只允许已发布测验
-$testStmt = $pdo->prepare("SELECT * FROM tests WHERE id = ? AND (status = 'published' OR status = 1) LIMIT 1");
-$testStmt->execute([$testId]);
+$testStmt = $pdo->prepare("SELECT * FROM tests WHERE id = ? AND (status = ? OR status = 1) LIMIT 1");
+$testStmt->execute([$testId, Constants::TEST_STATUS_PUBLISHED]);
 $test = $testStmt->fetch(PDO::FETCH_ASSOC);
 if (!$test) {
     http_response_code(404);
@@ -112,13 +114,13 @@ $userId      = $currentUser ? (int)$currentUser['id'] : null;
 
 // 生成分享 token（16位十六进制），确保唯一性
 $shareToken = null;
-$maxRetries = 5;
+$maxRetries = Constants::TOKEN_GENERATION_MAX_RETRIES;
 $retryCount = 0;
 
 while ($retryCount < $maxRetries) {
     try {
         if (function_exists('random_bytes')) {
-            $shareToken = bin2hex(random_bytes(16)); // 32 字符（16字节的十六进制）
+            $shareToken = bin2hex(random_bytes(Constants::SHARE_TOKEN_BYTES)); // 32 字符（16字节的十六进制）
         } else {
             $shareToken = md5(uniqid(mt_rand(), true)); // 32 字符（MD5 哈希）
         }
@@ -170,7 +172,7 @@ try {
     $testRunId = (int)$pdo->lastInsertId();
 
     // 对于 dimensions 模式，额外记录各维度得分
-    if (strtolower($test['scoring_mode'] ?? 'simple') === 'dimensions' && $testRunId > 0 && !empty($dimScores)) {
+    if (strtolower($test['scoring_mode'] ?? Constants::SCORING_MODE_SIMPLE) === Constants::SCORING_MODE_DIMENSIONS && $testRunId > 0 && !empty($dimScores)) {
         $insDim = $pdo->prepare(
             "INSERT INTO test_run_scores (test_run_id, dimension_key, score_value)
              VALUES (:run_id, :dim, :score)"
@@ -186,6 +188,11 @@ try {
     
     // 所有操作成功，提交事务
     $pdo->commit();
+    
+    // 清除 play_count 缓存（因为新增了一条 test_runs 记录）
+    CacheHelper::delete('test_play_count_' . $testId);
+    // 同时清除测验列表缓存（因为 play_count 会变化）
+    CacheHelper::delete('published_tests_list');
 } catch (Exception $e) {
     // 发生错误，回滚事务
     $pdo->rollBack();
