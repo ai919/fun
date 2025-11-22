@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/lib/ErrorHandler.php';
 require_once __DIR__ . '/lib/db_connect.php';
 require_once __DIR__ . '/lib/ScoreEngine.php';
 require_once __DIR__ . '/lib/user_auth.php';
@@ -8,14 +9,12 @@ require_once __DIR__ . '/lib/CacheHelper.php';
 
 // 验证 CSRF token
 if (!CSRF::validateToken()) {
-    http_response_code(403);
-    die('CSRF token 验证失败，请刷新页面后重试');
+    ErrorHandler::renderError(403, 'CSRF token 验证失败，请刷新页面后重试');
 }
 
 $testId = isset($_POST['test_id']) ? (int)$_POST['test_id'] : 0;
 if ($testId <= 0) {
-    http_response_code(400);
-    die('缺少 test_id');
+    ErrorHandler::renderError(400, '缺少 test_id');
 }
 
 // 只允许已发布测验
@@ -23,8 +22,7 @@ $testStmt = $pdo->prepare("SELECT * FROM tests WHERE id = ? AND (status = ? OR s
 $testStmt->execute([$testId, Constants::TEST_STATUS_PUBLISHED]);
 $test = $testStmt->fetch(PDO::FETCH_ASSOC);
 if (!$test) {
-    http_response_code(404);
-    die('测验不存在或已下线。');
+    ErrorHandler::renderError(404, '测验不存在或已下线。');
 }
 
 // 接收答案：q[question_id] = option_id
@@ -197,24 +195,11 @@ try {
     // 发生错误，回滚事务
     $pdo->rollBack();
     
-    // 记录错误日志
-    $logMessage = sprintf(
-        '[submit.php] 数据库插入失败: testId=%d, userId=%s, error=%s',
-        $testId,
-        $userId ?? 'null',
-        $e->getMessage()
+    // 使用统一的错误处理
+    ErrorHandler::handleException(
+        $e,
+        sprintf('提交测验答案失败: testId=%d, userId=%s', $testId, $userId ?? 'null')
     );
-    $logDir = __DIR__ . '/logs';
-    $logFile = $logDir . '/submit_error.log';
-    if (is_dir($logDir) || @mkdir($logDir, 0755, true)) {
-        @error_log($logMessage . PHP_EOL, 3, $logFile);
-    } else {
-        error_log($logMessage);
-    }
-    
-    // 返回错误响应
-    http_response_code(500);
-    die('提交失败，请稍后重试');
 }
 
 // 跳转到结果页

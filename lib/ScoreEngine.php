@@ -67,21 +67,15 @@ class ScoreEngine
 
         if (empty($normalizedAnswers) || $testId <= 0) {
             // 记录警告日志，便于调试
-            $logMessage = sprintf(
-                '[ScoreEngine] 无效输入: testId=%d, answersCount=%d, normalizedCount=%d',
-                $testId,
-                count($answers),
-                count($normalizedAnswers)
-            );
-            
-            // 尝试写入日志文件，如果失败则使用系统日志
-            $logDir = __DIR__ . '/../logs';
-            $logFile = $logDir . '/score_engine.log';
-            if (is_dir($logDir) || @mkdir($logDir, 0755, true)) {
-                @error_log($logMessage . PHP_EOL, 3, $logFile);
-            } else {
-                // 回退到系统日志
-                error_log($logMessage);
+            if (class_exists('ErrorHandler')) {
+                ErrorHandler::logWarning(
+                    'ScoreEngine: 无效输入',
+                    [
+                        'testId' => $testId,
+                        'answersCount' => count($answers),
+                        'normalizedCount' => count($normalizedAnswers),
+                    ]
+                );
             }
             
             return [
@@ -215,16 +209,11 @@ class ScoreEngine
         // 如果配置不完整，退回 simple 模式，避免直接炸掉
         if (!$dims) {
             // 记录警告日志
-            $logMessage = sprintf(
-                '[ScoreEngine] dimensions 模式配置不完整，退回 simple 模式: testId=%d',
-                $testId
-            );
-            $logDir = __DIR__ . '/../logs';
-            $logFile = $logDir . '/score_engine.log';
-            if (is_dir($logDir) || @mkdir($logDir, 0755, true)) {
-                @error_log($logMessage . PHP_EOL, 3, $logFile);
-            } else {
-                error_log($logMessage);
+            if (class_exists('ErrorHandler')) {
+                ErrorHandler::logWarning(
+                    'ScoreEngine: dimensions 模式配置不完整，退回 simple 模式',
+                    ['testId' => $testId]
+                );
             }
             
             return self::scoreSimple($testId, $answers, $optionsByQuestion, $pdo);

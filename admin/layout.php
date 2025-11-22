@@ -56,6 +56,11 @@ if (!isset($activeMenu)) {
                 <span class="admin-nav__icon">💾</span>
                 <span class="admin-nav__label">备份 & 日志</span>
             </a>
+            <a href="system.php"
+               class="admin-nav__item <?= $activeMenu === 'system' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">⚙️</span>
+                <span class="admin-nav__label">系统管理</span>
+            </a>
         </nav>
 
         <div class="admin-sidebar__footer">
