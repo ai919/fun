@@ -154,7 +154,7 @@ ob_start();
             </h2>
             
             <form method="POST" action="">
-                <?php CSRF::renderToken(); ?>
+                <?= CSRF::getTokenField() ?>
                 <?php if ($editAd): ?>
                     <input type="hidden" name="id" value="<?= $editAd['id'] ?>">
                 <?php endif; ?>
