@@ -28,6 +28,83 @@ function build_canonical_url(string $path = ''): string
 }
 
 /**
+ * 构建面包屑导航结构化数据
+ */
+function build_breadcrumb_structured_data(array $items): array
+{
+    $baseUrl = get_base_url();
+    $breadcrumbList = [
+        '@context' => 'https://schema.org',
+        '@type' => 'BreadcrumbList',
+        'itemListElement' => [],
+    ];
+
+    $position = 1;
+    foreach ($items as $item) {
+        $breadcrumbList['itemListElement'][] = [
+            '@type' => 'ListItem',
+            'position' => $position,
+            'name' => $item['name'] ?? '',
+            'item' => isset($item['url']) ? ($item['url'][0] === '/' ? $baseUrl . $item['url'] : $item['url']) : '',
+        ];
+        $position++;
+    }
+
+    return $breadcrumbList;
+}
+
+/**
+ * 构建 FAQPage 结构化数据
+ */
+function build_faq_structured_data(array $faqs): array
+{
+    $faqPage = [
+        '@context' => 'https://schema.org',
+        '@type' => 'FAQPage',
+        'mainEntity' => [],
+    ];
+
+    foreach ($faqs as $faq) {
+        $faqPage['mainEntity'][] = [
+            '@type' => 'Question',
+            'name' => $faq['question'] ?? '',
+            'acceptedAnswer' => [
+                '@type' => 'Answer',
+                'text' => $faq['answer'] ?? '',
+            ],
+        ];
+    }
+
+    return $faqPage;
+}
+
+/**
+ * 构建 Quiz/Assessment 结构化数据
+ */
+function build_quiz_structured_data(array $test, array $questions = []): array
+{
+    $baseUrl = get_base_url();
+    $slug = $test['slug'] ?? '';
+    $quiz = [
+        '@context' => 'https://schema.org',
+        '@type' => 'Quiz',
+        'name' => $test['title'] ?? '',
+        'description' => $test['description'] ?? '',
+        'url' => build_canonical_url('/test.php?slug=' . urlencode($slug)),
+    ];
+
+    if (!empty($test['cover_image'])) {
+        $quiz['image'] = $test['cover_image'];
+    }
+
+    if (!empty($questions)) {
+        $quiz['numberOfQuestions'] = count($questions);
+    }
+
+    return $quiz;
+}
+
+/**
  * 为不同页面类型构建 SEO 数据
  */
 function build_seo_meta(string $pageType, array $data = []): array
@@ -42,6 +119,7 @@ function build_seo_meta(string $pageType, array $data = []): array
     $image = $defaultImage;
     $type  = 'website';
     $robots = 'index,follow';
+    $additionalStructuredData = [];
 
     if ($pageType === 'home') {
         $title = $siteName . '｜心理 性格 性情：更专业的在线测验实验室';
@@ -54,6 +132,7 @@ function build_seo_meta(string $pageType, array $data = []): array
         $tTitle = $test['title'] ?? '';
         $subtitle = $test['subtitle'] ?? '';
         $descText = $test['description'] ?? '';
+        $questions = $data['questions'] ?? [];
 
         $titleParts = [];
         if ($tTitle !== '') $titleParts[] = $tTitle;
@@ -71,6 +150,19 @@ function build_seo_meta(string $pageType, array $data = []): array
         $canonical = build_canonical_url('/test.php?slug=' . urlencode($slug));
         $image = !empty($test['cover_image'] ?? '') ? $test['cover_image'] : $defaultImage;
         $type  = 'article';
+
+        // 添加 Quiz 结构化数据
+        if (!empty($test)) {
+            $additionalStructuredData[] = build_quiz_structured_data($test, $questions);
+        }
+
+        // 添加面包屑导航
+        $breadcrumbs = [
+            ['name' => '首页', 'url' => '/'],
+            ['name' => '测验列表', 'url' => '/index.php'],
+            ['name' => $tTitle ?: '测验', 'url' => '/test.php?slug=' . urlencode($slug)],
+        ];
+        $additionalStructuredData[] = build_breadcrumb_structured_data($breadcrumbs);
     } elseif ($pageType === 'result') {
         $test   = $data['test'] ?? [];
         $result = $data['result'] ?? [];
@@ -98,6 +190,15 @@ function build_seo_meta(string $pageType, array $data = []): array
         $image = !empty($result['image_url'] ?? '') ? $result['image_url']
                  : (!empty($test['cover_image'] ?? '') ? $test['cover_image'] : $defaultImage);
         $type  = 'article';
+
+        // 添加面包屑导航
+        $breadcrumbs = [
+            ['name' => '首页', 'url' => '/'],
+            ['name' => '测验列表', 'url' => '/index.php'],
+            ['name' => $tTitle ?: '测验', 'url' => '/test.php?slug=' . urlencode($slug)],
+            ['name' => $rTitle ?: '结果', 'url' => '/result.php?slug=' . urlencode($slug) . '&result=' . urlencode($code)],
+        ];
+        $additionalStructuredData[] = build_breadcrumb_structured_data($breadcrumbs);
     } else {
         if (!empty($data['title'])) {
             $title = $data['title'] . '｜' . $siteName;
@@ -112,6 +213,16 @@ function build_seo_meta(string $pageType, array $data = []): array
             $image = $data['image'];
         }
         $type = 'website';
+
+        // 如果提供了面包屑数据，添加面包屑导航
+        if (!empty($data['breadcrumbs']) && is_array($data['breadcrumbs'])) {
+            $additionalStructuredData[] = build_breadcrumb_structured_data($data['breadcrumbs']);
+        }
+    }
+
+    // 如果提供了 FAQ 数据，添加 FAQPage 结构化数据
+    if (!empty($data['faqs']) && is_array($data['faqs'])) {
+        $additionalStructuredData[] = build_faq_structured_data($data['faqs']);
     }
 
     $jsonLdData = [
@@ -143,6 +254,10 @@ function build_seo_meta(string $pageType, array $data = []): array
         ];
     }
 
+    // 合并所有结构化数据
+    $allStructuredData = [$jsonLdData];
+    $allStructuredData = array_merge($allStructuredData, $additionalStructuredData);
+
     return [
         'title'       => $title,
         'description' => $desc,
@@ -151,6 +266,9 @@ function build_seo_meta(string $pageType, array $data = []): array
         'type'        => $type,
         'robots'      => $robots,
         'json_ld'     => json_encode($jsonLdData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        'json_ld_all' => array_map(function($data) {
+            return json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }, $allStructuredData),
     ];
 }
 
@@ -166,6 +284,7 @@ function render_seo_head(array $seo): void
     $type        = htmlspecialchars($seo['type'] ?? 'website', ENT_QUOTES, 'UTF-8');
     $robots      = htmlspecialchars($seo['robots'] ?? 'index,follow', ENT_QUOTES, 'UTF-8');
     $jsonLd      = $seo['json_ld'] ?? '';
+    $jsonLdAll   = $seo['json_ld_all'] ?? [];
     $siteName    = 'DoFun心理实验空间';
     $siteNameEsc = htmlspecialchars($siteName, ENT_QUOTES, 'UTF-8');
 
@@ -188,7 +307,15 @@ function render_seo_head(array $seo): void
     echo "<meta name=\"twitter:description\" content=\"{$description}\">\n";
     echo "<meta name=\"twitter:image\" content=\"{$image}\">\n";
 
-    if (!empty($jsonLd)) {
+    // 输出所有结构化数据（包括主 JSON-LD 和额外的结构化数据）
+    if (!empty($jsonLdAll) && is_array($jsonLdAll)) {
+        foreach ($jsonLdAll as $structuredData) {
+            if (!empty($structuredData)) {
+                echo "<script type=\"application/ld+json\">{$structuredData}</script>\n";
+            }
+        }
+    } elseif (!empty($jsonLd)) {
+        // 向后兼容：如果没有 json_ld_all，使用旧的 json_ld
         echo "<script type=\"application/ld+json\">{$jsonLd}</script>\n";
     }
 }

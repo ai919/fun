@@ -131,6 +131,118 @@ ob_start();
             </div>
         </div>
     </a>
+    
+    <!-- 日志分析 -->
+    <a href="log_analysis.php" style="text-decoration: none;">
+        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
+             onmouseover="this.style.transform='translateY(-2px)'" 
+             onmouseout="this.style.transform='translateY(0)'">
+            <div style="font-size: 32px; margin-bottom: 12px;">🔍</div>
+            <h3 style="font-size: 16px; font-weight: 600; color: #e5e7eb; margin-bottom: 8px;">日志分析</h3>
+            <p style="font-size: 13px; color: #9ca3af; margin-bottom: 12px; line-height: 1.5;">
+                分析结构化日志，追踪错误趋势和性能问题
+            </p>
+            <div style="font-size: 12px; color: #60a5fa;">
+                错误追踪 · 趋势分析 · 告警
+            </div>
+        </div>
+    </a>
+    
+    <!-- APM 监控 -->
+    <a href="apm_dashboard.php" style="text-decoration: none;">
+        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
+             onmouseover="this.style.transform='translateY(-2px)'" 
+             onmouseout="this.style.transform='translateY(0)'">
+            <div style="font-size: 32px; margin-bottom: 12px;">⚡</div>
+            <h3 style="font-size: 16px; font-weight: 600; color: #e5e7eb; margin-bottom: 8px;">APM 监控</h3>
+            <p style="font-size: 13px; color: #9ca3af; margin-bottom: 12px; line-height: 1.5;">
+                应用性能监控，实时查看响应时间和系统健康度
+            </p>
+            <div style="font-size: 12px; color: #60a5fa;">
+                性能监控 · 实时指标 · 健康度
+            </div>
+        </div>
+    </a>
+    
+    <!-- SEO 内容优化 -->
+    <a href="seo_optimizer.php" style="text-decoration: none;">
+        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
+             onmouseover="this.style.transform='translateY(-2px)'" 
+             onmouseout="this.style.transform='translateY(0)'">
+            <div style="font-size: 32px; margin-bottom: 12px;">🔍</div>
+            <h3 style="font-size: 16px; font-weight: 600; color: #e5e7eb; margin-bottom: 8px;">SEO 优化</h3>
+            <p style="font-size: 13px; color: #9ca3af; margin-bottom: 12px; line-height: 1.5;">
+                批量检查测验 SEO 分数，提供优化建议和内部链接建议
+            </p>
+            <div style="font-size: 12px; color: #60a5fa;">
+                内容优化 · SEO 评分 · 链接建议
+            </div>
+        </div>
+    </a>
+    
+    <!-- 性能优化 -->
+    <a href="performance.php" style="text-decoration: none;">
+        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
+             onmouseover="this.style.transform='translateY(-2px)'" 
+             onmouseout="this.style.transform='translateY(0)'">
+            <div style="font-size: 32px; margin-bottom: 12px;">🚀</div>
+            <h3 style="font-size: 16px; font-weight: 600; color: #e5e7eb; margin-bottom: 8px;">性能优化</h3>
+            <p style="font-size: 13px; color: #9ca3af; margin-bottom: 12px; line-height: 1.5;">
+                缓存、APM 和性能指标总览，系统资源监控
+            </p>
+            <div style="font-size: 12px; color: #60a5fa;">
+                性能监控 · 缓存统计 · 优化建议
+            </div>
+        </div>
+    </a>
+    
+    <!-- URL 重定向管理 -->
+    <a href="url_redirects.php" style="text-decoration: none;">
+        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
+             onmouseover="this.style.transform='translateY(-2px)'" 
+             onmouseout="this.style.transform='translateY(0)'">
+            <div style="font-size: 32px; margin-bottom: 12px;">🔗</div>
+            <h3 style="font-size: 16px; font-weight: 600; color: #e5e7eb; margin-bottom: 8px;">URL 重定向</h3>
+            <p style="font-size: 13px; color: #9ca3af; margin-bottom: 12px; line-height: 1.5;">
+                管理 301 永久重定向规则，确保旧链接正确跳转
+            </p>
+            <div style="font-size: 12px; color: #60a5fa;">
+                301 重定向 · SEO 优化 · 链接管理
+            </div>
+        </div>
+    </a>
+    
+    <!-- 页面缓存管理 -->
+    <a href="page_cache_manage.php" style="text-decoration: none;">
+        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
+             onmouseover="this.style.transform='translateY(-2px)'" 
+             onmouseout="this.style.transform='translateY(0)'">
+            <div style="font-size: 32px; margin-bottom: 12px;">📄</div>
+            <h3 style="font-size: 16px; font-weight: 600; color: #e5e7eb; margin-bottom: 8px;">页面缓存</h3>
+            <p style="font-size: 13px; color: #9ca3af; margin-bottom: 12px; line-height: 1.5;">
+                管理页面级别缓存，提升页面加载速度
+            </p>
+            <div style="font-size: 12px; color: #60a5fa;">
+                页面缓存 · 性能优化 · 缓存管理
+            </div>
+        </div>
+    </a>
+    
+    <!-- 优化建议中心 -->
+    <a href="optimization_center.php" style="text-decoration: none;">
+        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
+             onmouseover="this.style.transform='translateY(-2px)'" 
+             onmouseout="this.style.transform='translateY(0)'">
+            <div style="font-size: 32px; margin-bottom: 12px;">💡</div>
+            <h3 style="font-size: 16px; font-weight: 600; color: #e5e7eb; margin-bottom: 8px;">优化建议</h3>
+            <p style="font-size: 13px; color: #9ca3af; margin-bottom: 12px; line-height: 1.5;">
+                整合所有优化建议，快速发现和解决系统问题
+            </p>
+            <div style="font-size: 12px; color: #60a5fa;">
+                建议汇总 · 健康检查 · 问题诊断
+            </div>
+        </div>
+    </a>
 </div>
 
 <!-- 系统状态 -->

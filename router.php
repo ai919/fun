@@ -13,7 +13,37 @@ require_once __DIR__ . '/lib/Constants.php';
 require_once __DIR__ . '/lib/CacheHelper.php';
 
 $uri  = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$query = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY);
 $slug = trim($uri, '/');
+
+// URL 结构优化：处理旧 URL 重定向
+// 1. test.php?id=xxx 或 quiz.php?id=xxx → /slug
+if (($slug === 'test.php' || $slug === 'quiz.php') && !empty($query)) {
+    parse_str($query, $params);
+    if (isset($params['id']) && ctype_digit((string)$params['id'])) {
+        $testId = (int)$params['id'];
+        
+        // 从缓存或数据库获取 slug
+        $slugCacheKey = 'test_id_slug_' . $testId;
+        $cachedSlug = CacheHelper::get($slugCacheKey, 3600);
+        
+        if ($cachedSlug === null) {
+            $stmt = $pdo->prepare("SELECT slug FROM tests WHERE id = ? LIMIT 1");
+            $stmt->execute([$testId]);
+            $cachedSlug = $stmt->fetchColumn();
+            if ($cachedSlug) {
+                CacheHelper::set($slugCacheKey, $cachedSlug);
+            }
+        }
+        
+        if ($cachedSlug) {
+            // 301 永久重定向到新 URL
+            $newUrl = '/' . urlencode($cachedSlug);
+            header('Location: ' . $newUrl, true, 301);
+            exit;
+        }
+    }
+}
 
 // 根路径 → 首页
 if ($slug === '' || $slug === 'index.php') {

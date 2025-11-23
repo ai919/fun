@@ -27,7 +27,11 @@ if ($tests === null) {
     CacheHelper::set($cacheKey, $tests);
 }
 
-$seo = build_seo_meta('home');
+$seo = build_seo_meta('home', [
+    'breadcrumbs' => [
+        ['name' => '首页', 'url' => '/'],
+    ],
+]);
 $user = UserAuth::currentUser();
 ?>
 <!DOCTYPE html>

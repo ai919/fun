@@ -27,6 +27,34 @@ return [
         
         // 是否同时记录到系统日志
         'system' => true,
+        
+        // 日志轮转配置（结构化日志）
+        'max_file_size' => 10 * 1024 * 1024, // 10MB
+        'max_files' => 10, // 保留最多 10 个文件
+    ],
+    
+    // 缓存配置
+    'cache' => [
+        // 页面缓存目录
+        'page_dir' => __DIR__ . '/../cache/pages',
+        
+        // 是否启用页面缓存
+        'page_enabled' => true,
+        
+        // 页面缓存默认 TTL（秒）
+        'page_ttl' => 300, // 5 分钟
+    ],
+    
+    // APM 配置
+    'apm' => [
+        // 是否启用 APM 监控
+        'enabled' => true,
+        
+        // 慢查询阈值（秒）
+        'slow_query_threshold' => 1.0,
+        
+        // 慢请求阈值（秒）
+        'slow_request_threshold' => 3.0,
     ],
     
     // 错误处理配置

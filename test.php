@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/lib/db_connect.php';
+require_once __DIR__ . '/seo_helper.php';
 require_once __DIR__ . '/lib/html_purifier.php';
 require_once __DIR__ . '/lib/CacheHelper.php';
 
@@ -140,14 +141,19 @@ if ($playCount === null) {
     CacheHelper::set($playCountCacheKey, $playCount);
 }
 
+// 构建 SEO 数据（包含结构化数据）
+$seo = build_seo_meta('test', [
+    'test' => $test,
+    'questions' => $questions,
+]);
+
 ?>
 <!doctype html>
 <html lang="zh-CN">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= htmlspecialchars($test['title'] ?? '测验') ?></title>
+<?php render_seo_head($seo); ?>
     <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </head>
 <body>
 
