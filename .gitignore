@@ -8,6 +8,9 @@ logs/*.log
 .env
 .env.local
 
+# Installation files
+.installed
+
 # IDE files
 .vscode/
 .idea/

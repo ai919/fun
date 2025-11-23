@@ -174,65 +174,52 @@ fun/
 ### 环境要求
 
 - PHP 7.4 或更高版本
-- MySQL 5.7 或更高版本
+- MySQL 5.7 或更高版本（或 MariaDB 10.2+）
+- PDO MySQL 扩展
+- JSON 扩展
 - Apache/Nginx Web服务器
 - 推荐启用：APCu、OPcache、Redis（可选）
 
-### 安装步骤
+### 快速安装（推荐）
 
-1. **克隆或下载项目**
+DoFun 提供了**自动安装向导**，让您能够快速完成安装，无需手动配置。
+
+1. **下载代码**
 
 ```bash
 git clone <repository-url>
 cd fun
 ```
 
-2. **配置数据库**
+2. **运行安装向导**
 
-编辑 `config/db.php` 或创建 `.env` 文件：
+在浏览器中访问：
 
-```php
-// config/db.php
-return [
-    'host' => 'localhost',
-    'dbname' => 'fun_quiz',
-    'username' => 'your_username',
-    'password' => 'your_password',
-    'charset' => 'utf8mb4',
-];
+```
+http://your-domain.com/install.php
 ```
 
-或使用环境变量：
+或直接访问：
 
-```env
-DB_HOST=localhost
-DB_NAME=fun_quiz
-DB_USER=your_username
-DB_PASS=your_password
+```
+http://your-domain.com/install/
 ```
 
-3. **导入数据库**
+3. **按照向导完成安装**
 
-执行数据库初始化脚本：
+安装向导会自动：
+- ✅ 检查环境要求（PHP版本、扩展、目录权限等）
+- ✅ 创建数据库和所有表结构
+- ✅ 创建管理员账户
+- ✅ 生成配置文件（`.env`）
 
-```sql
--- 执行 database/001_init_schema.sql
--- 然后根据需要执行其他迁移文件
-```
+**详细安装说明请参考：** [📖 安装指南](docs/INSTALLATION.md)
 
-或通过后台迁移系统执行：
-- 访问 `/admin/migrations.php`
-- 点击"执行所有待迁移"
+### 手动安装
 
-4. **设置目录权限**
+如果您更喜欢手动安装，请参考 [安装指南](docs/INSTALLATION.md) 中的"手动安装"部分。
 
-```bash
-chmod -R 755 cache/
-chmod -R 755 logs/
-chmod -R 755 assets/
-```
-
-5. **配置 Web 服务器**
+### 配置 Web 服务器
 
 **Apache (.htaccess)**
 
@@ -260,11 +247,13 @@ server {
 }
 ```
 
-6. **访问后台**
+### 访问系统
 
-- 后台地址：`/admin/login.php`
-- 默认账号：`admin`
-- 默认密码：请查看数据库初始化脚本或首次登录后修改
+安装完成后：
+
+- **前台首页**：`http://your-domain.com/`
+- **后台登录**：`http://your-domain.com/admin/login.php`
+- 使用安装时创建的管理员账户登录
 
 ---
 
