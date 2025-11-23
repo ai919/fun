@@ -115,10 +115,26 @@ ob_start();
             </div>
         </div>
     </a>
+    
+    <!-- 数据库查询日志 -->
+    <a href="db_query_logs.php" style="text-decoration: none;">
+        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
+             onmouseover="this.style.transform='translateY(-2px)'" 
+             onmouseout="this.style.transform='translateY(0)'">
+            <div style="font-size: 32px; margin-bottom: 12px;">📊</div>
+            <h3 style="font-size: 16px; font-weight: 600; color: #e5e7eb; margin-bottom: 8px;">查询日志</h3>
+            <p style="font-size: 13px; color: #9ca3af; margin-bottom: 12px; line-height: 1.5;">
+                查看数据库查询日志，分析查询性能和优化慢查询
+            </p>
+            <div style="font-size: 12px; color: #60a5fa;">
+                性能分析 · 慢查询
+            </div>
+        </div>
+    </a>
 </div>
 
 <!-- 系统状态 -->
-<div class="admin-card">
+<div class="admin-card" style="margin-bottom: 16px;">
     <h2 class="admin-page-title" style="font-size: 15px; margin-bottom: 12px;">系统状态</h2>
     <table class="admin-table admin-table--compact">
         <tbody>
@@ -153,6 +169,156 @@ ob_start();
         <tr>
             <td style="color: #9ca3af;">缓存目录</td>
             <td><code class="code-badge" style="font-size: 11px;"><?= htmlspecialchars($cacheDir) ?></code></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- 数据库连接状态 -->
+<?php
+require_once __DIR__ . '/../lib/DatabaseConnection.php';
+$dbStats = DatabaseConnection::getStats();
+$dbConnected = DatabaseConnection::isConnected();
+
+// 获取数据库信息
+$dbInfo = [];
+if ($dbConnected) {
+    try {
+        $dbInfo['version'] = $pdo->query('SELECT VERSION()')->fetchColumn();
+        $dbInfo['database'] = $pdo->query('SELECT DATABASE()')->fetchColumn();
+        $dbInfo['charset'] = $pdo->query('SELECT @@character_set_database')->fetchColumn();
+        $dbInfo['collation'] = $pdo->query('SELECT @@collation_database')->fetchColumn();
+        
+        // 获取表数量
+        $tableCount = $pdo->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE()")->fetchColumn();
+        $dbInfo['tables'] = $tableCount;
+        
+        // 获取连接数
+        $connectionCount = $pdo->query("SHOW STATUS LIKE 'Threads_connected'")->fetchColumn(1);
+        $dbInfo['connections'] = $connectionCount;
+    } catch (Exception $e) {
+        $dbInfo['error'] = $e->getMessage();
+    }
+}
+
+// 获取配置信息
+require_once __DIR__ . '/../lib/Config.php';
+Config::init();
+$dbConfig = Config::get('db');
+?>
+<div class="admin-card" style="margin-bottom: 16px;">
+    <h2 class="admin-page-title" style="font-size: 15px; margin-bottom: 12px;">
+        数据库连接状态
+        <span style="font-size: 12px; font-weight: normal; margin-left: 8px;">
+            <span style="color: <?= $dbConnected ? '#34d399' : '#ef4444' ?>;">
+                <?= $dbConnected ? '● 已连接' : '● 未连接' ?>
+            </span>
+        </span>
+    </h2>
+    <?php if ($dbConnected && !empty($dbInfo)): ?>
+        <table class="admin-table admin-table--compact">
+            <tbody>
+            <tr>
+                <td style="width: 150px; color: #9ca3af;">数据库版本</td>
+                <td><code class="code-badge"><?= htmlspecialchars($dbInfo['version'] ?? 'N/A') ?></code></td>
+            </tr>
+            <tr>
+                <td style="color: #9ca3af;">当前数据库</td>
+                <td><code class="code-badge"><?= htmlspecialchars($dbInfo['database'] ?? 'N/A') ?></code></td>
+            </tr>
+            <tr>
+                <td style="color: #9ca3af;">字符集</td>
+                <td><code class="code-badge"><?= htmlspecialchars($dbInfo['charset'] ?? 'N/A') ?></code></td>
+            </tr>
+            <tr>
+                <td style="color: #9ca3af;">排序规则</td>
+                <td><code class="code-badge"><?= htmlspecialchars($dbInfo['collation'] ?? 'N/A') ?></code></td>
+            </tr>
+            <tr>
+                <td style="color: #9ca3af;">数据表数量</td>
+                <td><code class="code-badge"><?= htmlspecialchars($dbInfo['tables'] ?? 'N/A') ?></code></td>
+            </tr>
+            <tr>
+                <td style="color: #9ca3af;">当前连接数</td>
+                <td><code class="code-badge"><?= htmlspecialchars($dbInfo['connections'] ?? 'N/A') ?></code></td>
+            </tr>
+            <tr>
+                <td style="color: #9ca3af;">持久连接</td>
+                <td>
+                    <span style="color: <?= $dbStats['persistent'] ? '#34d399' : '#9ca3af' ?>;">
+                        <?= $dbStats['persistent'] ? '已启用' : '未启用' ?>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td style="color: #9ca3af;">数据库主机</td>
+                <td><code class="code-badge" style="font-size: 11px;"><?= htmlspecialchars($dbConfig['host'] ?? 'N/A') ?></code></td>
+            </tr>
+            </tbody>
+        </table>
+    <?php else: ?>
+        <div style="padding: 20px; text-align: center; color: #9ca3af;">
+            <div style="font-size: 32px; margin-bottom: 8px;">⚠️</div>
+            <div>无法获取数据库信息</div>
+            <?php if (isset($dbInfo['error'])): ?>
+                <div style="font-size: 12px; color: #ef4444; margin-top: 8px;">
+                    <?= htmlspecialchars($dbInfo['error']) ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+</div>
+
+<!-- 配置和类状态 -->
+<?php
+$configLoaded = class_exists('Config');
+$databaseClassExists = class_exists('Database');
+$responseClassExists = class_exists('Response');
+$migrationClassExists = class_exists('Migration');
+?>
+<div class="admin-card">
+    <h2 class="admin-page-title" style="font-size: 15px; margin-bottom: 12px;">核心类状态</h2>
+    <table class="admin-table admin-table--compact">
+        <tbody>
+        <tr>
+            <td style="width: 150px; color: #9ca3af;">Config 类</td>
+            <td>
+                <span style="color: <?= $configLoaded ? '#34d399' : '#ef4444' ?>;">
+                    <?= $configLoaded ? '● 已加载' : '● 未加载' ?>
+                </span>
+            </td>
+        </tr>
+        <tr>
+            <td style="color: #9ca3af;">Database 类</td>
+            <td>
+                <span style="color: <?= $databaseClassExists ? '#34d399' : '#ef4444' ?>;">
+                    <?= $databaseClassExists ? '● 已加载' : '● 未加载' ?>
+                </span>
+            </td>
+        </tr>
+        <tr>
+            <td style="color: #9ca3af;">Response 类</td>
+            <td>
+                <span style="color: <?= $responseClassExists ? '#34d399' : '#ef4444' ?>;">
+                    <?= $responseClassExists ? '● 已加载' : '● 未加载' ?>
+                </span>
+            </td>
+        </tr>
+        <tr>
+            <td style="color: #9ca3af;">Migration 类</td>
+            <td>
+                <span style="color: <?= $migrationClassExists ? '#34d399' : '#ef4444' ?>;">
+                    <?= $migrationClassExists ? '● 已加载' : '● 未加载' ?>
+                </span>
+            </td>
+        </tr>
+        <tr>
+            <td style="color: #9ca3af;">DatabaseConnection 类</td>
+            <td>
+                <span style="color: <?= class_exists('DatabaseConnection') ? '#34d399' : '#ef4444' ?>;">
+                    <?= class_exists('DatabaseConnection') ? '● 已加载' : '● 未加载' ?>
+                </span>
+            </td>
         </tr>
         </tbody>
     </table>

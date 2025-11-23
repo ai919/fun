@@ -59,6 +59,16 @@ class Database
     }
 
     /**
+     * 检查查询日志是否启用
+     * 
+     * @return bool
+     */
+    public static function isQueryLogEnabled(): bool
+    {
+        return self::$queryLogEnabled;
+    }
+
+    /**
      * 记录查询日志
      * 
      * @param string $sql SQL 语句

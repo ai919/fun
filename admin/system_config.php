@@ -204,6 +204,136 @@ ob_start();
     </div>
 </form>
 
+<!-- 环境变量和配置来源 -->
+<?php
+require_once __DIR__ . '/../lib/Config.php';
+Config::init();
+
+// 获取环境变量
+$envVars = [];
+$envPrefixes = ['APP_', 'DB_'];
+foreach ($envPrefixes as $prefix) {
+    foreach ($_ENV as $key => $value) {
+        if (strpos($key, $prefix) === 0) {
+            $envVars[$key] = $value;
+        }
+    }
+    foreach ($_SERVER as $key => $value) {
+        if (strpos($key, $prefix) === 0 && !isset($envVars[$key])) {
+            $envVars[$key] = $value;
+        }
+    }
+}
+
+// 检查 .env 文件
+$envFile = __DIR__ . '/../.env';
+$envFileExists = file_exists($envFile);
+$envFileContent = $envFileExists ? file_get_contents($envFile) : '';
+
+// 获取当前配置值
+$currentConfig = [
+    'app.debug' => Config::get('app.debug'),
+    'app.environment' => Config::get('app.environment'),
+    'app.log.level' => Config::get('app.log.level'),
+    'db.host' => Config::get('db.host'),
+    'db.database' => Config::get('db.database'),
+    'db.persistent' => Config::get('db.persistent'),
+];
+?>
+
+<div class="admin-card" style="margin-top: 16px;">
+    <h2 class="admin-page-title" style="font-size: 15px; margin-bottom: 16px;">环境变量和配置来源</h2>
+    
+    <div style="margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+            <span style="font-size: 13px; font-weight: 600; color: #e5e7eb;">.env 文件</span>
+            <?php if ($envFileExists): ?>
+                <span style="background: #34d399; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">已存在</span>
+            <?php else: ?>
+                <span style="background: #6b7280; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">不存在</span>
+            <?php endif; ?>
+        </div>
+        <?php if ($envFileExists): ?>
+            <div style="background: #020617; border: 1px solid rgba(55,65,81,0.85); border-radius: 6px; padding: 12px; font-family: 'Consolas', 'Monaco', monospace; font-size: 11px; max-height: 200px; overflow-y: auto;">
+                <pre style="margin: 0; color: #e5e7eb; white-space: pre-wrap;"><?= htmlspecialchars($envFileContent) ?></pre>
+            </div>
+        <?php else: ?>
+            <div style="font-size: 12px; color: #9ca3af;">
+                未找到 .env 文件。可以复制 <code style="background: #1e293b; padding: 2px 6px; border-radius: 4px;">.env.example</code> 创建。
+            </div>
+        <?php endif; ?>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <div style="font-size: 13px; font-weight: 600; color: #e5e7eb; margin-bottom: 12px;">
+            环境变量 (<?= count($envVars) ?> 个)
+        </div>
+        <?php if (!empty($envVars)): ?>
+            <div style="background: #020617; border: 1px solid rgba(55,65,81,0.85); border-radius: 6px; padding: 12px; max-height: 300px; overflow-y: auto;">
+                <table class="admin-table admin-table--compact" style="font-size: 12px;">
+                    <thead>
+                        <tr>
+                            <th style="color: #9ca3af; text-align: left; padding: 8px;">变量名</th>
+                            <th style="color: #9ca3af; text-align: left; padding: 8px;">值</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($envVars as $key => $value): ?>
+                            <tr>
+                                <td style="color: #60a5fa; padding: 8px; font-family: 'Consolas', 'Monaco', monospace;">
+                                    <?= htmlspecialchars($key) ?>
+                                </td>
+                                <td style="color: #e5e7eb; padding: 8px; font-family: 'Consolas', 'Monaco', monospace;">
+                                    <?php
+                                    // 隐藏敏感信息
+                                    if (stripos($key, 'PASSWORD') !== false || stripos($key, 'SECRET') !== false || stripos($key, 'KEY') !== false) {
+                                        echo str_repeat('*', min(strlen($value), 20));
+                                    } else {
+                                        echo htmlspecialchars($value);
+                                    }
+                                    ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php else: ?>
+            <div style="font-size: 12px; color: #9ca3af;">
+                未检测到环境变量。配置将从配置文件读取。
+            </div>
+        <?php endif; ?>
+    </div>
+    
+    <div>
+        <div style="font-size: 13px; font-weight: 600; color: #e5e7eb; margin-bottom: 12px;">
+            当前配置值
+        </div>
+        <table class="admin-table admin-table--compact">
+            <tbody>
+                <?php foreach ($currentConfig as $key => $value): ?>
+                    <tr>
+                        <td style="width: 200px; color: #9ca3af; font-size: 12px;">
+                            <?= htmlspecialchars($key) ?>
+                        </td>
+                        <td>
+                            <code class="code-badge">
+                                <?php
+                                if (is_bool($value)) {
+                                    echo $value ? 'true' : 'false';
+                                } else {
+                                    echo htmlspecialchars((string)$value);
+                                }
+                                ?>
+                            </code>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <?php
 $content = ob_get_clean();
 include __DIR__ . '/layout.php';
