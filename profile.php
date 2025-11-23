@@ -463,7 +463,11 @@ document.addEventListener('DOMContentLoaded', function() {
         var topbarNicknames = document.querySelectorAll('.tub-nickname');
         var displayName = nickname && nickname.trim() !== '' ? nickname : email;
         topbarNicknames.forEach(function(el) {
-            el.textContent = displayName;
+            var textSpan = el.querySelector('.tub-text');
+            if (textSpan) {
+                textSpan.textContent = displayName;
+            }
+            el.setAttribute('title', displayName);
         });
     }
 

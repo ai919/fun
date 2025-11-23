@@ -86,8 +86,14 @@ function render_topbar($isTestPage = false, $isHomePage = false) {
                         "><?= $unreadCount > 99 ? '99+' : $unreadCount ?></span>
                     <?php endif; ?>
                 </a>
-                <a href="/profile.php" class="tub-nickname">
-                    <?php echo htmlspecialchars($user['nickname'] ?: $user['email']); ?>
+                <a href="/profile.php" class="tub-link tub-link-icon tub-nickname" title="<?php echo htmlspecialchars($user['nickname'] ?: $user['email']); ?>">
+                    <span class="tub-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </span>
+                    <span class="tub-text"><?php echo htmlspecialchars($user['nickname'] ?: $user['email']); ?></span>
                 </a>
                 <a href="/my_tests.php" class="tub-link tub-link-icon" title="我的测验">
                     <span class="tub-icon">
@@ -167,8 +173,14 @@ function render_topbar($isTestPage = false, $isHomePage = false) {
                     "><?= $unreadCount > 99 ? '99+' : $unreadCount ?></span>
                 <?php endif; ?>
             </a>
-            <a href="/profile.php" class="tub-nickname">
-                <?php echo htmlspecialchars($user['nickname'] ?: $user['email']); ?>
+            <a href="/profile.php" class="tub-link tub-link-icon tub-nickname" title="<?php echo htmlspecialchars($user['nickname'] ?: $user['email']); ?>">
+                <span class="tub-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </span>
+                <span class="tub-text"><?php echo htmlspecialchars($user['nickname'] ?: $user['email']); ?></span>
             </a>
             <a href="/my_tests.php" class="tub-link tub-link-icon" title="我的测验">
                 <span class="tub-icon">

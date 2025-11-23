@@ -2130,7 +2130,17 @@ html[data-theme="dark"] .page-profile .profile-container {
     padding: 4px 8px;
     border-radius: 6px;
     transition: 0.2s;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tub-nickname .tub-icon {
+    display: none; /* 桌面端默认隐藏图标 */
+}
+
+.tub-nickname .tub-text {
+    display: inline-block; /* 桌面端显示文字 */
 }
 
 .tub-nickname:hover {
@@ -2311,7 +2321,7 @@ html[data-theme="dark"] .page-profile .profile-container {
     }
     
     .topbar-right {
-        gap: 6px;
+        gap: 4px; /* 移动端图标更紧凑 */
         flex-wrap: nowrap;
     }
     
@@ -2349,10 +2359,28 @@ html[data-theme="dark"] .page-profile .profile-container {
         position: relative;
     }
     
+    /* 用户名在移动端也显示为图标 */
     .topbar-right .tub-nickname {
-        font-size: 11px;
-        padding: 3px 5px;
-        max-width: 60px;
+        padding: 8px;
+        min-width: 40px;
+        min-height: 40px;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .topbar-right .tub-nickname .tub-text {
+        display: none; /* 移动端隐藏用户名文字 */
+    }
+    
+    .topbar-right .tub-nickname .tub-icon {
+        display: flex; /* 移动端显示用户图标 */
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .topbar-right .tub-nickname .tub-icon svg {
+        width: 20px;
+        height: 20px;
     }
 
     .test-hero-meta {
