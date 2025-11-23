@@ -1964,10 +1964,14 @@ html[data-theme="dark"] .page-profile .profile-container {
 }
 
 .topbar-home-link .home-arrow {
-    display: inline-block;
+    display: none; /* 桌面端默认隐藏箭头，显示文字 */
     transition: transform 0.25s ease;
-    font-size: 16px;
-    font-weight: 600;
+}
+
+.topbar-home-link .home-arrow svg {
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
 }
 
 .topbar-home-link .home-text {
@@ -2173,13 +2177,18 @@ html[data-theme="dark"] .page-profile .profile-container {
 }
 
 .tub-icon {
-    display: inline-block;
-    font-size: 16px;
+    display: none; /* 桌面端默认隐藏图标 */
     line-height: 1;
 }
 
+.tub-icon svg {
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+}
+
 .tub-text {
-    display: inline-block;
+    display: inline-block; /* 桌面端显示文字 */
 }
 
 @media (max-width: 640px) {
@@ -2207,7 +2216,14 @@ html[data-theme="dark"] .page-profile .profile-container {
     }
     
     .topbar-home-link .home-arrow {
-        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .topbar-home-link .home-arrow svg {
+        width: 20px;
+        height: 20px;
     }
     
     .tub-link {
@@ -2221,6 +2237,12 @@ html[data-theme="dark"] .page-profile .profile-container {
         display: none;
     }
     
+    .tub-link-icon .tub-icon {
+        display: flex; /* 移动端显示图标 */
+        align-items: center;
+        justify-content: center;
+    }
+    
     .tub-link-icon {
         padding: 8px;
         min-width: 40px;
@@ -2229,8 +2251,9 @@ html[data-theme="dark"] .page-profile .profile-container {
         align-items: center;
     }
     
-    .tub-link-icon .tub-icon {
-        font-size: 20px;
+    .tub-link-icon .tub-icon svg {
+        width: 20px;
+        height: 20px;
     }
     
     /* 通知链接的特殊处理 */
@@ -2255,7 +2278,15 @@ html[data-theme="dark"] .page-profile .profile-container {
     
     .theme-toggle-btn .theme-icon-light,
     .theme-toggle-btn .theme-icon-dark {
-        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .theme-toggle-btn .theme-icon-light svg,
+    .theme-toggle-btn .theme-icon-dark svg {
+        width: 18px;
+        height: 18px;
     }
     
     /* 测验页面布局响应式 */
@@ -2294,6 +2325,12 @@ html[data-theme="dark"] .page-profile .profile-container {
         display: none;
     }
     
+    .topbar-right .tub-link-icon .tub-icon {
+        display: flex; /* 移动端显示图标 */
+        align-items: center;
+        justify-content: center;
+    }
+    
     .topbar-right .tub-link-icon {
         padding: 8px;
         min-width: 40px;
@@ -2302,8 +2339,9 @@ html[data-theme="dark"] .page-profile .profile-container {
         align-items: center;
     }
     
-    .topbar-right .tub-link-icon .tub-icon {
-        font-size: 20px;
+    .topbar-right .tub-link-icon .tub-icon svg {
+        width: 20px;
+        height: 20px;
     }
     
     /* 通知链接的特殊处理 */
@@ -2672,6 +2710,15 @@ html[data-theme="dark"] .page-profile .profile-container {
 .theme-toggle-btn .theme-icon-light,
 .theme-toggle-btn .theme-icon-dark {
     position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.theme-toggle-btn .theme-icon-light svg,
+.theme-toggle-btn .theme-icon-dark svg {
+    width: 18px;
+    height: 18px;
     font-size: 18px;
     transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     line-height: 1;
@@ -2716,7 +2763,15 @@ html[data-theme="dark"] .page-profile .profile-container {
     
     .theme-toggle-btn .theme-icon-light,
     .theme-toggle-btn .theme-icon-dark {
-        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .theme-toggle-btn .theme-icon-light svg,
+    .theme-toggle-btn .theme-icon-dark svg {
+        width: 18px;
+        height: 18px;
     }
     
     .test-actions {
@@ -2725,10 +2780,14 @@ html[data-theme="dark"] .page-profile .profile-container {
         flex-direction: column;
         align-items: stretch;
         gap: 10px;
+        width: 100%;
+        box-sizing: border-box;
     }
     .test-actions .btn-primary,
     .test-actions .btn-secondary {
         width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
         justify-content: center;
         text-align: center;
         padding: 12px 16px;
@@ -2739,18 +2798,19 @@ html[data-theme="dark"] .page-profile .profile-container {
     .result-share-actions {
         margin-top: 20px;
         margin-bottom: 16px;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+        display: flex;
+        flex-direction: column;
         gap: 10px;
+        width: 100%;
+        box-sizing: border-box;
     }
     .result-share-actions button {
         min-width: unset;
         width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
         padding: 12px 14px;
         font-size: 13px;
-    }
-    .result-share-actions button:last-child {
-        grid-column: 1 / -1;
     }
 
     .result-actions {
@@ -2759,11 +2819,15 @@ html[data-theme="dark"] .page-profile .profile-container {
         flex-direction: column;
         align-items: stretch;
         gap: 12px;
+        width: 100%;
+        box-sizing: border-box;
     }
     .result-actions a,
     .result-actions button {
         min-width: unset;
         width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
         justify-content: center;
         text-align: center;
         padding: 14px 20px;
