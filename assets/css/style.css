@@ -2165,6 +2165,23 @@ html[data-theme="dark"] .page-profile .profile-container {
     color: #f9fafb;
 }
 
+/* 带图标的链接样式 */
+.tub-link-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tub-icon {
+    display: inline-block;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.tub-text {
+    display: inline-block;
+}
+
 @media (max-width: 640px) {
     .test-page {
         margin: 64px auto 24px; /* 保持顶部间距，为固定 topbar 留出空间 */
@@ -2197,6 +2214,28 @@ html[data-theme="dark"] .page-profile .profile-container {
         padding: 4px 6px;
         font-size: 12px;
         white-space: nowrap;
+    }
+    
+    /* 移动端：只显示图标，隐藏文字 */
+    .tub-link-icon .tub-text {
+        display: none;
+    }
+    
+    .tub-link-icon {
+        padding: 8px;
+        min-width: 40px;
+        min-height: 40px;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .tub-link-icon .tub-icon {
+        font-size: 20px;
+    }
+    
+    /* 通知链接的特殊处理 */
+    .tub-link-icon[href="/notifications.php"] {
+        position: relative;
     }
     
     .tub-nickname {
@@ -2248,6 +2287,28 @@ html[data-theme="dark"] .page-profile .profile-container {
     .topbar-right .tub-link {
         font-size: 11px;
         padding: 3px 5px;
+    }
+    
+    /* 移动端：只显示图标，隐藏文字 */
+    .topbar-right .tub-link-icon .tub-text {
+        display: none;
+    }
+    
+    .topbar-right .tub-link-icon {
+        padding: 8px;
+        min-width: 40px;
+        min-height: 40px;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .topbar-right .tub-link-icon .tub-icon {
+        font-size: 20px;
+    }
+    
+    /* 通知链接的特殊处理 */
+    .topbar-right .tub-link-icon[href="/notifications.php"] {
+        position: relative;
     }
     
     .topbar-right .tub-nickname {

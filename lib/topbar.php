@@ -41,8 +41,9 @@ function render_topbar($isTestPage = false, $isHomePage = false) {
                 <span class="theme-icon-dark">🌙</span>
             </button>
             <?php if ($user): ?>
-                <a href="/notifications.php" class="tub-link" style="position: relative;">
-                    通知
+                <a href="/notifications.php" class="tub-link tub-link-icon" style="position: relative;" title="通知">
+                    <span class="tub-icon">🔔</span>
+                    <span class="tub-text">通知</span>
                     <?php if ($unreadCount > 0): ?>
                         <span style="
                             position: absolute;
@@ -63,11 +64,23 @@ function render_topbar($isTestPage = false, $isHomePage = false) {
                 <a href="/profile.php" class="tub-nickname">
                     <?php echo htmlspecialchars($user['nickname'] ?: $user['email']); ?>
                 </a>
-                <a href="/my_tests.php" class="tub-link">我的测验</a>
-                <a href="/logout.php" class="tub-link">退出</a>
+                <a href="/my_tests.php" class="tub-link tub-link-icon" title="我的测验">
+                    <span class="tub-icon">📋</span>
+                    <span class="tub-text">我的测验</span>
+                </a>
+                <a href="/logout.php" class="tub-link tub-link-icon" title="退出">
+                    <span class="tub-icon">🚪</span>
+                    <span class="tub-text">退出</span>
+                </a>
             <?php else: ?>
-                <a href="/login.php" class="tub-link">登录</a>
-                <a href="/register.php" class="tub-link">注册</a>
+                <a href="/login.php" class="tub-link tub-link-icon" title="登录">
+                    <span class="tub-icon">🔑</span>
+                    <span class="tub-text">登录</span>
+                </a>
+                <a href="/register.php" class="tub-link tub-link-icon" title="注册">
+                    <span class="tub-icon">✏️</span>
+                    <span class="tub-text">注册</span>
+                </a>
             <?php endif; ?>
         </div>
     </div>
@@ -92,8 +105,9 @@ function render_topbar($isTestPage = false, $isHomePage = false) {
             <span class="theme-icon-dark">🌙</span>
         </button>
         <?php if ($user): ?>
-            <a href="/notifications.php" class="tub-link" style="position: relative;">
-                通知
+            <a href="/notifications.php" class="tub-link tub-link-icon" style="position: relative;" title="通知">
+                <span class="tub-icon">🔔</span>
+                <span class="tub-text">通知</span>
                 <?php if ($unreadCount > 0): ?>
                     <span style="
                         position: absolute;
@@ -114,11 +128,23 @@ function render_topbar($isTestPage = false, $isHomePage = false) {
             <a href="/profile.php" class="tub-nickname">
                 <?php echo htmlspecialchars($user['nickname'] ?: $user['email']); ?>
             </a>
-            <a href="/my_tests.php" class="tub-link">我的测验</a>
-            <a href="/logout.php" class="tub-link">退出</a>
+            <a href="/my_tests.php" class="tub-link tub-link-icon" title="我的测验">
+                <span class="tub-icon">📋</span>
+                <span class="tub-text">我的测验</span>
+            </a>
+            <a href="/logout.php" class="tub-link tub-link-icon" title="退出">
+                <span class="tub-icon">🚪</span>
+                <span class="tub-text">退出</span>
+            </a>
         <?php else: ?>
-            <a href="/login.php" class="tub-link">登录</a>
-            <a href="/register.php" class="tub-link">注册</a>
+            <a href="/login.php" class="tub-link tub-link-icon" title="登录">
+                <span class="tub-icon">🔑</span>
+                <span class="tub-text">登录</span>
+            </a>
+            <a href="/register.php" class="tub-link tub-link-icon" title="注册">
+                <span class="tub-icon">✏️</span>
+                <span class="tub-text">注册</span>
+            </a>
         <?php endif; ?>
     </div>
 </div>
