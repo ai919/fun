@@ -4,6 +4,7 @@ require_once __DIR__ . '/lib/db_connect.php';
 require_once __DIR__ . '/lib/html_purifier.php';
 require_once __DIR__ . '/lib/SettingsHelper.php';
 require_once __DIR__ . '/lib/topbar.php';
+require_once __DIR__ . '/lib/AdHelper.php';
 
 $shareTokenParam = isset($_GET['token']) ? trim((string)$_GET['token']) : '';
 $runIdParam      = isset($_GET['run']) ? (int)$_GET['run'] : 0;
@@ -103,6 +104,16 @@ $seo = $finalTest && $finalResult
 $emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
 ?>
 
+<?php
+// 结果页顶部广告
+$resultTopAd = AdHelper::render('result_top', 'result');
+if ($resultTopAd):
+?>
+<div class="ad-wrapper ad-wrapper--result-top">
+    <?= $resultTopAd ?>
+</div>
+<?php endif; ?>
+
 <div class="result-page">
     <?php if ($finalTest): ?>
         <header class="result-hero">
@@ -184,6 +195,16 @@ $emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
                 </div>
             <?php endif; ?>
         </section>
+
+        <?php
+        // 结果页中间广告
+        $resultMiddleAd = AdHelper::render('result_middle', 'result');
+        if ($resultMiddleAd):
+        ?>
+        <div class="ad-wrapper ad-wrapper--result-middle">
+            <?= $resultMiddleAd ?>
+        </div>
+        <?php endif; ?>
     <?php endif; ?>
 
     <div class="result-share-actions">
@@ -198,6 +219,16 @@ $emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
         <?php endif; ?>
         <a href="/index.php" class="btn-primary">返回全部测验</a>
     </footer>
+
+    <?php
+    // 结果页底部广告
+    $resultBottomAd = AdHelper::render('result_bottom', 'result');
+    if ($resultBottomAd):
+    ?>
+    <div class="ad-wrapper ad-wrapper--result-bottom">
+        <?= $resultBottomAd ?>
+    </div>
+    <?php endif; ?>
 </div>
 
 <div id="result-poster" class="result-poster">

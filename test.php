@@ -5,6 +5,7 @@ require_once __DIR__ . '/lib/html_purifier.php';
 require_once __DIR__ . '/lib/CacheHelper.php';
 require_once __DIR__ . '/lib/SettingsHelper.php';
 require_once __DIR__ . '/lib/topbar.php';
+require_once __DIR__ . '/lib/AdHelper.php';
 
 function pick_field(array $row, array $candidates, $default = '')
 {
@@ -225,6 +226,16 @@ if ($titleColorField !== '' && preg_match('/^#[0-9a-fA-F]{6}$/', $titleColorFiel
         </div>
     </header>
 
+    <?php
+    // 测验页顶部广告
+    $testTopAd = AdHelper::render('test_top', 'test');
+    if ($testTopAd):
+    ?>
+    <div class="ad-wrapper ad-wrapper--test-top">
+        <?= $testTopAd ?>
+    </div>
+    <?php endif; ?>
+
     <div class="progress-indicator" id="global-progress" role="progressbar" aria-label="页面加载进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
         <div class="progress-indicator-bar" id="global-progress-bar"></div>
     </div>
@@ -296,8 +307,31 @@ if ($titleColorField !== '' && preg_match('/^#[0-9a-fA-F]{6}$/', $titleColorFiel
                             <?php endif; ?>
                         </div>
                     </div>
+                    <?php
+                    // 在题目中间插入广告（每3题后）
+                    if (($idx + 1) % 3 === 0 && $idx < count($questions) - 1):
+                        $testMiddleAd = AdHelper::render('test_middle', 'test');
+                        if ($testMiddleAd):
+                    ?>
+                    <div class="ad-wrapper ad-wrapper--test-middle">
+                        <?= $testMiddleAd ?>
+                    </div>
+                    <?php
+                        endif;
+                    endif;
+                    ?>
                 <?php endforeach; ?>
             </div>
+
+            <?php
+            // 测验页底部广告（提交按钮上方）
+            $testBottomAd = AdHelper::render('test_bottom', 'test');
+            if ($testBottomAd):
+            ?>
+            <div class="ad-wrapper ad-wrapper--test-bottom">
+                <?= $testBottomAd ?>
+            </div>
+            <?php endif; ?>
 
             <?php if ($isStepByStep): ?>
                 <div class="quiz-step-footer">

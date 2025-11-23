@@ -2041,6 +2041,96 @@ a:active {
     color: #666;
 }
 
+/* 广告位样式 */
+.ad-wrapper {
+    margin: 24px 0;
+    padding: 16px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.ad-wrapper--home-top {
+    margin-top: 0;
+    margin-bottom: 32px;
+}
+
+.ad-wrapper--home-middle {
+    margin: 32px 0;
+}
+
+.ad-wrapper--home-bottom {
+    margin-top: 48px;
+    margin-bottom: 0;
+}
+
+.ad-wrapper--test-top {
+    margin-top: 0;
+    margin-bottom: 24px;
+}
+
+.ad-wrapper--test-middle {
+    margin: 24px 0;
+}
+
+.ad-wrapper--test-bottom {
+    margin-top: 24px;
+    margin-bottom: 0;
+}
+
+.ad-wrapper--result-top {
+    margin-top: 0;
+    margin-bottom: 24px;
+}
+
+.ad-wrapper--result-middle {
+    margin: 24px 0;
+}
+
+.ad-wrapper--result-bottom {
+    margin-top: 48px;
+    margin-bottom: 0;
+}
+
+.ad-container {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.ad-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    display: block;
+    margin: 0 auto;
+}
+
+.ad-text-link {
+    display: inline-block;
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: opacity 0.2s;
+}
+
+.ad-text-link:hover {
+    opacity: 0.8;
+}
+
+.ad-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .ad-wrapper {
+        margin: 16px 0;
+        padding: 12px;
+    }
+}
+
 .quiz-step-footer {
     margin-top: 24px;
     padding-top: 16px;

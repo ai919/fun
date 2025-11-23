@@ -76,6 +76,11 @@ if (!isset($activeMenu)) {
                 <span class="admin-nav__icon">📊</span>
                 <span class="admin-nav__label">SEO 优化器</span>
             </a>
+            <a href="ad_positions.php"
+               class="admin-nav__item <?= $activeMenu === 'ads' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">📢</span>
+                <span class="admin-nav__label">广告位管理</span>
+            </a>
         </nav>
 
         <div class="admin-sidebar__footer">

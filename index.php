@@ -7,6 +7,7 @@ require_once __DIR__ . '/lib/Constants.php';
 require_once __DIR__ . '/lib/CacheHelper.php';
 require_once __DIR__ . '/lib/SettingsHelper.php';
 require_once __DIR__ . '/lib/topbar.php';
+require_once __DIR__ . '/lib/AdHelper.php';
 
 // 尝试从缓存获取测验列表（缓存5分钟）
 $cacheKey = 'published_tests_list';
@@ -68,6 +69,16 @@ $user = UserAuth::currentUser();
             </div>
             <p class="site-subtitle">心理 性格 性情：更专业的在线测验实验室</p>
         </header>
+
+        <?php
+        // 首页顶部广告
+        $homeTopAd = AdHelper::render('home_top', 'home');
+        if ($homeTopAd):
+        ?>
+        <div class="ad-wrapper ad-wrapper--home-top">
+            <?= $homeTopAd ?>
+        </div>
+        <?php endif; ?>
 
         <div class="quiz-grid tests-grid">
         <?php foreach ($tests as $test): ?>
@@ -145,6 +156,26 @@ $user = UserAuth::currentUser();
             </article>
         <?php endforeach; ?>
         </div>
+
+        <?php
+        // 首页中间广告（在测验列表中间）
+        $homeMiddleAd = AdHelper::render('home_middle', 'home');
+        if ($homeMiddleAd):
+        ?>
+        <div class="ad-wrapper ad-wrapper--home-middle">
+            <?= $homeMiddleAd ?>
+        </div>
+        <?php endif; ?>
+
+        <?php
+        // 首页底部广告
+        $homeBottomAd = AdHelper::render('home_bottom', 'home');
+        if ($homeBottomAd):
+        ?>
+        <div class="ad-wrapper ad-wrapper--home-bottom">
+            <?= $homeBottomAd ?>
+        </div>
+        <?php endif; ?>
     </div>
 </main>
 </body>
