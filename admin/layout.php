@@ -72,10 +72,10 @@ if (!isset($activeMenu)) {
                 <span class="admin-nav__icon">💬</span>
                 <span class="admin-nav__label">心理名言</span>
             </a>
-            <a href="seo_settings.php"
-               class="admin-nav__item <?= $activeMenu === 'seo' ? 'is-active' : '' ?>">
-                <span class="admin-nav__icon">🔍</span>
-                <span class="admin-nav__label">SEO 设置</span>
+            <a href="site_settings.php"
+               class="admin-nav__item <?= $activeMenu === 'site_settings' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">🌐</span>
+                <span class="admin-nav__label">网站设置</span>
             </a>
             <a href="seo_optimizer.php"
                class="admin-nav__item <?= $activeMenu === 'seo_optimizer' ? 'is-active' : '' ?>">
@@ -215,6 +215,42 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.execCommand('insertText', false, emoji);
                 this.value = '';
                 syncHidden();
+            });
+        }
+
+        // 颜色选择器
+        var colorTrigger = toolbar.querySelector('.rte-color-trigger');
+        var colorPicker = toolbar.querySelector('.rte-color-picker');
+        if (colorTrigger && colorPicker) {
+            colorTrigger.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var isVisible = colorPicker.style.display !== 'none';
+                // 关闭所有其他颜色选择器
+                document.querySelectorAll('.rte-color-picker').forEach(function (picker) {
+                    picker.style.display = 'none';
+                });
+                colorPicker.style.display = isVisible ? 'none' : 'block';
+            });
+
+            colorPicker.querySelectorAll('.rte-color-btn').forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var color = this.getAttribute('data-color');
+                    var cmd = colorTrigger.getAttribute('data-cmd');
+                    editor.focus();
+                    document.execCommand(cmd, false, color);
+                    colorPicker.style.display = 'none';
+                    syncHidden();
+                });
+            });
+
+            // 点击外部关闭颜色选择器
+            document.addEventListener('click', function (e) {
+                if (!colorTrigger.contains(e.target) && !colorPicker.contains(e.target)) {
+                    colorPicker.style.display = 'none';
+                }
             });
         }
 

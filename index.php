@@ -9,6 +9,10 @@ require_once __DIR__ . '/lib/SettingsHelper.php';
 require_once __DIR__ . '/lib/topbar.php';
 require_once __DIR__ . '/lib/AdHelper.php';
 
+// 获取首页显示测验数量限制
+$homeTestsLimit = (int)SettingsHelper::get('home_tests_limit', 20);
+$homeTestsLimit = max(1, min(200, $homeTestsLimit)); // 限制在1-200之间
+
 // 尝试从缓存获取测验列表（缓存5分钟）
 $cacheKey = 'published_tests_list';
 $tests = CacheHelper::get($cacheKey, 300);
@@ -22,12 +26,18 @@ if ($tests === null) {
         FROM tests t
         WHERE (t.status = ? OR t.status = 1)
         ORDER BY t.sort_order DESC, t.id DESC
+        LIMIT ?
     ");
-    $stmt->execute([Constants::TEST_STATUS_PUBLISHED]);
+    $stmt->bindValue(1, Constants::TEST_STATUS_PUBLISHED, PDO::PARAM_STR);
+    $stmt->bindValue(2, $homeTestsLimit, PDO::PARAM_INT);
+    $stmt->execute();
     $tests = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // 存入缓存
     CacheHelper::set($cacheKey, $tests);
+} else {
+    // 如果从缓存获取，也需要限制数量
+    $tests = array_slice($tests, 0, $homeTestsLimit);
 }
 
 // 获取热门标签（使用最多的标签）
@@ -178,9 +188,12 @@ $user = UserAuth::currentUser();
     <div class="page-container">
         <header class="site-header">
             <div class="site-title-wrap">
-                <h1 class="site-title">DoFun心理实验空间</h1>
+                <h1 class="site-title"><?= htmlspecialchars(SettingsHelper::get('site_name', 'DoFun心理实验空间')) ?></h1>
             </div>
-            <p class="site-subtitle">心理 性格 性情：更专业的在线测验实验室</p>
+            <?php $siteSubtitle = SettingsHelper::get('site_subtitle', '心理 性格 性情：更专业的在线测验实验室'); ?>
+            <?php if (!empty($siteSubtitle)): ?>
+            <p class="site-subtitle"><?= htmlspecialchars($siteSubtitle) ?></p>
+            <?php endif; ?>
         </header>
 
         <?php

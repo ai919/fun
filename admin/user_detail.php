@@ -92,6 +92,41 @@ ob_start();
             <th>最后登录</th>
             <td><?= $user['last_login_at'] ? date('Y-m-d H:i:s', strtotime($user['last_login_at'])) : '<span class="admin-table__muted">从未登录</span>' ?></td>
         </tr>
+        <tr>
+            <th>性别</th>
+            <td>
+                <?php
+                $genderLabels = ['male' => '男', 'female' => '女', 'other' => '其他'];
+                echo $user['gender'] ? htmlspecialchars($genderLabels[$user['gender']] ?? $user['gender']) : '<span class="admin-table__muted">未设置</span>';
+                ?>
+            </td>
+        </tr>
+        <tr>
+            <th>出生日期</th>
+            <td><?= $user['birth_date'] ? htmlspecialchars($user['birth_date']) : '<span class="admin-table__muted">未设置</span>' ?></td>
+        </tr>
+        <?php if ($user['birth_date']): 
+            $birthDate = new DateTime($user['birth_date']);
+            $today = new DateTime();
+            $age = $today->diff($birthDate)->y;
+        ?>
+        <tr>
+            <th>年龄</th>
+            <td><?= $age ?> 岁</td>
+        </tr>
+        <?php endif; ?>
+        <tr>
+            <th>星座</th>
+            <td><?= $user['zodiac'] ? htmlspecialchars($user['zodiac']) : '<span class="admin-table__muted">未设置</span>' ?></td>
+        </tr>
+        <tr>
+            <th>属相</th>
+            <td><?= $user['chinese_zodiac'] ? htmlspecialchars($user['chinese_zodiac']) : '<span class="admin-table__muted">未设置</span>' ?></td>
+        </tr>
+        <tr>
+            <th>人格</th>
+            <td><?= $user['personality'] ? htmlspecialchars($user['personality']) : '<span class="admin-table__muted">未设置</span>' ?></td>
+        </tr>
     </table>
 </div>
 

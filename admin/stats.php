@@ -34,13 +34,20 @@ if (!$testId) {
     }
     unset($test);
 
-$pageTitle    = '测验统计 - DoFun心理实验空间';
-    $pageHeading  = '测验统计';
+$pageTitle    = '统计';
+    $pageHeading  = '统计';
     $pageSubtitle = '选择一个测验查看运行数据。';
     $activeMenu   = 'stats';
+    $currentTab   = isset($_GET['tab']) ? trim($_GET['tab']) : 'tests';
 
     ob_start();
     ?>
+    <div class="admin-tabs" style="margin-bottom: 20px; border-bottom: 1px solid #374151;">
+        <a href="stats.php?tab=tests" class="admin-tab <?= $currentTab === 'tests' ? 'admin-tab--active' : '' ?>" style="display: inline-block; padding: 10px 16px; color: #9ca3af; text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px;">
+            测验统计
+        </a>
+        <!-- 后续可以添加其他统计标签 -->
+    </div>
     <div class="admin-card">
         <?php if (!$statsTests): ?>
             <p class="admin-table__muted">目前还没有可统计的测验，先去创建一个吧。</p>
@@ -148,9 +155,16 @@ $pageTitle    = '统计 - ' . ($test['title'] ?? '');
 $pageHeading  = '测验统计：' . ($test['title'] ?? '');
 $pageSubtitle = 'slug: ' . ($test['slug'] ?? '');
 $activeMenu   = 'stats';
+$currentTab   = isset($_GET['tab']) ? trim($_GET['tab']) : 'tests';
 
 ob_start();
 ?>
+<div class="admin-tabs" style="margin-bottom: 20px; border-bottom: 1px solid #374151;">
+    <a href="stats.php?tab=tests" class="admin-tab <?= $currentTab === 'tests' ? 'admin-tab--active' : '' ?>" style="display: inline-block; padding: 10px 16px; color: #9ca3af; text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; <?= $currentTab === 'tests' ? 'color: #3b82f6; border-bottom-color: #3b82f6;' : '' ?>">
+        测验统计
+    </a>
+    <!-- 后续可以添加其他统计标签 -->
+</div>
 
 <div class="admin-card" style="margin-bottom:16px;">
     <?php if ($totalRuns === 0): ?>

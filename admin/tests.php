@@ -49,7 +49,9 @@ ob_start();
                 <td><?= (int)$test['id'] ?></td>
                 <td>
                     <div class="admin-table__title admin-table__title--lg">
-                        <?= htmlspecialchars($test['title']) ?>
+                        <a href="../test.php?slug=<?= urlencode($test['slug']) ?>" target="_blank" style="color: inherit; text-decoration: none; cursor: pointer;">
+                            <?= htmlspecialchars($test['title']) ?>
+                        </a>
                     </div>
                     <?php if (!empty($test['subtitle'])): ?>
                         <div class="admin-table__subtitle">
@@ -100,7 +102,6 @@ ob_start();
                 </td>
                 <td class="admin-table__actions">
                     <a href="test_edit.php?id=<?= (int)$test['id'] ?>" class="btn btn-xs btn-primary">管理测验</a>
-                    <a href="../test.php?slug=<?= urlencode($test['slug']) ?>" class="btn btn-xs btn-ghost" target="_blank">预览</a>
                 </td>
             </tr>
         <?php endforeach; ?>

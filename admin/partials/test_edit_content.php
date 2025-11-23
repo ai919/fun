@@ -30,20 +30,13 @@ function admin_column_exists(PDO $pdo, string $table, string $column): bool
 }
 $hasEmojiCol = admin_column_exists($pdo, 'tests', 'emoji');
 $hasTitleColorCol = admin_column_exists($pdo, 'tests', 'title_color');
+// 30个常用emoji，无需名称
 $emojiOptions = [
-    ''   => '（不选择）',
-    '🧠' => '🧠 大脑',
-    '💘' => '💘 爱心',
-    '🔥' => '🔥 火焰',
-    '🌙' => '🌙 月亮',
-    '🎲' => '🎲 骰子',
-    '📚' => '📚 书本',
-    '😈' => '😈 小恶魔',
-    '🌈' => '🌈 彩虹',
-    '⭐' => '⭐ 星星',
-    '🎯' => '🎯 靶心',
-    '🎧' => '🎧 耳机',
-    '🪐' => '🪐 行星',
+    '' => '（不选择）',
+    '😀', '😍', '🤔', '🥲', '👍', '🔥', '✨', '💤',
+    '🧠', '💘', '🌙', '🎲', '📚', '😈', '🌈', '⭐',
+    '🎯', '🎧', '🪐', '💡', '🎨', '🎭', '🎪', '🎬',
+    '🎮', '🎯', '🏆', '🎁', '🎉', '🎊', '💝', '❤️'
 ];
 $scoringModes = Constants::getScoringModeLabels();
 
@@ -366,10 +359,12 @@ if ($testId && $existingTest) {
                     <div class="form-field">
                         <label class="form-label">Emoji</label>
                         <select name="emoji" class="form-select">
-                            <?php foreach ($emojiOptions as $value => $label): ?>
-                                <option value="<?= htmlspecialchars($value) ?>"<?= $emojiSelectValue === $value ? ' selected' : '' ?>>
-                                    <?= htmlspecialchars($label) ?>
-                                </option>
+                            <?php foreach ($emojiOptions as $index => $emoji): ?>
+                                <?php if ($index === ''): ?>
+                                    <option value=""<?= $emojiSelectValue === '' ? ' selected' : '' ?>><?= htmlspecialchars($emoji) ?></option>
+                                <?php else: ?>
+                                    <option value="<?= htmlspecialchars($emoji) ?>"<?= $emojiSelectValue === $emoji ? ' selected' : '' ?>><?= htmlspecialchars($emoji) ?></option>
+                                <?php endif; ?>
                             <?php endforeach; ?>
                         </select>
                         <p class="form-help">可选填，为标题增加一个小图标。</p>
@@ -396,9 +391,45 @@ if ($testId && $existingTest) {
 
                         <span class="rte-toolbar__divider"></span>
 
-                        <button type="button" class="btn btn-xs btn-ghost" data-cmd="foreColor" data-value="#ef4444">文字红</button>
-                        <button type="button" class="btn btn-xs btn-ghost" data-cmd="foreColor" data-value="#22c55e">文字绿</button>
-                        <button type="button" class="btn btn-xs btn-ghost" data-cmd="backColor" data-value="#fef9c3">背景黄</button>
+                        <div class="rte-color-picker-wrapper" style="display: inline-block; position: relative;">
+                            <button type="button" class="btn btn-xs btn-ghost rte-color-trigger" data-cmd="foreColor" title="文字颜色">
+                                <span style="display: inline-block; width: 16px; height: 16px; background: #ef4444; border-radius: 2px; vertical-align: middle;"></span>
+                            </button>
+                            <div class="rte-color-picker" style="display: none; position: absolute; top: 100%; left: 0; z-index: 1000; background: #1f2937; border: 1px solid #374151; border-radius: 6px; padding: 8px; margin-top: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                                <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; width: 200px;">
+                                    <button type="button" class="rte-color-btn" data-color="#000000" style="width: 20px; height: 20px; background: #000000; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#374151" style="width: 20px; height: 20px; background: #374151; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#6b7280" style="width: 20px; height: 20px; background: #6b7280; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#9ca3af" style="width: 20px; height: 20px; background: #9ca3af; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#d1d5db" style="width: 20px; height: 20px; background: #d1d5db; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#e5e7eb" style="width: 20px; height: 20px; background: #e5e7eb; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#f3f4f6" style="width: 20px; height: 20px; background: #f3f4f6; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#ffffff" style="width: 20px; height: 20px; background: #ffffff; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#ef4444" style="width: 20px; height: 20px; background: #ef4444; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#f97316" style="width: 20px; height: 20px; background: #f97316; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#fbbf24" style="width: 20px; height: 20px; background: #fbbf24; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#22c55e" style="width: 20px; height: 20px; background: #22c55e; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#10b981" style="width: 20px; height: 20px; background: #10b981; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#06b6d4" style="width: 20px; height: 20px; background: #06b6d4; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#3b82f6" style="width: 20px; height: 20px; background: #3b82f6; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#6366f1" style="width: 20px; height: 20px; background: #6366f1; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#8b5cf6" style="width: 20px; height: 20px; background: #8b5cf6; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#a855f7" style="width: 20px; height: 20px; background: #a855f7; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#d946ef" style="width: 20px; height: 20px; background: #d946ef; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#ec4899" style="width: 20px; height: 20px; background: #ec4899; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#f43f5e" style="width: 20px; height: 20px; background: #f43f5e; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#fef9c3" style="width: 20px; height: 20px; background: #fef9c3; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#dbeafe" style="width: 20px; height: 20px; background: #dbeafe; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#e9d5ff" style="width: 20px; height: 20px; background: #e9d5ff; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#fce7f3" style="width: 20px; height: 20px; background: #fce7f3; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#fecdd3" style="width: 20px; height: 20px; background: #fecdd3; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#fed7aa" style="width: 20px; height: 20px; background: #fed7aa; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#fde68a" style="width: 20px; height: 20px; background: #fde68a; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#d1fae5" style="width: 20px; height: 20px; background: #d1fae5; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                    <button type="button" class="rte-color-btn" data-color="#cffafe" style="width: 20px; height: 20px; background: #cffafe; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                </div>
+                            </div>
+                        </div>
 
                         <span class="rte-toolbar__divider"></span>
 
@@ -417,6 +448,29 @@ if ($testId && $existingTest) {
                             <option>🔥</option>
                             <option>✨</option>
                             <option>💤</option>
+                            <option>🧠</option>
+                            <option>💘</option>
+                            <option>🌙</option>
+                            <option>🎲</option>
+                            <option>📚</option>
+                            <option>😈</option>
+                            <option>🌈</option>
+                            <option>⭐</option>
+                            <option>🎯</option>
+                            <option>🎧</option>
+                            <option>🪐</option>
+                            <option>💡</option>
+                            <option>🎨</option>
+                            <option>🎭</option>
+                            <option>🎪</option>
+                            <option>🎬</option>
+                            <option>🎮</option>
+                            <option>🏆</option>
+                            <option>🎁</option>
+                            <option>🎉</option>
+                            <option>🎊</option>
+                            <option>💝</option>
+                            <option>❤️</option>
                         </select>
                     </div>
 
@@ -645,9 +699,45 @@ if ($testId && $existingTest) {
 
                                     <span class="rte-toolbar__divider"></span>
 
-                                    <button type="button" class="btn btn-xs btn-ghost" data-cmd="foreColor" data-value="#ef4444">文字红</button>
-                                    <button type="button" class="btn btn-xs btn-ghost" data-cmd="foreColor" data-value="#22c55e">文字绿</button>
-                                    <button type="button" class="btn btn-xs btn-ghost" data-cmd="backColor" data-value="#fef9c3">背景黄</button>
+                                    <div class="rte-color-picker-wrapper" style="display: inline-block; position: relative;">
+                                        <button type="button" class="btn btn-xs btn-ghost rte-color-trigger" data-cmd="foreColor" title="文字颜色">
+                                            <span style="display: inline-block; width: 16px; height: 16px; background: #ef4444; border-radius: 2px; vertical-align: middle;"></span>
+                                        </button>
+                                        <div class="rte-color-picker" style="display: none; position: absolute; top: 100%; left: 0; z-index: 1000; background: #1f2937; border: 1px solid #374151; border-radius: 6px; padding: 8px; margin-top: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                                            <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; width: 200px;">
+                                                <button type="button" class="rte-color-btn" data-color="#000000" style="width: 20px; height: 20px; background: #000000; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#374151" style="width: 20px; height: 20px; background: #374151; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#6b7280" style="width: 20px; height: 20px; background: #6b7280; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#9ca3af" style="width: 20px; height: 20px; background: #9ca3af; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#d1d5db" style="width: 20px; height: 20px; background: #d1d5db; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#e5e7eb" style="width: 20px; height: 20px; background: #e5e7eb; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#f3f4f6" style="width: 20px; height: 20px; background: #f3f4f6; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#ffffff" style="width: 20px; height: 20px; background: #ffffff; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#ef4444" style="width: 20px; height: 20px; background: #ef4444; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#f97316" style="width: 20px; height: 20px; background: #f97316; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#fbbf24" style="width: 20px; height: 20px; background: #fbbf24; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#22c55e" style="width: 20px; height: 20px; background: #22c55e; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#10b981" style="width: 20px; height: 20px; background: #10b981; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#06b6d4" style="width: 20px; height: 20px; background: #06b6d4; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#3b82f6" style="width: 20px; height: 20px; background: #3b82f6; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#6366f1" style="width: 20px; height: 20px; background: #6366f1; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#8b5cf6" style="width: 20px; height: 20px; background: #8b5cf6; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#a855f7" style="width: 20px; height: 20px; background: #a855f7; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#d946ef" style="width: 20px; height: 20px; background: #d946ef; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#ec4899" style="width: 20px; height: 20px; background: #ec4899; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#f43f5e" style="width: 20px; height: 20px; background: #f43f5e; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#fef9c3" style="width: 20px; height: 20px; background: #fef9c3; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#dbeafe" style="width: 20px; height: 20px; background: #dbeafe; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#e9d5ff" style="width: 20px; height: 20px; background: #e9d5ff; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#fce7f3" style="width: 20px; height: 20px; background: #fce7f3; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#fecdd3" style="width: 20px; height: 20px; background: #fecdd3; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#fed7aa" style="width: 20px; height: 20px; background: #fed7aa; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#fde68a" style="width: 20px; height: 20px; background: #fde68a; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#d1fae5" style="width: 20px; height: 20px; background: #d1fae5; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                                <button type="button" class="rte-color-btn" data-color="#cffafe" style="width: 20px; height: 20px; background: #cffafe; border: 1px solid #4b5563; border-radius: 3px; cursor: pointer;"></button>
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     <span class="rte-toolbar__divider"></span>
 
@@ -666,6 +756,29 @@ if ($testId && $existingTest) {
                                         <option>🔥</option>
                                         <option>✨</option>
                                         <option>💤</option>
+                                        <option>🧠</option>
+                                        <option>💘</option>
+                                        <option>🌙</option>
+                                        <option>🎲</option>
+                                        <option>📚</option>
+                                        <option>😈</option>
+                                        <option>🌈</option>
+                                        <option>⭐</option>
+                                        <option>🎯</option>
+                                        <option>🎧</option>
+                                        <option>🪐</option>
+                                        <option>💡</option>
+                                        <option>🎨</option>
+                                        <option>🎭</option>
+                                        <option>🎪</option>
+                                        <option>🎬</option>
+                                        <option>🎮</option>
+                                        <option>🏆</option>
+                                        <option>🎁</option>
+                                        <option>🎉</option>
+                                        <option>🎊</option>
+                                        <option>💝</option>
+                                        <option>❤️</option>
                                     </select>
                                 </div>
 

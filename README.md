@@ -122,7 +122,7 @@ fun/
 │   ├── tests.php          # 测验管理
 │   ├── questions.php      # 题目管理
 │   ├── results.php        # 结果管理
-│   ├── seo_settings.php   # SEO设置
+│   ├── site_settings.php  # 网站设置（包含SEO设置）
 │   ├── ad_positions.php   # 广告位管理
 │   ├── migrations.php     # 数据库迁移
 │   ├── performance.php    # 性能监控
@@ -288,7 +288,7 @@ return [
 
 ### SEO配置
 
-通过后台 `/admin/seo_settings.php` 进行配置，包括：
+通过后台 `/admin/site_settings.php` 进行配置，包括：
 - 站点标题和描述
 - 默认关键词
 - Open Graph 设置

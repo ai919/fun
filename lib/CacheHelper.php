@@ -95,6 +95,48 @@ class CacheHelper
     }
 
     /**
+     * 根据模式删除缓存
+     * @param string $pattern 模式，支持通配符 * 和 ?
+     * @return int 删除的缓存数量
+     */
+    public static function deletePattern(string $pattern): int
+    {
+        self::initCacheDir();
+        $files = glob(self::$cacheDir . '/*.cache');
+        if ($files === false) {
+            return 0;
+        }
+        
+        $count = 0;
+        
+        // 将模式转换为安全键模式（特殊字符会被替换为下划线，但保留 * 和 ?）
+        $safePattern = preg_replace('/[^a-zA-Z0-9_*-?]/', '_', $pattern);
+        
+        // 将模式转换为正则表达式
+        // 先将 * 和 ? 替换为占位符，转义其他字符，再替换回来
+        $tempPattern = str_replace(['*', '?'], ['__WILDCARD__', '__SINGLE__'], $safePattern);
+        $escapedPattern = preg_quote($tempPattern, '/');
+        $regex = '/^' . str_replace(
+            ['__WILDCARD__', '__SINGLE__'],
+            ['.*', '.'],
+            $escapedPattern
+        ) . '$/';
+        
+        foreach ($files as $file) {
+            // 从文件路径中提取缓存文件名（不含扩展名）
+            $filename = basename($file, '.cache');
+            // 匹配文件名
+            if (preg_match($regex, $filename)) {
+                if (@unlink($file)) {
+                    $count++;
+                }
+            }
+        }
+        
+        return $count;
+    }
+
+    /**
      * 清空所有缓存
      * @return bool 是否成功
      */

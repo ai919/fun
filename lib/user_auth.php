@@ -82,6 +82,28 @@ class UserAuth
         unset($_SESSION['user_id']);
     }
 
+    /**
+     * 检查列是否存在
+     */
+    private static function columnExists(PDO $pdo, string $table, string $column): bool
+    {
+        static $cache = [];
+        $dbName = (string)$pdo->query('SELECT DATABASE()')->fetchColumn();
+        $key = "{$dbName}.{$table}.{$column}";
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+        $stmt = $pdo->prepare("
+            SELECT 1
+            FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?
+            LIMIT 1
+        ");
+        $stmt->execute([$dbName, $table, $column]);
+        $cache[$key] = (bool)$stmt->fetchColumn();
+        return $cache[$key];
+    }
+
     public static function currentUser(): ?array
     {
         global $pdo;
@@ -98,7 +120,18 @@ class UserAuth
             return $cached;
         }
 
-        $stmt = $pdo->prepare("SELECT id, email, nickname, created_at FROM users WHERE id = :id LIMIT 1");
+        // 动态构建查询字段，只选择存在的列
+        $columns = ['id', 'email', 'nickname', 'created_at'];
+        $optionalColumns = ['gender', 'birth_date', 'zodiac', 'chinese_zodiac', 'personality'];
+        
+        foreach ($optionalColumns as $col) {
+            if (self::columnExists($pdo, 'users', $col)) {
+                $columns[] = $col;
+            }
+        }
+
+        $fields = implode(', ', $columns);
+        $stmt = $pdo->prepare("SELECT {$fields} FROM users WHERE id = :id LIMIT 1");
         $stmt->execute([':id' => $userId]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -203,6 +236,61 @@ class UserAuth
         // 更新昵称
         $stmt = $pdo->prepare("UPDATE users SET nickname = :nickname WHERE id = :id");
         $stmt->execute([':nickname' => $nickname ?: null, ':id' => $userId]);
+
+        // 清除缓存
+        static $cached = null;
+        $cached = null;
+
+        return ['success' => true];
+    }
+
+    /**
+     * 更新用户信息（性别、出生日期、星座、属相、人格）
+     */
+    public static function updateProfile($userId, $data)
+    {
+        global $pdo;
+
+        $gender = isset($data['gender']) && in_array($data['gender'], ['male', 'female', 'other', '']) ? ($data['gender'] ?: null) : null;
+        $birthDate = !empty($data['birth_date']) ? $data['birth_date'] : null;
+        $zodiac = !empty($data['zodiac']) ? trim($data['zodiac']) : null;
+        $chineseZodiac = !empty($data['chinese_zodiac']) ? trim($data['chinese_zodiac']) : null;
+        $personality = !empty($data['personality']) ? trim($data['personality']) : null;
+
+        // 验证出生日期格式
+        if ($birthDate && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $birthDate)) {
+            return ['success' => false, 'message' => '出生日期格式不正确'];
+        }
+
+        // 验证字段长度
+        if ($zodiac && mb_strlen($zodiac) > 20) {
+            return ['success' => false, 'message' => '星座长度不能超过20个字符'];
+        }
+        if ($chineseZodiac && mb_strlen($chineseZodiac) > 20) {
+            return ['success' => false, 'message' => '属相长度不能超过20个字符'];
+        }
+        if ($personality && mb_strlen($personality) > 100) {
+            return ['success' => false, 'message' => '人格长度不能超过100个字符'];
+        }
+
+        // 更新用户信息
+        $stmt = $pdo->prepare("
+            UPDATE users 
+            SET gender = :gender, 
+                birth_date = :birth_date, 
+                zodiac = :zodiac, 
+                chinese_zodiac = :chinese_zodiac, 
+                personality = :personality 
+            WHERE id = :id
+        ");
+        $stmt->execute([
+            ':gender' => $gender,
+            ':birth_date' => $birthDate,
+            ':zodiac' => $zodiac,
+            ':chinese_zodiac' => $chineseZodiac,
+            ':personality' => $personality,
+            ':id' => $userId
+        ]);
 
         // 清除缓存
         static $cached = null;

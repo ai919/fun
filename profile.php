@@ -51,6 +51,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $errors['nickname'] = $result['message'] ?? '昵称更新失败';
             }
+        } elseif ($action === 'update_profile') {
+            $profileData = [
+                'gender' => $_POST['gender'] ?? '',
+                'birth_date' => $_POST['birth_date'] ?? '',
+                'zodiac' => $_POST['zodiac'] ?? '',
+                'chinese_zodiac' => $_POST['chinese_zodiac'] ?? '',
+                'personality' => $_POST['personality'] ?? '',
+            ];
+            $result = UserAuth::updateProfile($user['id'], $profileData);
+            if ($result['success']) {
+                $success = '个人信息更新成功';
+                // 重新获取用户信息
+                $user = UserAuth::currentUser();
+            } else {
+                $errors['profile'] = $result['message'] ?? '个人信息更新失败';
+            }
         }
     }
 }
@@ -218,6 +234,71 @@ $recentRuns = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php endif; ?>
                 </div>
                 <button type="submit" class="btn-primary">更新昵称</button>
+            </form>
+        </section>
+
+        <!-- 个人信息 -->
+        <section class="profile-section">
+            <h2 class="profile-section-title">个人信息</h2>
+            <form method="POST" class="profile-form">
+                <?= CSRF::getTokenField() ?>
+                <input type="hidden" name="action" value="update_profile">
+                <div class="form-group">
+                    <label for="gender">性别</label>
+                    <select id="gender" name="gender">
+                        <option value="">不选择</option>
+                        <option value="male" <?= ($user['gender'] ?? '') === 'male' ? 'selected' : '' ?>>男</option>
+                        <option value="female" <?= ($user['gender'] ?? '') === 'female' ? 'selected' : '' ?>>女</option>
+                        <option value="other" <?= ($user['gender'] ?? '') === 'other' ? 'selected' : '' ?>>其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="birth_date">出生年月日</label>
+                    <input 
+                        type="date" 
+                        id="birth_date" 
+                        name="birth_date" 
+                        value="<?= htmlspecialchars($user['birth_date'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                    >
+                    <small class="form-hint">可选，用于计算年龄</small>
+                </div>
+                <div class="form-group">
+                    <label for="zodiac">星座</label>
+                    <input 
+                        type="text" 
+                        id="zodiac" 
+                        name="zodiac" 
+                        value="<?= htmlspecialchars($user['zodiac'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                        maxlength="20"
+                        placeholder="例如：白羊座"
+                    >
+                </div>
+                <div class="form-group">
+                    <label for="chinese_zodiac">属相</label>
+                    <input 
+                        type="text" 
+                        id="chinese_zodiac" 
+                        name="chinese_zodiac" 
+                        value="<?= htmlspecialchars($user['chinese_zodiac'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                        maxlength="20"
+                        placeholder="例如：龙"
+                    >
+                </div>
+                <div class="form-group">
+                    <label for="personality">人格</label>
+                    <input 
+                        type="text" 
+                        id="personality" 
+                        name="personality" 
+                        value="<?= htmlspecialchars($user['personality'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                        maxlength="100"
+                        placeholder="例如：INTJ、ENFP"
+                    >
+                </div>
+                <?php if (isset($errors['profile'])): ?>
+                    <div class="form-error"><?= htmlspecialchars($errors['profile'], ENT_QUOTES, 'UTF-8') ?></div>
+                <?php endif; ?>
+                <button type="submit" class="btn-primary">更新个人信息</button>
             </form>
         </section>
 
