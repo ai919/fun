@@ -30,13 +30,12 @@ function admin_column_exists(PDO $pdo, string $table, string $column): bool
 }
 $hasEmojiCol = admin_column_exists($pdo, 'tests', 'emoji');
 $hasTitleColorCol = admin_column_exists($pdo, 'tests', 'title_color');
-// 30个常用emoji，无需名称
+// 30个常用emoji，一行10个显示
 $emojiOptions = [
     '' => '（不选择）',
-    '😀', '😍', '🤔', '🥲', '👍', '🔥', '✨', '💤',
-    '🧠', '💘', '🌙', '🎲', '📚', '😈', '🌈', '⭐',
-    '🎯', '🎧', '🪐', '💡', '🎨', '🎭', '🎪', '🎬',
-    '🎮', '🎯', '🏆', '🎁', '🎉', '🎊', '💝', '❤️'
+    '😀', '😍', '🤔', '🥲', '👍', '🔥', '✨', '💤', '🧠', '💘',
+    '🌙', '🎲', '📚', '😈', '🌈', '⭐', '🎯', '🎧', '🪐', '💡',
+    '🎨', '🎭', '🎪', '🎬', '🎮', '🏆', '🎁', '🎉', '🎊', '💝', '❤️'
 ];
 $scoringModes = Constants::getScoringModeLabels();
 
@@ -358,22 +357,32 @@ if ($testId && $existingTest) {
                 <div class="form-grid">
                     <div class="form-field">
                         <label class="form-label">Emoji</label>
-                        <select name="emoji" class="form-select">
-                            <?php foreach ($emojiOptions as $index => $emoji): ?>
-                                <?php if ($index === ''): ?>
-                                    <option value=""<?= $emojiSelectValue === '' ? ' selected' : '' ?>><?= htmlspecialchars($emoji) ?></option>
-                                <?php else: ?>
-                                    <option value="<?= htmlspecialchars($emoji) ?>"<?= $emojiSelectValue === $emoji ? ' selected' : '' ?>><?= htmlspecialchars($emoji) ?></option>
-                                <?php endif; ?>
-                            <?php endforeach; ?>
-                        </select>
-                        <p class="form-help">可选填，为标题增加一个小图标。</p>
+                        <div class="emoji-select-wrapper">
+                            <select name="emoji" id="emoji-select" class="form-select emoji-select">
+                                <option value="">（不选择）</option>
+                                <?php 
+                                $emojiList = array_filter($emojiOptions, function($key) { return $key !== ''; }, ARRAY_FILTER_USE_KEY);
+                                foreach ($emojiList as $emoji): 
+                                ?>
+                                    <option value="<?= htmlspecialchars($emoji, ENT_QUOTES, 'UTF-8') ?>" <?= $emojiSelectValue === $emoji ? 'selected' : '' ?>><?= htmlspecialchars($emoji) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="emoji-dropdown-grid" id="emoji-dropdown-grid" style="display: none;">
+                                <?php 
+                                $emojiList = array_filter($emojiOptions, function($key) { return $key !== ''; }, ARRAY_FILTER_USE_KEY);
+                                foreach ($emojiList as $emoji): 
+                                ?>
+                                    <button type="button" class="emoji-dropdown-item" data-emoji="<?= htmlspecialchars($emoji, ENT_QUOTES, 'UTF-8') ?>" title="<?= htmlspecialchars($emoji, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($emoji) ?></button>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                        <p class="form-help">可选填，为标题增加一个小图标。下拉时一行10个显示。</p>
                     </div>
                     <div class="form-field">
                         <label class="form-label">自定义 Emoji</label>
                         <input type="text" name="emoji_custom" class="form-input"
-                               value="<?= htmlspecialchars($emojiSelectValue === '' ? $formData['emoji'] : '') ?>" maxlength="16" placeholder="也可手动输入">
-                        <p class="form-help">如果下拉没有想要的，可以在此输入（不超过 16 字符）。</p>
+                               value="<?= htmlspecialchars($emojiSelectValue === '' ? $formData['emoji'] : '', ENT_QUOTES, 'UTF-8') ?>" maxlength="16" placeholder="也可手动输入">
+                        <p class="form-help">如果上方没有想要的，可以在此输入（不超过 16 字符）。</p>
                     </div>
                 </div>
             </div>
@@ -438,40 +447,25 @@ if ($testId && $existingTest) {
 
                         <span class="rte-toolbar__divider"></span>
 
-                        <select class="rte-emoji-picker">
-                            <option value="">Emoji</option>
-                            <option>😀</option>
-                            <option>😍</option>
-                            <option>🤔</option>
-                            <option>🥲</option>
-                            <option>👍</option>
-                            <option>🔥</option>
-                            <option>✨</option>
-                            <option>💤</option>
-                            <option>🧠</option>
-                            <option>💘</option>
-                            <option>🌙</option>
-                            <option>🎲</option>
-                            <option>📚</option>
-                            <option>😈</option>
-                            <option>🌈</option>
-                            <option>⭐</option>
-                            <option>🎯</option>
-                            <option>🎧</option>
-                            <option>🪐</option>
-                            <option>💡</option>
-                            <option>🎨</option>
-                            <option>🎭</option>
-                            <option>🎪</option>
-                            <option>🎬</option>
-                            <option>🎮</option>
-                            <option>🏆</option>
-                            <option>🎁</option>
-                            <option>🎉</option>
-                            <option>🎊</option>
-                            <option>💝</option>
-                            <option>❤️</option>
-                        </select>
+                        <div class="rte-emoji-picker-wrapper emoji-select-wrapper">
+                            <select class="rte-emoji-picker emoji-select">
+                                <option value="">Emoji</option>
+                                <?php 
+                                $emojiList = array_filter($emojiOptions, function($key) { return $key !== ''; }, ARRAY_FILTER_USE_KEY);
+                                foreach ($emojiList as $emoji): 
+                                ?>
+                                    <option value="<?= htmlspecialchars($emoji, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($emoji) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="emoji-dropdown-grid" style="display: none;">
+                                <?php 
+                                $emojiList = array_filter($emojiOptions, function($key) { return $key !== ''; }, ARRAY_FILTER_USE_KEY);
+                                foreach ($emojiList as $emoji): 
+                                ?>
+                                    <button type="button" class="emoji-dropdown-item" data-emoji="<?= htmlspecialchars($emoji, ENT_QUOTES, 'UTF-8') ?>" title="<?= htmlspecialchars($emoji, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($emoji) ?></button>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
                     </div>
 
                     <div id="description-editor-main"
@@ -746,40 +740,25 @@ if ($testId && $existingTest) {
 
                                     <span class="rte-toolbar__divider"></span>
 
-                                    <select class="rte-emoji-picker">
-                                        <option value="">Emoji</option>
-                                        <option>😀</option>
-                                        <option>😍</option>
-                                        <option>🤔</option>
-                                        <option>🥲</option>
-                                        <option>👍</option>
-                                        <option>🔥</option>
-                                        <option>✨</option>
-                                        <option>💤</option>
-                                        <option>🧠</option>
-                                        <option>💘</option>
-                                        <option>🌙</option>
-                                        <option>🎲</option>
-                                        <option>📚</option>
-                                        <option>😈</option>
-                                        <option>🌈</option>
-                                        <option>⭐</option>
-                                        <option>🎯</option>
-                                        <option>🎧</option>
-                                        <option>🪐</option>
-                                        <option>💡</option>
-                                        <option>🎨</option>
-                                        <option>🎭</option>
-                                        <option>🎪</option>
-                                        <option>🎬</option>
-                                        <option>🎮</option>
-                                        <option>🏆</option>
-                                        <option>🎁</option>
-                                        <option>🎉</option>
-                                        <option>🎊</option>
-                                        <option>💝</option>
-                                        <option>❤️</option>
-                                    </select>
+                                    <div class="rte-emoji-picker-wrapper emoji-select-wrapper">
+                                        <select class="rte-emoji-picker emoji-select">
+                                            <option value="">Emoji</option>
+                                            <?php 
+                                            $emojiList = array_filter($emojiOptions, function($key) { return $key !== ''; }, ARRAY_FILTER_USE_KEY);
+                                            foreach ($emojiList as $emoji): 
+                                            ?>
+                                                <option value="<?= htmlspecialchars($emoji, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($emoji) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                        <div class="emoji-dropdown-grid" style="display: none;">
+                                            <?php 
+                                            $emojiList = array_filter($emojiOptions, function($key) { return $key !== ''; }, ARRAY_FILTER_USE_KEY);
+                                            foreach ($emojiList as $emoji): 
+                                            ?>
+                                                <button type="button" class="emoji-dropdown-item" data-emoji="<?= htmlspecialchars($emoji, ENT_QUOTES, 'UTF-8') ?>" title="<?= htmlspecialchars($emoji, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($emoji) ?></button>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div id="<?= $editorId ?>"

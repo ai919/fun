@@ -169,6 +169,49 @@ try {
     ]);
     $testRunId = (int)$pdo->lastInsertId();
 
+    // 保存问题答案到 question_answers 表
+    if ($testRunId > 0 && !empty($answers)) {
+        // 获取所有选项的 option_key
+        $optionIds = array_values(array_filter(array_map('intval', $answers), function($id) {
+            return $id > 0;
+        }));
+        
+        if (!empty($optionIds)) {
+            $optPlaceholders = implode(',', array_fill(0, count($optionIds), '?'));
+            $optStmt = $pdo->prepare(
+                "SELECT id, question_id, option_key FROM question_options WHERE id IN ($optPlaceholders)"
+            );
+            $optStmt->execute($optionIds);
+            $optionMap = [];
+            while ($opt = $optStmt->fetch(PDO::FETCH_ASSOC)) {
+                $optionMap[(int)$opt['id']] = [
+                    'question_id' => (int)$opt['question_id'],
+                    'option_key' => $opt['option_key']
+                ];
+            }
+            
+            // 插入 question_answers
+            $insAnswer = $pdo->prepare(
+                "INSERT INTO question_answers (test_run_id, test_id, question_id, option_key)
+                 VALUES (:run_id, :test_id, :question_id, :option_key)"
+            );
+            
+            foreach ($answers as $qId => $optId) {
+                $qId = (int)$qId;
+                $optId = (int)$optId;
+                
+                if (isset($optionMap[$optId]) && $optionMap[$optId]['question_id'] === $qId) {
+                    $insAnswer->execute([
+                        ':run_id' => $testRunId,
+                        ':test_id' => $testId,
+                        ':question_id' => $qId,
+                        ':option_key' => $optionMap[$optId]['option_key']
+                    ]);
+                }
+            }
+        }
+    }
+
     // 对于 dimensions 模式，额外记录各维度得分
     if (strtolower($test['scoring_mode'] ?? Constants::SCORING_MODE_SIMPLE) === Constants::SCORING_MODE_DIMENSIONS && $testRunId > 0 && !empty($dimScores)) {
         $insDim = $pdo->prepare(

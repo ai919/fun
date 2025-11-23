@@ -5,9 +5,11 @@
  */
 require_once __DIR__ . '/user_auth.php';
 require_once __DIR__ . '/motivational_quotes.php';
+require_once __DIR__ . '/NotificationHelper.php';
 
 function render_topbar($isTestPage = false, $isHomePage = false) {
     $user = UserAuth::currentUser();
+    $unreadCount = $user ? NotificationHelper::getUnreadCount($user['id']) : 0;
     
     // 如果在测验页面，显示特殊布局
     if ($isTestPage) {
@@ -39,6 +41,25 @@ function render_topbar($isTestPage = false, $isHomePage = false) {
                 <span class="theme-icon-dark">🌙</span>
             </button>
             <?php if ($user): ?>
+                <a href="/notifications.php" class="tub-link" style="position: relative;">
+                    通知
+                    <?php if ($unreadCount > 0): ?>
+                        <span style="
+                            position: absolute;
+                            top: -4px;
+                            right: -8px;
+                            background: #ef4444;
+                            color: white;
+                            font-size: 11px;
+                            font-weight: 600;
+                            padding: 2px 6px;
+                            border-radius: 10px;
+                            min-width: 18px;
+                            text-align: center;
+                            line-height: 1.4;
+                        "><?= $unreadCount > 99 ? '99+' : $unreadCount ?></span>
+                    <?php endif; ?>
+                </a>
                 <a href="/profile.php" class="tub-nickname">
                     <?php echo htmlspecialchars($user['nickname'] ?: $user['email']); ?>
                 </a>
@@ -71,6 +92,25 @@ function render_topbar($isTestPage = false, $isHomePage = false) {
             <span class="theme-icon-dark">🌙</span>
         </button>
         <?php if ($user): ?>
+            <a href="/notifications.php" class="tub-link" style="position: relative;">
+                通知
+                <?php if ($unreadCount > 0): ?>
+                    <span style="
+                        position: absolute;
+                        top: -4px;
+                        right: -8px;
+                        background: #ef4444;
+                        color: white;
+                        font-size: 11px;
+                        font-weight: 600;
+                        padding: 2px 6px;
+                        border-radius: 10px;
+                        min-width: 18px;
+                        text-align: center;
+                        line-height: 1.4;
+                    "><?= $unreadCount > 99 ? '99+' : $unreadCount ?></span>
+                <?php endif; ?>
+            </a>
             <a href="/profile.php" class="tub-nickname">
                 <?php echo htmlspecialchars($user['nickname'] ?: $user['email']); ?>
             </a>

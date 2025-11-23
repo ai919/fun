@@ -57,10 +57,10 @@ if (!isset($activeMenu)) {
                 <span class="admin-nav__icon">📈</span>
                 <span class="admin-nav__label">统计</span>
             </a>
-            <a href="backup_logs.php"
-               class="admin-nav__item <?= $activeMenu === 'backup' ? 'is-active' : '' ?>">
-                <span class="admin-nav__icon">💾</span>
-                <span class="admin-nav__label">备份 & 日志</span>
+            <a href="notifications.php"
+               class="admin-nav__item <?= $activeMenu === 'notifications' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">🔔</span>
+                <span class="admin-nav__label">通知管理</span>
             </a>
             <a href="system.php"
                class="admin-nav__item <?= $activeMenu === 'system' ? 'is-active' : '' ?>">
@@ -207,14 +207,52 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         var emojiPicker = toolbar.querySelector('.rte-emoji-picker');
-        if (emojiPicker) {
-            emojiPicker.addEventListener('change', function () {
-                var emoji = this.value;
-                if (!emoji) return;
-                editor.focus();
-                document.execCommand('insertText', false, emoji);
-                this.value = '';
-                syncHidden();
+        var emojiDropdown = toolbar.querySelector('.emoji-dropdown-grid');
+        if (emojiPicker && emojiDropdown) {
+            // 阻止原生select的下拉显示，改用自定义下拉网格
+            emojiPicker.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                var isVisible = emojiDropdown.style.display === 'grid';
+                // 关闭所有其他emoji下拉
+                document.querySelectorAll('.emoji-dropdown-grid').forEach(function(dropdown) {
+                    if (dropdown !== emojiDropdown) {
+                        dropdown.style.display = 'none';
+                    }
+                });
+                emojiDropdown.style.display = isVisible ? 'none' : 'grid';
+            });
+            
+            // 阻止键盘操作打开原生下拉
+            emojiPicker.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    var isVisible = emojiDropdown.style.display === 'grid';
+                    emojiDropdown.style.display = isVisible ? 'none' : 'grid';
+                }
+            });
+            
+            // 点击下拉项时插入emoji到编辑器
+            emojiDropdown.querySelectorAll('.emoji-dropdown-item').forEach(function(item) {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var emoji = this.getAttribute('data-emoji');
+                    if (emoji) {
+                        editor.focus();
+                        document.execCommand('insertText', false, emoji);
+                        emojiDropdown.style.display = 'none';
+                        emojiPicker.value = '';
+                        syncHidden();
+                    }
+                });
+            });
+            
+            // 点击外部关闭下拉
+            document.addEventListener('click', function(e) {
+                var wrapper = toolbar.querySelector('.rte-emoji-picker-wrapper');
+                if (wrapper && !wrapper.contains(e.target) && !emojiDropdown.contains(e.target)) {
+                    emojiDropdown.style.display = 'none';
+                }
             });
         }
 
@@ -260,6 +298,47 @@ document.addEventListener('DOMContentLoaded', function () {
             syncHidden();
         });
     });
+    
+    // Emoji下拉选择器
+    var emojiSelect = document.getElementById('emoji-select');
+    var emojiDropdown = document.getElementById('emoji-dropdown-grid');
+    if (emojiSelect && emojiDropdown) {
+        // 阻止原生select的下拉显示，改用自定义下拉网格
+        emojiSelect.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            var isVisible = emojiDropdown.style.display === 'grid';
+            emojiDropdown.style.display = isVisible ? 'none' : 'grid';
+        });
+        
+        // 阻止键盘操作打开原生下拉
+        emojiSelect.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                var isVisible = emojiDropdown.style.display === 'grid';
+                emojiDropdown.style.display = isVisible ? 'none' : 'grid';
+            }
+        });
+        
+        // 点击下拉项时选择
+        emojiDropdown.querySelectorAll('.emoji-dropdown-item').forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var emoji = this.getAttribute('data-emoji');
+                emojiSelect.value = emoji || '';
+                emojiDropdown.style.display = 'none';
+                // 触发change事件以便其他代码可以监听
+                emojiSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+        });
+        
+        // 点击外部关闭下拉
+        document.addEventListener('click', function(e) {
+            if (!emojiSelect.contains(e.target) && !emojiDropdown.contains(e.target)) {
+                emojiDropdown.style.display = 'none';
+            }
+        });
+    }
     
     // 主题切换按钮事件
     const themeBtn = document.getElementById('theme-toggle-btn');

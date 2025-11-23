@@ -9,6 +9,9 @@ require_once __DIR__ . '/db_connect.php';
 
 class UserAuth
 {
+    // 类级别的用户缓存，所有方法共享
+    private static $userCache = null;
+
     public static function register($email, $password, $nickname = null)
     {
         global $pdo;
@@ -115,9 +118,9 @@ class UserAuth
         }
         $userId = (int)$_SESSION['user_id'];
 
-        static $cached = null;
-        if ($cached !== null && (int)($cached['id'] ?? 0) === $userId) {
-            return $cached;
+        // 使用类级别的缓存
+        if (self::$userCache !== null && (int)(self::$userCache['id'] ?? 0) === $userId) {
+            return self::$userCache;
         }
 
         // 动态构建查询字段，只选择存在的列
@@ -137,10 +140,11 @@ class UserAuth
 
         if (!$user) {
             unset($_SESSION['user_id']);
+            self::$userCache = null;
             return null;
         }
 
-        $cached = $user;
+        self::$userCache = $user;
         return $user;
     }
 
@@ -179,9 +183,8 @@ class UserAuth
         $stmt = $pdo->prepare("UPDATE users SET email = :email WHERE id = :id");
         $stmt->execute([':email' => $username, ':id' => $userId]);
 
-        // 清除缓存
-        static $cached = null;
-        $cached = null;
+        // 清除类级别的缓存
+        self::$userCache = null;
 
         return ['success' => true];
     }
@@ -237,9 +240,8 @@ class UserAuth
         $stmt = $pdo->prepare("UPDATE users SET nickname = :nickname WHERE id = :id");
         $stmt->execute([':nickname' => $nickname ?: null, ':id' => $userId]);
 
-        // 清除缓存
-        static $cached = null;
-        $cached = null;
+        // 清除类级别的缓存
+        self::$userCache = null;
 
         return ['success' => true];
     }
@@ -292,9 +294,8 @@ class UserAuth
             ':id' => $userId
         ]);
 
-        // 清除缓存
-        static $cached = null;
-        $cached = null;
+        // 清除类级别的缓存，强制下次重新从数据库获取
+        self::$userCache = null;
 
         return ['success' => true];
     }

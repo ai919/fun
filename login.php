@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $result = UserAuth::login($username, $password);
         if ($result['success']) {
-            header('Location: /my_tests.php');
+            header('Location: /profile.php');
             exit;
         } else {
             $error = $result['message'] ?? I18n::t('error.login_failed');
@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $user = UserAuth::currentUser();
 if ($user) {
-    header('Location: /my_tests.php');
+    header('Location: /profile.php');
     exit;
 }
 ?>

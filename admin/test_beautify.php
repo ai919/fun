@@ -93,7 +93,19 @@ ob_start();
         </div>
     </div>
 
-    <table class="admin-table">
+    <!-- 搜索框 -->
+    <div style="margin-bottom: 16px;">
+        <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="搜索测验标题或ID..." 
+            class="form-input"
+            style="max-width: 400px;"
+            onkeyup="filterTests()"
+        >
+    </div>
+
+    <table class="admin-table" id="testsTable">
         <thead>
         <tr>
             <th>ID</th>
@@ -137,13 +149,18 @@ ob_start();
                     </span>
                 </td>
                 <td>
-                    <?php if ($beautifiedValue !== null): ?>
-                        <span style="font-weight: 600; color: #60a5fa;">
-                            <?= number_format((int)$beautifiedValue) ?>
-                        </span>
-                    <?php else: ?>
-                        <span style="color: #9ca3af; font-size: 12px;">未设置</span>
-                    <?php endif; ?>
+                    <input 
+                        type="number" 
+                        class="form-input" 
+                        style="width: 120px; padding: 4px 8px; font-size: 13px;"
+                        value="<?= $beautifiedValue !== null ? (int)$beautifiedValue : '' ?>"
+                        placeholder="留空使用真实数据"
+                        data-test-id="<?= (int)$test['id'] ?>"
+                        data-original-value="<?= $beautifiedValue !== null ? (int)$beautifiedValue : '' ?>"
+                        onchange="saveBeautifiedValue(<?= (int)$test['id'] ?>, this)"
+                        min="1"
+                        step="1"
+                    >
                 </td>
                 <td>
                     <span style="font-weight: 600; color: #34d399;">
@@ -154,8 +171,10 @@ ob_start();
                     <button 
                         type="button" 
                         class="btn btn-xs btn-primary"
-                        onclick="openEditModal(<?= (int)$test['id'] ?>, '<?= htmlspecialchars(addslashes($test['title'])) ?>', <?= $realCount ?>, <?= $beautifiedValue !== null ? (int)$beautifiedValue : 'null' ?>)">
-                        设置
+                        onclick="saveBeautifiedValueDirect(<?= (int)$test['id'] ?>)"
+                        id="save-btn-<?= (int)$test['id'] ?>"
+                        style="display: none;">
+                        保存
                     </button>
                     <?php if ($beautifiedValue !== null): ?>
                         <form method="POST" action="" style="display: inline-block; margin-left: 4px;" onsubmit="return confirm('确定要清除此测验的美化数据吗？');">
@@ -216,6 +235,98 @@ ob_start();
 </div>
 
 <script>
+function filterTests() {
+    const input = document.getElementById('searchInput');
+    const filter = input.value.toLowerCase();
+    const table = document.getElementById('testsTable');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const text = row.textContent || row.innerText;
+        if (text.toLowerCase().indexOf(filter) > -1) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    }
+}
+
+function saveBeautifiedValue(testId, input) {
+    const saveBtn = document.getElementById('save-btn-' + testId);
+    const originalValue = input.getAttribute('data-original-value');
+    const currentValue = input.value.trim();
+    
+    // 如果值改变了，显示保存按钮
+    if (currentValue !== originalValue) {
+        saveBtn.style.display = 'inline-block';
+        input.setAttribute('data-changed', 'true');
+    } else {
+        saveBtn.style.display = 'none';
+        input.removeAttribute('data-changed');
+    }
+}
+
+function saveBeautifiedValueDirect(testId) {
+    const input = document.querySelector('input[data-test-id="' + testId + '"]');
+    const value = input.value.trim();
+    const saveBtn = document.getElementById('save-btn-' + testId);
+    
+    // 验证输入
+    if (value !== '' && (!/^\d+$/.test(value) || parseInt(value) <= 0)) {
+        alert('美化数据必须是正整数，或留空以使用真实数据。');
+        return;
+    }
+    
+    // 创建表单提交
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '';
+    
+    // 添加CSRF token
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrf_token';
+    const csrfField = document.querySelector('input[name="csrf_token"]');
+    if (csrfField) {
+        csrfInput.value = csrfField.value;
+    } else {
+        // 尝试从表单中获取
+        const existingForm = document.querySelector('form');
+        if (existingForm) {
+            const existingCsrf = existingForm.querySelector('input[name="csrf_token"]');
+            if (existingCsrf) {
+                csrfInput.value = existingCsrf.value;
+            }
+        }
+    }
+    form.appendChild(csrfInput);
+    
+    // 添加action
+    const actionInput = document.createElement('input');
+    actionInput.type = 'hidden';
+    actionInput.name = 'action';
+    actionInput.value = 'save';
+    form.appendChild(actionInput);
+    
+    // 添加test_id
+    const testIdInput = document.createElement('input');
+    testIdInput.type = 'hidden';
+    testIdInput.name = 'test_id';
+    testIdInput.value = testId;
+    form.appendChild(testIdInput);
+    
+    // 添加play_count_beautified
+    const valueInput = document.createElement('input');
+    valueInput.type = 'hidden';
+    valueInput.name = 'play_count_beautified';
+    valueInput.value = value;
+    form.appendChild(valueInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
 function openEditModal(testId, testTitle, realCount, beautifiedValue) {
     document.getElementById('modalTitle').textContent = '设置美化数据：' + testTitle;
     document.getElementById('modalTestId').value = testId;
@@ -229,11 +340,13 @@ function closeEditModal() {
 }
 
 // 点击模态框背景关闭
-document.getElementById('editModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeEditModal();
-    }
-});
+if (document.getElementById('editModal')) {
+    document.getElementById('editModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeEditModal();
+        }
+    });
+}
 </script>
 
 <?php

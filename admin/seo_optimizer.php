@@ -86,8 +86,9 @@ if ($testId) {
     if ($testData) {
         $testReport = SEOContentOptimizer::generateReport($testData);
         // 获取内部链接建议
-        $allTests = $pdo->query("SELECT id, title, slug FROM tests WHERE id != ? AND status = 'published' LIMIT 50")
-            ->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $pdo->prepare("SELECT id, title, slug FROM tests WHERE id != ? AND status = 'published' LIMIT 50");
+        $stmt->execute([$testId]);
+        $allTests = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $linkSuggestions = SEOContentOptimizer::suggestInternalLinks($testData, $allTests, 5);
     }
 }

@@ -32,23 +32,26 @@ ob_start();
     </div>
 
     <!-- 系统健康状态 -->
-    <div class="health-status">
-        <?php
-        $healthScore = 100;
-        if ($performanceStats['avg_duration'] > 2.0) $healthScore -= 20;
-        if ($errorStats['total'] > 10) $healthScore -= 30;
-        if ($performanceStats['slow_requests'] > 5) $healthScore -= 20;
-        
-        $healthLevel = $healthScore >= 80 ? 'good' : ($healthScore >= 60 ? 'warning' : 'error');
-        ?>
-        <div class="health-indicator health-<?= $healthLevel ?>">
-            <div class="health-score"><?= $healthScore ?></div>
-            <div class="health-label">系统健康度</div>
+    <div class="admin-card" style="margin-bottom: 24px;">
+        <div class="health-status">
+            <?php
+            $healthScore = 100;
+            if ($performanceStats['avg_duration'] > 2.0) $healthScore -= 20;
+            if ($errorStats['total'] > 10) $healthScore -= 30;
+            if ($performanceStats['slow_requests'] > 5) $healthScore -= 20;
+            
+            $healthLevel = $healthScore >= 80 ? 'good' : ($healthScore >= 60 ? 'warning' : 'error');
+            ?>
+            <div class="health-indicator health-<?= $healthLevel ?>">
+                <div class="health-score"><?= $healthScore ?></div>
+                <div class="health-label">系统健康度</div>
+            </div>
         </div>
     </div>
 
     <!-- 关键指标 -->
-    <div class="metrics-grid">
+    <div class="admin-card" style="margin-bottom: 24px;">
+        <div class="metrics-grid">
         <div class="metric-card">
             <div class="metric-icon">⚡</div>
             <div class="metric-content">
@@ -103,22 +106,26 @@ ob_start();
                 <div class="metric-label">数据库查询</div>
             </div>
         </div>
+        </div>
     </div>
 
     <!-- 告警 -->
     <?php if (!empty($alerts)): ?>
-    <div class="alerts-section">
+    <div class="admin-card" style="margin-bottom: 24px;">
+        <div class="alerts-section">
         <h2>告警</h2>
         <?php foreach ($alerts as $alert): ?>
         <div class="alert alert-<?= $alert['level'] === 'high' ? 'error' : 'warning' ?>">
             <strong><?= htmlspecialchars($alert['message']) ?></strong>
         </div>
         <?php endforeach; ?>
+        </div>
     </div>
     <?php endif; ?>
 
     <!-- 性能详情 -->
-    <div class="section">
+    <div class="admin-card">
+        <div class="section" style="margin-bottom: 0; padding: 0; background: transparent; border: none;">
         <h2>性能详情</h2>
         <table class="data-table">
             <thead>
@@ -155,7 +162,16 @@ ob_start();
                 </tr>
                 <tr>
                     <td>最小响应时间</td>
-                    <td><?= number_format($performanceStats['min_duration'] ?? 0, 3) ?>s</td>
+                    <td>
+                        <?php 
+                        $minDuration = $performanceStats['min_duration'] ?? 0;
+                        // 处理 PHP_FLOAT_MAX 或无效值的情况
+                        if ($minDuration === PHP_FLOAT_MAX || is_infinite($minDuration) || $minDuration > 1000000 || ($performanceStats['total_requests'] ?? 0) === 0) {
+                            $minDuration = 0;
+                        }
+                        echo number_format($minDuration, 3) . 's';
+                        ?>
+                    </td>
                     <td><span class="badge badge-info">正常</span></td>
                 </tr>
                 <tr>
@@ -197,6 +213,7 @@ ob_start();
                 </tr>
             </tbody>
         </table>
+        </div>
     </div>
 
 <script>

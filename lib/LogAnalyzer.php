@@ -192,6 +192,7 @@ class LogAnalyzer
         ];
 
         if (!file_exists($logFile) || !is_readable($logFile)) {
+            $stats['min_duration'] = 0;
             return $stats;
         }
 
@@ -202,6 +203,7 @@ class LogAnalyzer
 
         $handle = fopen($logFile, 'r');
         if (!$handle) {
+            $stats['min_duration'] = 0;
             return $stats;
         }
 
@@ -262,7 +264,9 @@ class LogAnalyzer
         if (!empty($queryDurations)) {
             $stats['query_stats']['avg_duration'] = array_sum($queryDurations) / count($queryDurations);
         }
-        if ($stats['min_duration'] === PHP_FLOAT_MAX) {
+        
+        // 如果没有找到任何数据，将 min_duration 设置为 0
+        if ($stats['min_duration'] === PHP_FLOAT_MAX || $stats['total_requests'] === 0) {
             $stats['min_duration'] = 0;
         }
 

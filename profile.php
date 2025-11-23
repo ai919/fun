@@ -9,6 +9,9 @@ $user = UserAuth::requireLogin();
 $errors = [];
 $success = '';
 
+// 检查是否为 AJAX 请求
+$isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+
 // 处理表单提交
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!CSRF::validateToken()) {
@@ -48,8 +51,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $success = '昵称更新成功';
                 // 重新获取用户信息
                 $user = UserAuth::currentUser();
+                
+                // 如果是 AJAX 请求，返回 JSON
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => true,
+                        'message' => $success,
+                        'nickname' => $user['nickname'] ?? '',
+                        'email' => $user['email'] ?? ''
+                    ]);
+                    exit;
+                }
             } else {
                 $errors['nickname'] = $result['message'] ?? '昵称更新失败';
+                
+                // 如果是 AJAX 请求，返回 JSON
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => false,
+                        'message' => $errors['nickname']
+                    ]);
+                    exit;
+                }
             }
         } elseif ($action === 'update_profile') {
             $profileData = [
@@ -64,10 +89,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $success = '个人信息更新成功';
                 // 重新获取用户信息
                 $user = UserAuth::currentUser();
+                
+                // 如果是 AJAX 请求，返回 JSON
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => true,
+                        'message' => $success,
+                        'profile' => [
+                            'gender' => $user['gender'] ?? '',
+                            'birth_date' => $user['birth_date'] ?? '',
+                            'zodiac' => $user['zodiac'] ?? '',
+                            'chinese_zodiac' => $user['chinese_zodiac'] ?? '',
+                            'personality' => $user['personality'] ?? ''
+                        ]
+                    ]);
+                    exit;
+                }
             } else {
                 $errors['profile'] = $result['message'] ?? '个人信息更新失败';
+                
+                // 如果是 AJAX 请求，返回 JSON
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => false,
+                        'message' => $errors['profile']
+                    ]);
+                    exit;
+                }
             }
         }
+    }
+    
+    // 如果是 AJAX 请求但还没有退出（说明是其他操作或错误），返回 JSON
+    if ($isAjax) {
+        header('Content-Type: application/json');
+        $response = ['success' => false];
+        if (!empty($errors)) {
+            $response['message'] = implode('; ', $errors);
+        } elseif (!empty($success)) {
+            $response['success'] = true;
+            $response['message'] = $success;
+        } else {
+            $response['message'] = '未知错误';
+        }
+        echo json_encode($response);
+        exit;
     }
 }
 
@@ -216,7 +284,7 @@ $recentRuns = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
         <!-- 修改昵称 -->
         <section class="profile-section">
             <h2 class="profile-section-title">修改昵称</h2>
-            <form method="POST" class="profile-form">
+            <form method="POST" class="profile-form" id="nickname-form" data-action="update_nickname">
                 <?= CSRF::getTokenField() ?>
                 <input type="hidden" name="action" value="update_nickname">
                 <div class="form-group">
@@ -229,9 +297,8 @@ $recentRuns = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
                         maxlength="15"
                     >
                     <small class="form-hint">昵称长度需在 3-15 位，留空则清除昵称</small>
-                    <?php if (isset($errors['nickname'])): ?>
-                        <div class="form-error"><?= htmlspecialchars($errors['nickname'], ENT_QUOTES, 'UTF-8') ?></div>
-                    <?php endif; ?>
+                    <div class="form-error" id="nickname-error" style="display: none;"></div>
+                    <div class="form-success" id="nickname-success" style="display: none; color: #065f46; margin-top: 8px;"></div>
                 </div>
                 <button type="submit" class="btn-primary">更新昵称</button>
             </form>
@@ -240,7 +307,7 @@ $recentRuns = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
         <!-- 个人信息 -->
         <section class="profile-section">
             <h2 class="profile-section-title">个人信息</h2>
-            <form method="POST" class="profile-form">
+            <form method="POST" class="profile-form" id="profile-form" data-action="update_profile">
                 <?= CSRF::getTokenField() ?>
                 <input type="hidden" name="action" value="update_profile">
                 <div class="form-group">
@@ -264,40 +331,65 @@ $recentRuns = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
                 <div class="form-group">
                     <label for="zodiac">星座</label>
-                    <input 
-                        type="text" 
-                        id="zodiac" 
-                        name="zodiac" 
-                        value="<?= htmlspecialchars($user['zodiac'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                        maxlength="20"
-                        placeholder="例如：白羊座"
-                    >
+                    <select id="zodiac" name="zodiac" class="form-select">
+                        <option value="">不选择</option>
+                        <option value="白羊座" <?= ($user['zodiac'] ?? '') === '白羊座' ? 'selected' : '' ?>>白羊座</option>
+                        <option value="金牛座" <?= ($user['zodiac'] ?? '') === '金牛座' ? 'selected' : '' ?>>金牛座</option>
+                        <option value="双子座" <?= ($user['zodiac'] ?? '') === '双子座' ? 'selected' : '' ?>>双子座</option>
+                        <option value="巨蟹座" <?= ($user['zodiac'] ?? '') === '巨蟹座' ? 'selected' : '' ?>>巨蟹座</option>
+                        <option value="狮子座" <?= ($user['zodiac'] ?? '') === '狮子座' ? 'selected' : '' ?>>狮子座</option>
+                        <option value="处女座" <?= ($user['zodiac'] ?? '') === '处女座' ? 'selected' : '' ?>>处女座</option>
+                        <option value="天秤座" <?= ($user['zodiac'] ?? '') === '天秤座' ? 'selected' : '' ?>>天秤座</option>
+                        <option value="天蝎座" <?= ($user['zodiac'] ?? '') === '天蝎座' ? 'selected' : '' ?>>天蝎座</option>
+                        <option value="射手座" <?= ($user['zodiac'] ?? '') === '射手座' ? 'selected' : '' ?>>射手座</option>
+                        <option value="摩羯座" <?= ($user['zodiac'] ?? '') === '摩羯座' ? 'selected' : '' ?>>摩羯座</option>
+                        <option value="水瓶座" <?= ($user['zodiac'] ?? '') === '水瓶座' ? 'selected' : '' ?>>水瓶座</option>
+                        <option value="双鱼座" <?= ($user['zodiac'] ?? '') === '双鱼座' ? 'selected' : '' ?>>双鱼座</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="chinese_zodiac">属相</label>
-                    <input 
-                        type="text" 
-                        id="chinese_zodiac" 
-                        name="chinese_zodiac" 
-                        value="<?= htmlspecialchars($user['chinese_zodiac'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                        maxlength="20"
-                        placeholder="例如：龙"
-                    >
+                    <select id="chinese_zodiac" name="chinese_zodiac" class="form-select">
+                        <option value="">不选择</option>
+                        <option value="鼠" <?= ($user['chinese_zodiac'] ?? '') === '鼠' ? 'selected' : '' ?>>鼠</option>
+                        <option value="牛" <?= ($user['chinese_zodiac'] ?? '') === '牛' ? 'selected' : '' ?>>牛</option>
+                        <option value="虎" <?= ($user['chinese_zodiac'] ?? '') === '虎' ? 'selected' : '' ?>>虎</option>
+                        <option value="兔" <?= ($user['chinese_zodiac'] ?? '') === '兔' ? 'selected' : '' ?>>兔</option>
+                        <option value="龙" <?= ($user['chinese_zodiac'] ?? '') === '龙' ? 'selected' : '' ?>>龙</option>
+                        <option value="蛇" <?= ($user['chinese_zodiac'] ?? '') === '蛇' ? 'selected' : '' ?>>蛇</option>
+                        <option value="马" <?= ($user['chinese_zodiac'] ?? '') === '马' ? 'selected' : '' ?>>马</option>
+                        <option value="羊" <?= ($user['chinese_zodiac'] ?? '') === '羊' ? 'selected' : '' ?>>羊</option>
+                        <option value="猴" <?= ($user['chinese_zodiac'] ?? '') === '猴' ? 'selected' : '' ?>>猴</option>
+                        <option value="鸡" <?= ($user['chinese_zodiac'] ?? '') === '鸡' ? 'selected' : '' ?>>鸡</option>
+                        <option value="狗" <?= ($user['chinese_zodiac'] ?? '') === '狗' ? 'selected' : '' ?>>狗</option>
+                        <option value="猪" <?= ($user['chinese_zodiac'] ?? '') === '猪' ? 'selected' : '' ?>>猪</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="personality">人格</label>
-                    <input 
-                        type="text" 
-                        id="personality" 
-                        name="personality" 
-                        value="<?= htmlspecialchars($user['personality'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                        maxlength="100"
-                        placeholder="例如：INTJ、ENFP"
-                    >
+                    <select id="personality" name="personality" class="form-select">
+                        <option value="">不选择</option>
+                        <option value="INTJ" <?= ($user['personality'] ?? '') === 'INTJ' ? 'selected' : '' ?>>INTJ - 建筑师</option>
+                        <option value="INTP" <?= ($user['personality'] ?? '') === 'INTP' ? 'selected' : '' ?>>INTP - 逻辑学家</option>
+                        <option value="ENTJ" <?= ($user['personality'] ?? '') === 'ENTJ' ? 'selected' : '' ?>>ENTJ - 指挥官</option>
+                        <option value="ENTP" <?= ($user['personality'] ?? '') === 'ENTP' ? 'selected' : '' ?>>ENTP - 辩论家</option>
+                        <option value="INFJ" <?= ($user['personality'] ?? '') === 'INFJ' ? 'selected' : '' ?>>INFJ - 提倡者</option>
+                        <option value="INFP" <?= ($user['personality'] ?? '') === 'INFP' ? 'selected' : '' ?>>INFP - 调停者</option>
+                        <option value="ENFJ" <?= ($user['personality'] ?? '') === 'ENFJ' ? 'selected' : '' ?>>ENFJ - 主人公</option>
+                        <option value="ENFP" <?= ($user['personality'] ?? '') === 'ENFP' ? 'selected' : '' ?>>ENFP - 竞选者</option>
+                        <option value="ISTJ" <?= ($user['personality'] ?? '') === 'ISTJ' ? 'selected' : '' ?>>ISTJ - 物流师</option>
+                        <option value="ISFJ" <?= ($user['personality'] ?? '') === 'ISFJ' ? 'selected' : '' ?>>ISFJ - 守卫者</option>
+                        <option value="ESTJ" <?= ($user['personality'] ?? '') === 'ESTJ' ? 'selected' : '' ?>>ESTJ - 总经理</option>
+                        <option value="ESFJ" <?= ($user['personality'] ?? '') === 'ESFJ' ? 'selected' : '' ?>>ESFJ - 执政官</option>
+                        <option value="ISTP" <?= ($user['personality'] ?? '') === 'ISTP' ? 'selected' : '' ?>>ISTP - 鉴赏家</option>
+                        <option value="ISFP" <?= ($user['personality'] ?? '') === 'ISFP' ? 'selected' : '' ?>>ISFP - 探险家</option>
+                        <option value="ESTP" <?= ($user['personality'] ?? '') === 'ESTP' ? 'selected' : '' ?>>ESTP - 企业家</option>
+                        <option value="ESFP" <?= ($user['personality'] ?? '') === 'ESFP' ? 'selected' : '' ?>>ESFP - 表演者</option>
+                    </select>
+                    <small class="form-hint">MBTI 16型人格类型</small>
                 </div>
-                <?php if (isset($errors['profile'])): ?>
-                    <div class="form-error"><?= htmlspecialchars($errors['profile'], ENT_QUOTES, 'UTF-8') ?></div>
-                <?php endif; ?>
+                <div class="form-error" id="profile-error" style="display: none;"></div>
+                <div class="form-success" id="profile-success" style="display: none; color: #065f46; margin-top: 8px;"></div>
                 <button type="submit" class="btn-primary">更新个人信息</button>
             </form>
         </section>
@@ -364,6 +456,150 @@ $recentRuns = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
         </section>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 更新顶部导航栏昵称显示
+    function updateTopbarNickname(nickname, email) {
+        var topbarNicknames = document.querySelectorAll('.tub-nickname');
+        var displayName = nickname && nickname.trim() !== '' ? nickname : email;
+        topbarNicknames.forEach(function(el) {
+            el.textContent = displayName;
+        });
+    }
+
+    // 处理昵称表单提交
+    var nicknameForm = document.getElementById('nickname-form');
+    if (nicknameForm) {
+        nicknameForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            var formData = new FormData(this);
+            var errorDiv = document.getElementById('nickname-error');
+            var successDiv = document.getElementById('nickname-success');
+            var submitBtn = this.querySelector('button[type="submit"]');
+            var originalText = submitBtn.textContent;
+            
+            // 隐藏之前的消息
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            
+            // 禁用按钮
+            submitBtn.disabled = true;
+            submitBtn.textContent = '更新中...';
+            
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                if (data.success) {
+                    // 成功：更新昵称显示
+                    var nicknameInput = document.getElementById('nickname');
+                    var newNickname = data.nickname || '';
+                    var userEmail = data.email || '';
+                    
+                    // 更新顶部导航栏昵称
+                    updateTopbarNickname(newNickname, userEmail);
+                    
+                    // 显示成功消息
+                    successDiv.textContent = data.message || '昵称更新成功';
+                    successDiv.style.display = 'block';
+                    
+                    // 3秒后隐藏成功消息
+                    setTimeout(function() {
+                        successDiv.style.display = 'none';
+                    }, 3000);
+                } else {
+                    // 显示错误消息
+                    errorDiv.textContent = data.message || '更新失败';
+                    errorDiv.style.display = 'block';
+                }
+            })
+            .catch(function(error) {
+                errorDiv.textContent = '更新失败，请稍后重试';
+                errorDiv.style.display = 'block';
+            })
+            .finally(function() {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            });
+        });
+    }
+
+    // 处理个人信息表单提交
+    var profileForm = document.getElementById('profile-form');
+    if (profileForm) {
+        profileForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            var formData = new FormData(this);
+            var errorDiv = document.getElementById('profile-error');
+            var successDiv = document.getElementById('profile-success');
+            var submitBtn = this.querySelector('button[type="submit"]');
+            var originalText = submitBtn.textContent;
+            
+            // 隐藏之前的消息
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            
+            // 禁用按钮
+            submitBtn.disabled = true;
+            submitBtn.textContent = '更新中...';
+            
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                if (data.success) {
+                    // 成功：更新表单值
+                    if (data.profile) {
+                        var profile = data.profile;
+                        if (document.getElementById('gender')) document.getElementById('gender').value = profile.gender || '';
+                        if (document.getElementById('birth_date')) document.getElementById('birth_date').value = profile.birth_date || '';
+                        if (document.getElementById('zodiac')) document.getElementById('zodiac').value = profile.zodiac || '';
+                        if (document.getElementById('chinese_zodiac')) document.getElementById('chinese_zodiac').value = profile.chinese_zodiac || '';
+                        if (document.getElementById('personality')) document.getElementById('personality').value = profile.personality || '';
+                    }
+                    
+                    // 显示成功消息
+                    successDiv.textContent = data.message || '个人信息更新成功';
+                    successDiv.style.display = 'block';
+                    
+                    // 3秒后隐藏成功消息
+                    setTimeout(function() {
+                        successDiv.style.display = 'none';
+                    }, 3000);
+                } else {
+                    // 显示错误消息
+                    errorDiv.textContent = data.message || '更新失败';
+                    errorDiv.style.display = 'block';
+                }
+            })
+            .catch(function(error) {
+                errorDiv.textContent = '更新失败，请稍后重试';
+                errorDiv.style.display = 'block';
+            })
+            .finally(function() {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            });
+        });
+    }
+});
+</script>
 </body>
 </html>
 
