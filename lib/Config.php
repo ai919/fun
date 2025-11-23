@@ -76,25 +76,40 @@ class Config
      * 
      * @param array $config 配置数组
      * @param string $prefix 环境变量前缀
+     * @param int $depth 递归深度（防止无限递归）
      * @return array
      */
-    private static function mergeEnvVars(array $config, string $prefix): array
+    private static function mergeEnvVars(array $config, string $prefix, int $depth = 0): array
     {
+        // 防止无限递归（最多递归 10 层）
+        if ($depth > 10) {
+            return $config;
+        }
+
         foreach ($config as $key => $value) {
             $envKey = $prefix . strtoupper($key);
             $envValue = self::getEnv($envKey);
 
             if ($envValue !== null) {
-                // 转换类型
-                if (is_bool($value)) {
-                    $config[$key] = in_array(strtolower($envValue), ['true', '1', 'yes', 'on']);
-                } elseif (is_int($value)) {
-                    $config[$key] = (int)$envValue;
-                } elseif (is_float($value)) {
-                    $config[$key] = (float)$envValue;
+                // 如果是嵌套数组，不直接替换，而是递归处理
+                if (is_array($value) && !empty($value)) {
+                    // 对于嵌套数组，尝试递归合并
+                    $config[$key] = self::mergeEnvVars($value, $envKey . '_', $depth + 1);
                 } else {
-                    $config[$key] = $envValue;
+                    // 转换类型
+                    if (is_bool($value)) {
+                        $config[$key] = in_array(strtolower($envValue), ['true', '1', 'yes', 'on']);
+                    } elseif (is_int($value)) {
+                        $config[$key] = (int)$envValue;
+                    } elseif (is_float($value)) {
+                        $config[$key] = (float)$envValue;
+                    } else {
+                        $config[$key] = $envValue;
+                    }
                 }
+            } elseif (is_array($value) && !empty($value)) {
+                // 即使没有对应的环境变量，也要递归处理嵌套数组
+                $config[$key] = self::mergeEnvVars($value, $envKey . '_', $depth + 1);
             }
         }
 

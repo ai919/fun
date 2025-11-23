@@ -274,55 +274,100 @@ class ScoreEngine
      */
     protected static function findResultByScore(int $testId, int $score, \PDO $pdo): ?array
     {
-        // 先严格匹配 min <= score <= max
-        $stmt = $pdo->prepare(
-            "SELECT * FROM results
-             WHERE test_id = :tid
-               AND min_score IS NOT NULL
-               AND max_score IS NOT NULL
-               AND min_score <= :score
-               AND max_score >= :score
-             ORDER BY id ASC
-             LIMIT 1"
-        );
-        $stmt->execute([
-            ':tid'   => $testId,
-            ':score' => $score,
-        ]);
-        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
-        if ($row) {
-            return $row;
+        try {
+            // 先严格匹配 min <= score <= max
+            // 注意：使用不同的参数名避免 PDO 参数绑定问题
+            $stmt = $pdo->prepare(
+                "SELECT * FROM results
+                 WHERE test_id = :tid
+                   AND min_score IS NOT NULL
+                   AND max_score IS NOT NULL
+                   AND min_score <= :score_min
+                   AND max_score >= :score_max
+                 ORDER BY id ASC
+                 LIMIT 1"
+            );
+            $stmt->execute([
+                ':tid'       => $testId,
+                ':score_min' => $score,
+                ':score_max' => $score,
+            ]);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if ($row) {
+                return $row;
+            }
+        } catch (\PDOException $e) {
+            // 记录错误但继续尝试其他查询
+            if (class_exists('ErrorHandler')) {
+                ErrorHandler::logError(
+                    'ScoreEngine::findResultByScore 第一次查询失败',
+                    [
+                        'testId' => $testId,
+                        'score' => $score,
+                        'error' => $e->getMessage(),
+                    ]
+                );
+            }
         }
 
-        // 退而求其次：选 min_score <= score 的最高一档
-        $stmt = $pdo->prepare(
-            "SELECT * FROM results
-             WHERE test_id = :tid
-               AND min_score IS NOT NULL
-               AND min_score <= :score
-             ORDER BY min_score DESC
-             LIMIT 1"
-        );
-        $stmt->execute([
-            ':tid'   => $testId,
-            ':score' => $score,
-        ]);
-        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
-        if ($row) {
-            return $row;
+        try {
+            // 退而求其次：选 min_score <= score 的最高一档
+            $stmt = $pdo->prepare(
+                "SELECT * FROM results
+                 WHERE test_id = :tid
+                   AND min_score IS NOT NULL
+                   AND min_score <= :score
+                 ORDER BY min_score DESC
+                 LIMIT 1"
+            );
+            $stmt->execute([
+                ':tid'   => $testId,
+                ':score' => $score,
+            ]);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if ($row) {
+                return $row;
+            }
+        } catch (\PDOException $e) {
+            // 记录错误但继续尝试最后一个查询
+            if (class_exists('ErrorHandler')) {
+                ErrorHandler::logError(
+                    'ScoreEngine::findResultByScore 第二次查询失败',
+                    [
+                        'testId' => $testId,
+                        'score' => $score,
+                        'error' => $e->getMessage(),
+                    ]
+                );
+            }
         }
 
-        // 再不行就选该测验的第一条结果，避免完全没有结果
-        $stmt = $pdo->prepare(
-            "SELECT * FROM results
-             WHERE test_id = :tid
-             ORDER BY id ASC
-             LIMIT 1"
-        );
-        $stmt->execute([':tid' => $testId]);
-        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        try {
+            // 再不行就选该测验的第一条结果，避免完全没有结果
+            $stmt = $pdo->prepare(
+                "SELECT * FROM results
+                 WHERE test_id = :tid
+                 ORDER BY id ASC
+                 LIMIT 1"
+            );
+            $stmt->execute([':tid' => $testId]);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-        return $row ?: null;
+            return $row ?: null;
+        } catch (\PDOException $e) {
+            // 如果最后一个查询也失败，记录错误并返回 null
+            if (class_exists('ErrorHandler')) {
+                ErrorHandler::logError(
+                    'ScoreEngine::findResultByScore 所有查询都失败',
+                    [
+                        'testId' => $testId,
+                        'score' => $score,
+                        'error' => $e->getMessage(),
+                    ]
+                );
+            }
+            return null;
+        }
     }
 
     /**
@@ -330,30 +375,59 @@ class ScoreEngine
      */
     protected static function findResultByCode(int $testId, string $code, \PDO $pdo): ?array
     {
-        $stmt = $pdo->prepare(
-            "SELECT * FROM results
-             WHERE test_id = :tid AND code = :code
-             LIMIT 1"
-        );
-        $stmt->execute([
-            ':tid'  => $testId,
-            ':code' => $code,
-        ]);
-        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
-        if ($row) {
-            return $row;
+        try {
+            $stmt = $pdo->prepare(
+                "SELECT * FROM results
+                 WHERE test_id = :tid AND code = :code
+                 LIMIT 1"
+            );
+            $stmt->execute([
+                ':tid'  => $testId,
+                ':code' => $code,
+            ]);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if ($row) {
+                return $row;
+            }
+        } catch (\PDOException $e) {
+            // 记录错误但继续尝试备用查询
+            if (class_exists('ErrorHandler')) {
+                ErrorHandler::logError(
+                    'ScoreEngine::findResultByCode 第一次查询失败',
+                    [
+                        'testId' => $testId,
+                        'code' => $code,
+                        'error' => $e->getMessage(),
+                    ]
+                );
+            }
         }
 
-        // 找不到对应 code 时，退回该测验的第一条结果
-        $stmt = $pdo->prepare(
-            "SELECT * FROM results
-             WHERE test_id = :tid
-             ORDER BY id ASC
-             LIMIT 1"
-        );
-        $stmt->execute([':tid' => $testId]);
-        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        try {
+            // 找不到对应 code 时，退回该测验的第一条结果
+            $stmt = $pdo->prepare(
+                "SELECT * FROM results
+                 WHERE test_id = :tid
+                 ORDER BY id ASC
+                 LIMIT 1"
+            );
+            $stmt->execute([':tid' => $testId]);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-        return $row ?: null;
+            return $row ?: null;
+        } catch (\PDOException $e) {
+            // 如果备用查询也失败，记录错误并返回 null
+            if (class_exists('ErrorHandler')) {
+                ErrorHandler::logError(
+                    'ScoreEngine::findResultByCode 所有查询都失败',
+                    [
+                        'testId' => $testId,
+                        'code' => $code,
+                        'error' => $e->getMessage(),
+                    ]
+                );
+            }
+            return null;
+        }
     }
 }

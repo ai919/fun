@@ -203,13 +203,19 @@ var shareUrl = <?php echo json_encode($shareUrl); ?> || window.location.href;
     function showToast(text) {
         if (!toastEl) return;
         toastEl.textContent = text;
+        toastEl.classList.remove('copy-toast--hide');
         toastEl.classList.add('copy-toast--show');
         if (toastTimer) {
             clearTimeout(toastTimer);
         }
         toastTimer = setTimeout(function () {
             toastEl.classList.remove('copy-toast--show');
-        }, 3000);
+            toastEl.classList.add('copy-toast--hide');
+            // 动画结束后移除 hide 类
+            setTimeout(function() {
+                toastEl.classList.remove('copy-toast--hide');
+            }, 300);
+        }, 5000); // 改为5秒自动隐藏
     }
 
     function copyText(text) {

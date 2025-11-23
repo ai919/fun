@@ -32,22 +32,47 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    let submitTimeout = null;
+    let isSubmitting = false;
+
     quizForm.addEventListener('submit', function(e) {
+        // 防止重复提交
+        if (isSubmitting) {
+            e.preventDefault();
+            return false;
+        }
+
         // 验证表单
         if (!quizForm.checkValidity()) {
             return;
         }
         
+        isSubmitting = true;
         setLoadingState(true);
+        
+        // 清理之前的超时定时器
+        if (submitTimeout !== null) {
+            clearTimeout(submitTimeout);
+            submitTimeout = null;
+        }
         
         // 如果表单提交失败（网络错误等），恢复按钮状态
         // 注意：如果提交成功会跳转，所以这里主要是处理失败情况
-        setTimeout(function() {
-            // 如果5秒后还在当前页面，说明可能提交失败，恢复按钮
+        submitTimeout = setTimeout(function() {
+            // 如果10秒后还在当前页面，说明可能提交失败，恢复按钮
             if (document.getElementById('quiz-form')) {
+                isSubmitting = false;
                 setLoadingState(false);
             }
-        }, 5000);
+        }, 10000); // 从5秒改为10秒，给服务器更多响应时间
+    });
+
+    // 页面卸载时清理定时器
+    window.addEventListener('beforeunload', function() {
+        if (submitTimeout !== null) {
+            clearTimeout(submitTimeout);
+            submitTimeout = null;
+        }
     });
 
     // 只有 step_by_step 模式下，题目容器才会带 .question-step

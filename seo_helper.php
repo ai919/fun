@@ -81,7 +81,7 @@ function build_faq_structured_data(array $faqs): array
 /**
  * 构建 Quiz/Assessment 结构化数据
  */
-function build_quiz_structured_data(array $test, array $questions = []): array
+function build_quiz_structured_data(array $test, $questions = []): array
 {
     $baseUrl = get_base_url();
     $slug = $test['slug'] ?? '';
@@ -97,8 +97,9 @@ function build_quiz_structured_data(array $test, array $questions = []): array
         $quiz['image'] = $test['cover_image'];
     }
 
+    // 只使用题目数量，避免传递完整数组
     if (!empty($questions)) {
-        $quiz['numberOfQuestions'] = count($questions);
+        $quiz['numberOfQuestions'] = is_array($questions) ? count($questions) : (int)$questions;
     }
 
     return $quiz;
@@ -152,8 +153,10 @@ function build_seo_meta(string $pageType, array $data = []): array
         $type  = 'article';
 
         // 添加 Quiz 结构化数据
+        // 只传递题目数量或空数组，避免内存问题
         if (!empty($test)) {
-            $additionalStructuredData[] = build_quiz_structured_data($test, $questions);
+            $questionCount = is_numeric($questions) ? (int)$questions : (is_array($questions) ? count($questions) : 0);
+            $additionalStructuredData[] = build_quiz_structured_data($test, $questionCount > 0 ? $questionCount : []);
         }
 
         // 添加面包屑导航

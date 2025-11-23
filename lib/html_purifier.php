@@ -56,6 +56,12 @@ class HTMLPurifier {
      * @return string 净化后的HTML
      */
     private static function purifyWithDOM($html) {
+        // 限制HTML长度，避免处理过大的内容导致内存问题
+        $maxLength = 100000; // 100KB
+        if (strlen($html) > $maxLength) {
+            $html = mb_substr($html, 0, $maxLength, 'UTF-8');
+        }
+        
         // 包装在容器中以便解析片段
         $wrapped = '<div>' . $html . '</div>';
         
@@ -68,7 +74,8 @@ class HTMLPurifier {
         $dom->preserveWhiteSpace = true;
         
         // 加载HTML（使用 UTF-8 编码）
-        @$dom->loadHTML('<?xml encoding="UTF-8">' . $wrapped, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        // 限制解析深度，避免深层嵌套导致内存问题
+        @$dom->loadHTML('<?xml encoding="UTF-8">' . $wrapped, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_PARSEHUGE);
         
         libxml_use_internal_errors($libxmlPreviousState);
         
@@ -83,8 +90,8 @@ class HTMLPurifier {
             return self::purifyWithRegex($html);
         }
         
-        // 递归过滤所有元素
-        self::filterElement($container);
+        // 递归过滤所有元素（添加深度限制）
+        self::filterElement($container, 0, 50); // 最大深度50层
         
         // 提取内容（移除包装的div）
         $result = '';
@@ -99,8 +106,15 @@ class HTMLPurifier {
      * 递归过滤DOM元素及其属性
      * 
      * @param DOMElement $element DOM元素
+     * @param int $depth 当前递归深度
+     * @param int $maxDepth 最大递归深度，防止无限递归
      */
-    private static function filterElement($element) {
+    private static function filterElement($element, $depth = 0, $maxDepth = 50) {
+        // 防止无限递归
+        if ($depth > $maxDepth) {
+            return;
+        }
+        
         if ($element->nodeType !== XML_ELEMENT_NODE) {
             return;
         }
@@ -161,13 +175,13 @@ class HTMLPurifier {
             }
         }
         
-        // 递归处理子元素
+        // 递归处理子元素（增加深度计数）
         $children = [];
         foreach ($element->childNodes as $child) {
             $children[] = $child;
         }
         foreach ($children as $child) {
-            self::filterElement($child);
+            self::filterElement($child, $depth + 1, $maxDepth);
         }
     }
 

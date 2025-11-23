@@ -233,6 +233,14 @@ a:hover {
     color: #fff;
 }
 
+.btn-primary:disabled,
+.btn-primary.btn-disabled {
+    background: #d1d5db;
+    color: #9ca3af;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 .btn-lg {
     min-height: 34px;
     padding: 6px 16px;
@@ -364,8 +372,9 @@ a:active {
 
 .quiz-tag-list {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 6px;
+    overflow: hidden;
 }
 
 .quiz-tag {
@@ -566,12 +575,18 @@ a:active {
 
 .sticky-progress {
     position: sticky;
-    top: 0;
-    z-index: 20;
+    top: 50px; /* 显示在 topbar 下方 */
+    z-index: 1001; /* 高于 topbar，确保可见 */
     background-color: #ffffff;
-    padding: 8px 0 10px;
+    padding: 12px 16px 14px;
     margin-bottom: 12px;
+    border-radius: 12px;
     box-shadow: 0 6px 12px rgba(15, 23, 42, 0.06);
+}
+
+[data-theme="dark"] .sticky-progress {
+    background-color: var(--bg-secondary);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
 .test-progress-label {
@@ -637,7 +652,7 @@ a:active {
 .question-options {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
     margin-top: 4px;
 }
 
@@ -1305,67 +1320,212 @@ a:active {
 }
 
 .result-actions {
-    margin-top: 24px;
+    margin-top: 28px;
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
+    align-items: center;
     gap: 12px;
+    flex-wrap: wrap;
 }
 .result-share-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    margin-top: 16px;
+    margin-top: 24px;
+    margin-bottom: 12px;
+    justify-content: center;
+    align-items: center;
+}
+.result-share-actions button {
+    flex: 1 1 auto;
+    min-width: 130px;
+    max-width: 200px;
+    transition: all 0.2s ease;
+}
+.result-actions a,
+.result-actions button {
+    min-width: 150px;
+    max-width: 220px;
+    transition: all 0.2s ease;
 }
 .btn-ghost-muted {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 7px 14px;
-    border-radius: 10px;
+    padding: 10px 16px;
+    border-radius: 12px;
     background-color: #f3f4f6;
     color: #4b5563;
     border: 1px solid #e5e7eb;
-    font-size: 13px;
+    font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
     text-decoration: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
 }
 .btn-ghost-muted:hover {
     background-color: #e5e7eb;
+    border-color: #d1d5db;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.btn-ghost-muted:active {
+    transform: translateY(0);
 }
 
 .btn-ghost-soft-red {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 7px 14px;
-    border-radius: 10px;
+    padding: 10px 16px;
+    border-radius: 12px;
     background-color: #fee2e2;
     color: #b91c1c;
     border: 1px solid #fecaca;
-    font-size: 13px;
+    font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
     text-decoration: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
 }
 .btn-ghost-soft-red:hover {
     background-color: #fecdd3;
+    border-color: #fca5a5;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(185, 28, 28, 0.15);
+}
+.btn-ghost-soft-red:active {
+    transform: translateY(0);
 }
 
+/* 暗色主题下的按钮样式 */
+[data-theme="dark"] .btn-ghost-muted {
+    background-color: #374151;
+    color: #d1d5db;
+    border-color: #4b5563;
+}
+[data-theme="dark"] .btn-ghost-muted:hover {
+    background-color: #4b5563;
+    border-color: #6b7280;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .btn-ghost-soft-red {
+    background-color: rgba(185, 28, 28, 0.2);
+    color: #fca5a5;
+    border-color: rgba(185, 28, 28, 0.4);
+}
+[data-theme="dark"] .btn-ghost-soft-red:hover {
+    background-color: rgba(185, 28, 28, 0.3);
+    border-color: rgba(185, 28, 28, 0.5);
+    box-shadow: 0 2px 8px rgba(185, 28, 28, 0.25);
+}
+
+[data-theme="dark"] .btn-secondary {
+    background-color: #374151;
+    color: #d1d5db;
+    border-color: #4b5563;
+}
+[data-theme="dark"] .btn-secondary:hover {
+    background-color: #4b5563;
+    border-color: #6b7280;
+}
+
+/* 统一的 Toast 提示系统 - 屏幕中间显示 */
+.toast {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    padding: 16px 24px;
+    border-radius: 12px;
+    background: rgba(17, 24, 39, 0.95);
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 500;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 10000;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    max-width: 90%;
+    text-align: center;
+    line-height: 1.5;
+    backdrop-filter: blur(10px);
+}
+
+.toast.toast--show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.toast.toast--hide {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+}
+
+/* 暗色主题支持 */
+[data-theme="dark"] .toast {
+    background: rgba(31, 41, 55, 0.95);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* 兼容旧的 copy-toast */
 .copy-toast {
     position: fixed;
     left: 50%;
-    bottom: 24px;
-    transform: translateX(-50%);
-    padding: 8px 14px;
-    border-radius: 10px;
-    background: rgba(17, 24, 39, 0.9);
+    top: 50%;
+    transform: translate(-50%, -50%);
+    padding: 16px 24px;
+    border-radius: 12px;
+    background: rgba(17, 24, 39, 0.95);
     color: #ffffff;
-    font-size: 13px;
+    font-size: 15px;
+    font-weight: 500;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s ease;
+    z-index: 10000;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    max-width: 90%;
+    text-align: center;
+    line-height: 1.5;
+    backdrop-filter: blur(10px);
 }
+
 .copy-toast.copy-toast--show {
     opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.copy-toast.copy-toast--hide {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+}
+
+[data-theme="dark"] .copy-toast {
+    background: rgba(31, 41, 55, 0.95);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+    .result-share-actions {
+        gap: 12px;
+    }
+    .result-share-actions button {
+        min-width: 140px;
+        max-width: 180px;
+    }
+    .result-actions {
+        gap: 14px;
+    }
+    .result-actions a,
+    .result-actions button {
+        min-width: 160px;
+        max-width: 200px;
+    }
 }
 
 @media (max-width: 640px) {
@@ -1387,39 +1547,39 @@ a:active {
     }
 
     .result-share-actions {
-        margin-top: 18px;
-        margin-bottom: 12px;
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
+        margin-top: 20px;
+        margin-bottom: 16px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
         gap: 10px;
     }
-    .result-share-actions .btn-secondary,
-    .result-share-actions .btn-ghost-muted,
-    .result-share-actions .btn-ghost-soft-red {
-        flex: 1 1 100%;
+    .result-share-actions button {
+        min-width: unset;
         width: 100%;
-        justify-content: center;
-        text-align: center;
         padding: 12px 14px;
-        font-size: 14px;
+        font-size: 13px;
+    }
+    .result-share-actions button:last-child {
+        grid-column: 1 / -1;
     }
 
     .result-actions {
-        margin-top: 24px;
+        margin-top: 20px;
         display: flex;
-        flex-direction: column-reverse;
+        flex-direction: column;
         align-items: stretch;
-        gap: 10px;
+        gap: 12px;
     }
-    .result-actions .btn-primary,
-    .result-actions .btn-secondary {
+    .result-actions a,
+    .result-actions button {
+        min-width: unset;
         width: 100%;
         justify-content: center;
         text-align: center;
-        padding: 12px 16px;
+        padding: 14px 20px;
         font-size: 15px;
-        border-radius: 999px;
+        font-weight: 500;
+        border-radius: 12px;
     }
 }
 
@@ -1713,7 +1873,7 @@ a:active {
 .quiz-options {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
 }
 
 .quiz-option-item {

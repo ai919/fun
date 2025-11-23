@@ -32,12 +32,10 @@ class ErrorHandler
             return;
         }
 
-        // 加载配置
-        $configPath = __DIR__ . '/../config/app.php';
-        if (file_exists($configPath)) {
-            self::$config = require $configPath;
-        } else {
-            // 默认配置
+        // 防止在加载配置时触发循环引用
+        static $loading = false;
+        if ($loading) {
+            // 如果正在加载配置，使用默认值
             self::$config = [
                 'debug' => false,
                 'environment' => 'production',
@@ -53,29 +51,59 @@ class ErrorHandler
                     'log_stack_trace' => true,
                 ],
             ];
+            self::$initialized = true;
+            return;
         }
 
-        // 设置时区
-        if (isset(self::$config['timezone'])) {
-            date_default_timezone_set(self::$config['timezone']);
+        $loading = true;
+        try {
+            // 加载配置
+            $configPath = __DIR__ . '/../config/app.php';
+            if (file_exists($configPath)) {
+                self::$config = require $configPath;
+            } else {
+                // 默认配置
+                self::$config = [
+                    'debug' => false,
+                    'environment' => 'production',
+                    'log' => [
+                        'dir' => __DIR__ . '/../logs',
+                        'enabled' => true,
+                        'level' => 'INFO',
+                        'file' => true,
+                        'system' => true,
+                    ],
+                    'error' => [
+                        'display_details' => true,
+                        'log_stack_trace' => true,
+                    ],
+                ];
+            }
+
+            // 设置时区
+            if (isset(self::$config['timezone'])) {
+                date_default_timezone_set(self::$config['timezone']);
+            }
+
+            // 设置错误报告级别
+            if (self::isDebug()) {
+                error_reporting(E_ALL);
+                ini_set('display_errors', '1');
+            } else {
+                error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
+                ini_set('display_errors', '0');
+            }
+
+            // 注册全局异常处理器
+            set_exception_handler([self::class, 'handleException']);
+            
+            // 注册全局错误处理器
+            set_error_handler([self::class, 'handleError']);
+
+            self::$initialized = true;
+        } finally {
+            $loading = false;
         }
-
-        // 设置错误报告级别
-        if (self::isDebug()) {
-            error_reporting(E_ALL);
-            ini_set('display_errors', '1');
-        } else {
-            error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
-            ini_set('display_errors', '0');
-        }
-
-        // 注册全局异常处理器
-        set_exception_handler([self::class, 'handleException']);
-        
-        // 注册全局错误处理器
-        set_error_handler([self::class, 'handleError']);
-
-        self::$initialized = true;
     }
 
     /**

@@ -22,23 +22,37 @@ class StructuredLogger
             return;
         }
 
-        $configFile = __DIR__ . '/../config/app.php';
-        if (file_exists($configFile)) {
-            self::$config = require $configFile;
-        } else {
+        // 防止在加载配置时触发循环引用
+        static $loading = false;
+        if ($loading) {
+            // 如果正在加载配置，使用默认值
             self::$config = [];
+            self::$logDir = __DIR__ . '/../logs';
+            return;
         }
 
-        self::$logDir = self::$config['log']['dir'] ?? __DIR__ . '/../logs';
-        
-        // 确保日志目录存在
-        if (!is_dir(self::$logDir)) {
-            @mkdir(self::$logDir, 0755, true);
-        }
+        $loading = true;
+        try {
+            $configFile = __DIR__ . '/../config/app.php';
+            if (file_exists($configFile)) {
+                self::$config = require $configFile;
+            } else {
+                self::$config = [];
+            }
 
-        // 从配置读取日志轮转设置
-        self::$maxFileSize = self::$config['log']['max_file_size'] ?? self::$maxFileSize;
-        self::$maxFiles = self::$config['log']['max_files'] ?? self::$maxFiles;
+            self::$logDir = self::$config['log']['dir'] ?? __DIR__ . '/../logs';
+            
+            // 确保日志目录存在
+            if (!is_dir(self::$logDir)) {
+                @mkdir(self::$logDir, 0755, true);
+            }
+
+            // 从配置读取日志轮转设置
+            self::$maxFileSize = self::$config['log']['max_file_size'] ?? self::$maxFileSize;
+            self::$maxFiles = self::$config['log']['max_files'] ?? self::$maxFiles;
+        } finally {
+            $loading = false;
+        }
     }
 
     /**

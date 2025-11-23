@@ -87,7 +87,8 @@ if ($cachedData !== null && is_array($cachedData)) {
     $optionsByQuestion = $cachedData['options'];
 } else {
     // 缓存未命中，从数据库查询
-    $testStmt = $pdo->prepare("SELECT * FROM tests WHERE id = ? LIMIT 1");
+    // 只选择需要的字段，避免 SELECT * 加载不必要的数据（特别是 description TEXT 字段可能很大）
+    $testStmt = $pdo->prepare("SELECT id, slug, title, subtitle, description, title_color, emoji, tags, status, sort_order, scoring_mode, scoring_config, display_mode FROM tests WHERE id = ? LIMIT 1");
     $testStmt->execute([$testId]);
     $test = $testStmt->fetch(PDO::FETCH_ASSOC);
     if (!$test) {
@@ -98,7 +99,8 @@ if ($cachedData !== null && is_array($cachedData)) {
 
     $questionOrderField = choose_order_field($pdo, 'questions');
     $questionOrderSql = $questionOrderField ? "ORDER BY {$questionOrderField} ASC, id ASC" : "ORDER BY id ASC";
-    $questionsStmt = $pdo->prepare("SELECT * FROM questions WHERE test_id = ? {$questionOrderSql}");
+    // 只选择需要的字段，避免 SELECT * 加载不必要的数据
+    $questionsStmt = $pdo->prepare("SELECT id, question_text, sort_order FROM questions WHERE test_id = ? {$questionOrderSql}");
     $questionsStmt->execute([$testId]);
     $questions = $questionsStmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -108,8 +110,10 @@ if ($cachedData !== null && is_array($cachedData)) {
         $placeholders = implode(',', array_fill(0, count($questionIds), '?'));
         $optionOrderField = choose_order_field($pdo, 'question_options');
         $optionOrderSql = $optionOrderField ? "ORDER BY {$optionOrderField} ASC, id ASC" : "ORDER BY id ASC";
+        // 只选择需要的字段，避免 SELECT * 加载不必要的数据
         $optStmt = $pdo->prepare(
-            "SELECT * FROM question_options
+            "SELECT id, question_id, option_key, option_text, map_result_code, score_value
+             FROM question_options
              WHERE question_id IN ($placeholders)
              {$optionOrderSql}"
         );
@@ -144,9 +148,10 @@ if ($playCount === null) {
 }
 
 // 构建 SEO 数据（包含结构化数据）
+// 只传递题目数量，避免传递完整数组导致内存问题
 $seo = build_seo_meta('test', [
     'test' => $test,
-    'questions' => $questions,
+    'questions' => $questionCount, // 只传递数量，不传递完整数组
 ]);
 
 ?>
@@ -324,23 +329,103 @@ document.addEventListener('DOMContentLoaded', function () {
     const globalProgress = document.getElementById('global-progress');
     const globalProgressBar = document.getElementById('global-progress-bar');
 
-    function updateProgress() {
-        const answeredQuestions = new Set();
-        radios.forEach(function (radio) {
-            if (radio.checked) {
-                answeredQuestions.add(radio.name);
+    // 统一的 Toast 提示系统
+    let toastElement = null;
+    let toastTimer = null;
+
+    function showToast(message, duration = 5000) {
+        // 创建或获取 toast 元素
+        if (!toastElement) {
+            toastElement = document.createElement('div');
+            toastElement.className = 'toast';
+            document.body.appendChild(toastElement);
+        }
+
+        // 清除之前的定时器
+        if (toastTimer) {
+            clearTimeout(toastTimer);
+            toastTimer = null;
+        }
+
+        // 设置消息内容
+        toastElement.textContent = message;
+        
+        // 显示 toast
+        toastElement.classList.remove('toast--hide');
+        toastElement.classList.add('toast--show');
+
+        // 5秒后自动隐藏
+        toastTimer = setTimeout(function() {
+            toastElement.classList.remove('toast--show');
+            toastElement.classList.add('toast--hide');
+            // 动画结束后移除 hide 类
+            setTimeout(function() {
+                toastElement.classList.remove('toast--hide');
+            }, 300);
+        }, duration);
+    }
+    
+    // 将 showToast 暴露到全局作用域，供 step-by-step 模式使用
+    window.showToast = showToast;
+
+    // 缓存已答题数，避免重复计算
+    let cachedAnsweredCount = 0;
+    
+    // 获取所有提交按钮
+    function getSubmitButtons() {
+        return quizForm ? quizForm.querySelectorAll('button[type="submit"]') : [];
+    }
+    
+    // 更新提交按钮状态
+    function updateSubmitButtonState(answeredCount) {
+        const submitButtons = getSubmitButtons();
+        const isComplete = answeredCount >= totalQuestions;
+        
+        submitButtons.forEach(function(btn) {
+            if (isComplete) {
+                btn.disabled = false;
+                btn.classList.remove('btn-disabled');
+            } else {
+                btn.disabled = true;
+                btn.classList.add('btn-disabled');
             }
         });
-        const answeredCount = answeredQuestions.size;
-        if (answeredLabel) {
-            answeredLabel.textContent = answeredCount;
+    }
+    
+    // 获取所有已答题数（动态获取，确保包含所有可见的 radio）
+    function getAnsweredCount() {
+        const allRadios = quizForm ? quizForm.querySelectorAll('input[type="radio"][name^="q["]') : [];
+        const answeredQuestions = new Set();
+        for (let i = 0; i < allRadios.length; i++) {
+            if (allRadios[i].checked) {
+                answeredQuestions.add(allRadios[i].name);
+            }
         }
-        if (progressFill) {
-            const percent = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
-            progressFill.style.width = percent + '%';
-            progressFill.parentElement.setAttribute('aria-valuenow', answeredCount);
+        return answeredQuestions.size;
+    }
+    
+    function updateProgress() {
+        // 使用动态获取的方式统计已答题数（确保包含所有可见和隐藏的 radio）
+        const answeredCount = getAnsweredCount();
+        
+        // 只在数量变化时更新DOM，减少不必要的操作
+        if (answeredCount !== cachedAnsweredCount) {
+            cachedAnsweredCount = answeredCount;
+            if (answeredLabel) {
+                answeredLabel.textContent = answeredCount;
+            }
+            if (progressFill) {
+                const percent = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
+                progressFill.style.width = percent + '%';
+                progressFill.parentElement.setAttribute('aria-valuenow', answeredCount);
+            }
+            // 更新提交按钮状态
+            updateSubmitButtonState(answeredCount);
         }
     }
+    
+    // 将 updateProgress 暴露到全局作用域，供 step-by-step 模式使用
+    window.updateProgress = updateProgress;
 
     // 全局进度指示器（用于表单提交等长操作）
     function showGlobalProgress(percent) {
@@ -356,22 +441,109 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // 清理所有进度定时器
+    let progressInterval = null;
+    let progressTimeout = null;
+    let isSubmitting = false;
+
+    function clearAllProgressTimers() {
+        if (progressInterval !== null) {
+            clearInterval(progressInterval);
+            progressInterval = null;
+        }
+        if (progressTimeout !== null) {
+            clearTimeout(progressTimeout);
+            progressTimeout = null;
+        }
+    }
+
+    // 页面卸载时清理定时器
+    window.addEventListener('beforeunload', clearAllProgressTimers);
+    window.addEventListener('unload', clearAllProgressTimers);
+
     // 表单提交时显示进度
     const quizForm = document.getElementById('quiz-form');
     if (quizForm) {
-        quizForm.addEventListener('submit', function() {
+        quizForm.addEventListener('submit', function(e) {
+            // 防止重复提交
+            if (isSubmitting) {
+                e.preventDefault();
+                return false;
+            }
+
+            // 验证所有题目是否完成（动态获取，确保包含所有可见的 radio）
+            const answeredCount = getAnsweredCount();
+
+            // 如果未完成所有题目，阻止提交并显示提示
+            if (answeredCount < totalQuestions) {
+                e.preventDefault();
+                showToast('请耐心完成所有测验题目哦。');
+                return false;
+            }
+
+            isSubmitting = true;
+
+            // 禁用提交按钮
+            const submitBtn = quizForm.querySelector('button[type="submit"], input[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+            }
+
+            // 清理之前的定时器（防止重复提交）
+            clearAllProgressTimers();
+
+            // 显示初始进度
             showGlobalProgress(30);
-            // 模拟进度更新
+
+            // 模拟进度更新（最多到90%，等待服务器响应）
             let progress = 30;
-            const progressInterval = setInterval(function() {
-                progress += 10;
+            progressInterval = setInterval(function() {
+                // 检查是否还在提交状态，防止页面已跳转但定时器仍在运行
+                // 注意：如果页面已跳转，表单元素可能不存在，此时应该清理定时器
+                const formStillExists = document.getElementById('quiz-form');
+                if (!isSubmitting || !formStillExists) {
+                    if (progressInterval) {
+                        clearInterval(progressInterval);
+                        progressInterval = null;
+                    }
+                    return;
+                }
+                
+                progress += 5; // 减慢更新速度，减少CPU占用
                 if (progress < 90) {
                     showGlobalProgress(progress);
                 } else {
-                    clearInterval(progressInterval);
+                    if (progressInterval) {
+                        clearInterval(progressInterval);
+                        progressInterval = null;
+                    }
                     showGlobalProgress(90);
                 }
-            }, 200);
+            }, 300); // 从200ms改为300ms，减少更新频率
+
+            // 超时保护：如果30秒后还没跳转，清理定时器并恢复按钮
+            progressTimeout = setTimeout(function() {
+                // 再次检查，确保只清理一次
+                if (isSubmitting && document.getElementById('quiz-form')) {
+                    clearAllProgressTimers();
+                    showGlobalProgress(0);
+                    isSubmitting = false;
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                    }
+                    // 可选：显示错误提示
+                    console.warn('提交超时，请检查网络连接');
+                }
+            }, 30000);
+            
+            // 立即在页面卸载时清理（确保即使快速跳转也能清理）
+            const cleanupOnUnload = function() {
+                clearAllProgressTimers();
+                window.removeEventListener('beforeunload', cleanupOnUnload);
+                window.removeEventListener('unload', cleanupOnUnload);
+            };
+            window.addEventListener('beforeunload', cleanupOnUnload, { once: true });
+            window.addEventListener('unload', cleanupOnUnload, { once: true });
         });
     }
 
@@ -386,3 +558,4 @@ document.addEventListener('DOMContentLoaded', function () {
 <?php endif; ?>
 </body>
 </html>
+
