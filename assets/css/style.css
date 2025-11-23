@@ -2326,7 +2326,7 @@ html[data-theme="dark"] .page-profile .profile-container {
     }
     
     .topbar-right {
-        gap: 4px; /* 移动端图标更紧凑 */
+        gap: 2px; /* 移动端图标更紧凑 */
         flex-wrap: nowrap;
     }
     

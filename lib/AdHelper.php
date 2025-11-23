@@ -9,6 +9,7 @@ class AdHelper
     private static ?PDO $pdo = null;
     private static array $cache = [];
     private static int $cacheTime = 300; // 缓存5分钟
+    private static array $renderedAds = []; // 跟踪已渲染的广告位，防止重复
 
     /**
      * 初始化数据库连接
@@ -27,16 +28,28 @@ class AdHelper
      * 
      * @param string $positionKey 广告位标识
      * @param string $currentPage 当前页面类型（home, test, result）
+     * @param bool $allowMultiple 是否允许在同一页面中多次渲染（默认false，防止重复）
      * @return string|null 广告HTML代码，如果没有则返回null
      */
-    public static function render(string $positionKey, string $currentPage = 'home'): ?string
+    public static function render(string $positionKey, string $currentPage = 'home', bool $allowMultiple = false): ?string
     {
+        // 检查是否已经渲染过（防止重复）
+        $renderKey = "{$positionKey}_{$currentPage}";
+        if (!$allowMultiple && isset(self::$renderedAds[$renderKey])) {
+            return null; // 已经渲染过，返回 null 避免重复
+        }
+
         // 检查缓存
         $cacheKey = "ad_{$positionKey}_{$currentPage}";
         if (isset(self::$cache[$cacheKey])) {
             $ad = self::$cache[$cacheKey];
             if ($ad === null || self::isAdValid($ad)) {
-                return $ad ? self::formatAd($ad) : null;
+                if ($ad) {
+                    // 标记为已渲染
+                    self::$renderedAds[$renderKey] = true;
+                    return self::formatAd($ad);
+                }
+                return null;
             }
         }
 
@@ -68,6 +81,8 @@ class AdHelper
         }
 
         self::$cache[$cacheKey] = $ad;
+        // 标记为已渲染
+        self::$renderedAds[$renderKey] = true;
         return self::formatAd($ad);
     }
 
@@ -217,6 +232,7 @@ class AdHelper
     public static function clearCache(): void
     {
         self::$cache = [];
+        self::$renderedAds = []; // 同时清除已渲染记录
     }
 }
 
