@@ -1397,7 +1397,7 @@ html[data-theme="dark"] .sticky-progress {
 .question-options {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     margin-top: 4px;
 }
 
@@ -1409,8 +1409,8 @@ html[data-theme="dark"] .sticky-progress {
     /* 移动端选项卡片优化 */
     @media (max-width: 640px) {
         .option-inner {
-            padding: 14px 16px;
-            min-height: 48px; /* 确保触摸目标足够大 */
+            padding: 12px 14px;
+            /* 移除固定高度，让高度自适应内容 */
         }
         
         .option-text {
@@ -1430,6 +1430,10 @@ html[data-theme="dark"] .sticky-progress {
             height: 36px;
             font-size: 14px;
         }
+        
+        .question-options {
+            gap: 4px; /* 移动端选项间距更紧凑 */
+        }
     }
 
 .option-card input[type="radio"] {
@@ -1444,6 +1448,7 @@ html[data-theme="dark"] .sticky-progress {
     border-radius: 12px;
     border: 1px solid var(--border-color);
     background-color: var(--bg-secondary);
+    /* 高度自适应内容，不设置固定高度 */
     transition:
         background-color 0.3s ease,
         border-color 0.3s ease,
