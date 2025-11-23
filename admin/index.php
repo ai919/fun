@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/auth.php';
+require_admin_login();
 require_once __DIR__ . '/../lib/db_connect.php';
 
 $pageTitle = '概览';
@@ -35,7 +36,7 @@ ob_start();
     </div>
 </div>
 
-<div class="admin-card" style="margin-bottom: 16px;">
+<div class="admin-card admin-card--spaced">
     <table class="admin-table admin-table--kpi">
         <tbody>
         <tr>
@@ -57,7 +58,7 @@ ob_start();
 </div>
 
 <div class="admin-card">
-    <h2 class="admin-page-title" style="font-size: 15px; margin-bottom: 8px;">最受欢迎的测验</h2>
+    <h2 class="admin-card__title">最受欢迎的测验</h2>
     <?php if (empty($topTests)): ?>
         <p class="admin-table__muted">暂无数据。</p>
     <?php else: ?>

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/auth.php';
+require_admin_login();
 require_once __DIR__ . '/../lib/LogAnalyzer.php';
 
 $pageTitle = '日志分析';

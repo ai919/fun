@@ -56,8 +56,10 @@ class AdHelper
         self::initPdo();
 
         // 查询启用的广告位
+        // 只选择需要的字段，避免 SELECT * 加载不必要的数据
         $stmt = self::$pdo->prepare("
-            SELECT * FROM ad_positions 
+            SELECT id, position_key, ad_type, ad_code, image_url, link_url, alt_text, start_date, end_date, priority, max_display_count, display_pages
+            FROM ad_positions 
             WHERE position_key = ? 
             AND is_enabled = 1
             AND (display_pages IS NULL OR display_pages = '' OR FIND_IN_SET(?, display_pages) > 0)
@@ -157,8 +159,10 @@ class AdHelper
     public static function getAllPositions(): array
     {
         self::initPdo();
+        // 只选择需要的字段，避免 SELECT * 加载不必要的数据
         $stmt = self::$pdo->query("
-            SELECT * FROM ad_positions 
+            SELECT id, position_key, position_name, ad_type, ad_code, image_url, link_url, alt_text, is_enabled, start_date, end_date, priority, max_display_count, display_pages, created_at, updated_at
+            FROM ad_positions 
             ORDER BY priority DESC, position_key ASC
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -173,7 +177,8 @@ class AdHelper
     public static function getPosition(int $id): ?array
     {
         self::initPdo();
-        $stmt = self::$pdo->prepare("SELECT * FROM ad_positions WHERE id = ? LIMIT 1");
+        // 只选择需要的字段，避免 SELECT * 加载不必要的数据
+        $stmt = self::$pdo->prepare("SELECT id, position_key, position_name, ad_type, ad_code, image_url, link_url, alt_text, is_enabled, start_date, end_date, priority, max_display_count, display_pages, created_at, updated_at FROM ad_positions WHERE id = ? LIMIT 1");
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/auth.php';
+require_admin_login();
 require_once __DIR__ . '/../lib/db_connect.php';
 require_once __DIR__ . '/../config/app.php';
 
@@ -40,18 +41,16 @@ ob_start();
     </div>
 </div>
 
-<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px;">
+<div class="admin-system-grid">
     <!-- 系统配置 -->
-    <a href="system_config.php" style="text-decoration: none;">
-        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
-             onmouseover="this.style.transform='translateY(-2px)'" 
-             onmouseout="this.style.transform='translateY(0)'">
-            <div style="font-size: 24px; margin-bottom: 8px;">⚙️</div>
-            <h3 style="font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 6px;">系统配置</h3>
-            <p style="font-size: 12px; color: #6b7280; margin-bottom: 8px; line-height: 1.4;">
+    <a href="system_config.php" class="admin-system-card-link">
+        <div class="admin-card admin-system-card">
+            <div class="admin-system-card__icon">⚙️</div>
+            <h3 class="admin-system-card__title">系统配置</h3>
+            <p class="admin-system-card__description">
                 管理调试模式、日志级别、错误处理等系统配置
             </p>
-            <div style="font-size: 12px; color: #60a5fa;">
+            <div class="admin-system-card__meta">
                 环境: <?= htmlspecialchars(strtoupper($config['environment'])) ?> · 
                 调试: <?= $config['debug'] ? '开启' : '关闭' ?>
             </div>
@@ -59,16 +58,14 @@ ob_start();
     </a>
     
     <!-- 系统日志 -->
-    <a href="system_logs.php" style="text-decoration: none;">
-        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
-             onmouseover="this.style.transform='translateY(-2px)'" 
-             onmouseout="this.style.transform='translateY(0)'">
-            <div style="font-size: 24px; margin-bottom: 8px;">📋</div>
-            <h3 style="font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 6px;">系统日志</h3>
-            <p style="font-size: 12px; color: #6b7280; margin-bottom: 8px; line-height: 1.4;">
+    <a href="system_logs.php" class="admin-system-card-link">
+        <div class="admin-card admin-system-card">
+            <div class="admin-system-card__icon">📋</div>
+            <h3 class="admin-system-card__title">系统日志</h3>
+            <p class="admin-system-card__description">
                 查看错误、警告、信息和调试日志
             </p>
-            <div style="font-size: 12px; color: #60a5fa;">
+            <div class="admin-system-card__meta">
                 错误: <?= number_format($logStats['error']['count']) ?> · 
                 警告: <?= number_format($logStats['warning']['count']) ?>
             </div>
@@ -76,16 +73,14 @@ ob_start();
     </a>
     
     <!-- 缓存管理 -->
-    <a href="cache_manage.php" style="text-decoration: none;">
-        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
-             onmouseover="this.style.transform='translateY(-2px)'" 
-             onmouseout="this.style.transform='translateY(0)'">
-            <div style="font-size: 24px; margin-bottom: 8px;">📦</div>
-            <h3 style="font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 6px;">缓存管理</h3>
-            <p style="font-size: 12px; color: #6b7280; margin-bottom: 8px; line-height: 1.4;">
+    <a href="cache_manage.php" class="admin-system-card-link">
+        <div class="admin-card admin-system-card">
+            <div class="admin-system-card__icon">📦</div>
+            <h3 class="admin-system-card__title">缓存管理</h3>
+            <p class="admin-system-card__description">
                 查看和管理系统缓存文件，提升性能
             </p>
-            <div style="font-size: 12px; color: #60a5fa;">
+            <div class="admin-system-card__meta">
                 文件数: <?= $cacheCount ?> · 
                 总大小: <?php
                     if ($cacheSize > 1024 * 1024) {
@@ -101,176 +96,154 @@ ob_start();
     </a>
     
     <!-- 数据库迁移 -->
-    <a href="migrations.php" style="text-decoration: none;">
-        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
-             onmouseover="this.style.transform='translateY(-2px)'" 
-             onmouseout="this.style.transform='translateY(0)'">
-            <div style="font-size: 24px; margin-bottom: 8px;">🗄️</div>
-            <h3 style="font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 6px;">数据库迁移</h3>
-            <p style="font-size: 12px; color: #6b7280; margin-bottom: 8px; line-height: 1.4;">
+    <a href="migrations.php" class="admin-system-card-link">
+        <div class="admin-card admin-system-card">
+            <div class="admin-system-card__icon">🗄️</div>
+            <h3 class="admin-system-card__title">数据库迁移</h3>
+            <p class="admin-system-card__description">
                 管理数据库结构变更，支持版本控制和回滚
             </p>
-            <div style="font-size: 12px; color: #60a5fa;">
+            <div class="admin-system-card__meta">
                 迁移管理 · 版本控制
             </div>
         </div>
     </a>
     
     <!-- 数据库查询日志 -->
-    <a href="db_query_logs.php" style="text-decoration: none;">
-        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
-             onmouseover="this.style.transform='translateY(-2px)'" 
-             onmouseout="this.style.transform='translateY(0)'">
-            <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
-            <h3 style="font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 6px;">查询日志</h3>
-            <p style="font-size: 12px; color: #6b7280; margin-bottom: 8px; line-height: 1.4;">
+    <a href="db_query_logs.php" class="admin-system-card-link">
+        <div class="admin-card admin-system-card">
+            <div class="admin-system-card__icon">📊</div>
+            <h3 class="admin-system-card__title">查询日志</h3>
+            <p class="admin-system-card__description">
                 查看数据库查询日志，分析查询性能和优化慢查询
             </p>
-            <div style="font-size: 12px; color: #60a5fa;">
+            <div class="admin-system-card__meta">
                 性能分析 · 慢查询
             </div>
         </div>
     </a>
     
     <!-- 日志分析 -->
-    <a href="log_analysis.php" style="text-decoration: none;">
-        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
-             onmouseover="this.style.transform='translateY(-2px)'" 
-             onmouseout="this.style.transform='translateY(0)'">
-            <div style="font-size: 24px; margin-bottom: 8px;">🔍</div>
-            <h3 style="font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 6px;">日志分析</h3>
-            <p style="font-size: 12px; color: #6b7280; margin-bottom: 8px; line-height: 1.4;">
+    <a href="log_analysis.php" class="admin-system-card-link">
+        <div class="admin-card admin-system-card">
+            <div class="admin-system-card__icon">🔍</div>
+            <h3 class="admin-system-card__title">日志分析</h3>
+            <p class="admin-system-card__description">
                 分析结构化日志，追踪错误趋势和性能问题
             </p>
-            <div style="font-size: 12px; color: #60a5fa;">
+            <div class="admin-system-card__meta">
                 错误追踪 · 趋势分析 · 告警
             </div>
         </div>
     </a>
     
     <!-- APM 监控 -->
-    <a href="apm_dashboard.php" style="text-decoration: none;">
-        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
-             onmouseover="this.style.transform='translateY(-2px)'" 
-             onmouseout="this.style.transform='translateY(0)'">
-            <div style="font-size: 24px; margin-bottom: 8px;">⚡</div>
-            <h3 style="font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 6px;">APM 监控</h3>
-            <p style="font-size: 12px; color: #6b7280; margin-bottom: 8px; line-height: 1.4;">
+    <a href="apm_dashboard.php" class="admin-system-card-link">
+        <div class="admin-card admin-system-card">
+            <div class="admin-system-card__icon">⚡</div>
+            <h3 class="admin-system-card__title">APM 监控</h3>
+            <p class="admin-system-card__description">
                 应用性能监控，实时查看响应时间和系统健康度
             </p>
-            <div style="font-size: 12px; color: #60a5fa;">
+            <div class="admin-system-card__meta">
                 性能监控 · 实时指标 · 健康度
             </div>
         </div>
     </a>
     
     <!-- 备份 & 日志 -->
-    <a href="backup_logs.php" style="text-decoration: none;">
-        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
-             onmouseover="this.style.transform='translateY(-2px)'" 
-             onmouseout="this.style.transform='translateY(0)'">
-            <div style="font-size: 24px; margin-bottom: 8px;">💾</div>
-            <h3 style="font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 6px;">备份 & 日志</h3>
-            <p style="font-size: 12px; color: #6b7280; margin-bottom: 8px; line-height: 1.4;">
+    <a href="backup_logs.php" class="admin-system-card-link">
+        <div class="admin-card admin-system-card">
+            <div class="admin-system-card__icon">💾</div>
+            <h3 class="admin-system-card__title">备份 & 日志</h3>
+            <p class="admin-system-card__description">
                 查看、下载或删除站点备份记录
             </p>
-            <div style="font-size: 12px; color: #60a5fa;">
+            <div class="admin-system-card__meta">
                 备份管理 · 下载备份 · 备份记录
             </div>
         </div>
     </a>
     
     <!-- SEO 内容优化 -->
-    <a href="seo_optimizer.php" style="text-decoration: none;">
-        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
-             onmouseover="this.style.transform='translateY(-2px)'" 
-             onmouseout="this.style.transform='translateY(0)'">
-            <div style="font-size: 24px; margin-bottom: 8px;">🔍</div>
-            <h3 style="font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 6px;">SEO 优化</h3>
-            <p style="font-size: 12px; color: #6b7280; margin-bottom: 8px; line-height: 1.4;">
+    <a href="seo_optimizer.php" class="admin-system-card-link">
+        <div class="admin-card admin-system-card">
+            <div class="admin-system-card__icon">🔍</div>
+            <h3 class="admin-system-card__title">SEO 优化</h3>
+            <p class="admin-system-card__description">
                 批量检查测验 SEO 分数，提供优化建议和内部链接建议
             </p>
-            <div style="font-size: 12px; color: #60a5fa;">
+            <div class="admin-system-card__meta">
                 内容优化 · SEO 评分 · 链接建议
             </div>
         </div>
     </a>
     
     <!-- 性能优化 -->
-    <a href="performance.php" style="text-decoration: none;">
-        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
-             onmouseover="this.style.transform='translateY(-2px)'" 
-             onmouseout="this.style.transform='translateY(0)'">
-            <div style="font-size: 24px; margin-bottom: 8px;">🚀</div>
-            <h3 style="font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 6px;">性能优化</h3>
-            <p style="font-size: 12px; color: #6b7280; margin-bottom: 8px; line-height: 1.4;">
+    <a href="performance.php" class="admin-system-card-link">
+        <div class="admin-card admin-system-card">
+            <div class="admin-system-card__icon">🚀</div>
+            <h3 class="admin-system-card__title">性能优化</h3>
+            <p class="admin-system-card__description">
                 缓存、APM 和性能指标总览，系统资源监控
             </p>
-            <div style="font-size: 12px; color: #60a5fa;">
+            <div class="admin-system-card__meta">
                 性能监控 · 缓存统计 · 优化建议
             </div>
         </div>
     </a>
     
     <!-- URL 重定向管理 -->
-    <a href="url_redirects.php" style="text-decoration: none;">
-        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
-             onmouseover="this.style.transform='translateY(-2px)'" 
-             onmouseout="this.style.transform='translateY(0)'">
-            <div style="font-size: 24px; margin-bottom: 8px;">🔗</div>
-            <h3 style="font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 6px;">URL 重定向</h3>
-            <p style="font-size: 12px; color: #6b7280; margin-bottom: 8px; line-height: 1.4;">
+    <a href="url_redirects.php" class="admin-system-card-link">
+        <div class="admin-card admin-system-card">
+            <div class="admin-system-card__icon">🔗</div>
+            <h3 class="admin-system-card__title">URL 重定向</h3>
+            <p class="admin-system-card__description">
                 管理 301 永久重定向规则，确保旧链接正确跳转
             </p>
-            <div style="font-size: 12px; color: #60a5fa;">
+            <div class="admin-system-card__meta">
                 301 重定向 · SEO 优化 · 链接管理
             </div>
         </div>
     </a>
     
     <!-- 页面缓存管理 -->
-    <a href="page_cache_manage.php" style="text-decoration: none;">
-        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
-             onmouseover="this.style.transform='translateY(-2px)'" 
-             onmouseout="this.style.transform='translateY(0)'">
-            <div style="font-size: 24px; margin-bottom: 8px;">📄</div>
-            <h3 style="font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 6px;">页面缓存</h3>
-            <p style="font-size: 12px; color: #6b7280; margin-bottom: 8px; line-height: 1.4;">
+    <a href="page_cache_manage.php" class="admin-system-card-link">
+        <div class="admin-card admin-system-card">
+            <div class="admin-system-card__icon">📄</div>
+            <h3 class="admin-system-card__title">页面缓存</h3>
+            <p class="admin-system-card__description">
                 管理页面级别缓存，提升页面加载速度
             </p>
-            <div style="font-size: 12px; color: #60a5fa;">
+            <div class="admin-system-card__meta">
                 页面缓存 · 性能优化 · 缓存管理
             </div>
         </div>
     </a>
     
     <!-- 优化建议中心 -->
-    <a href="optimization_center.php" style="text-decoration: none;">
-        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
-             onmouseover="this.style.transform='translateY(-2px)'" 
-             onmouseout="this.style.transform='translateY(0)'">
-            <div style="font-size: 24px; margin-bottom: 8px;">💡</div>
-            <h3 style="font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 6px;">优化建议</h3>
-            <p style="font-size: 12px; color: #6b7280; margin-bottom: 8px; line-height: 1.4;">
+    <a href="optimization_center.php" class="admin-system-card-link">
+        <div class="admin-card admin-system-card">
+            <div class="admin-system-card__icon">💡</div>
+            <h3 class="admin-system-card__title">优化建议</h3>
+            <p class="admin-system-card__description">
                 整合所有优化建议，快速发现和解决系统问题
             </p>
-            <div style="font-size: 12px; color: #60a5fa;">
+            <div class="admin-system-card__meta">
                 建议汇总 · 健康检查 · 问题诊断
             </div>
         </div>
     </a>
     
     <!-- Google Analytics 设置 -->
-    <a href="analytics_settings.php" style="text-decoration: none;">
-        <div class="admin-card" style="height: 100%; transition: transform 0.2s; cursor: pointer;" 
-             onmouseover="this.style.transform='translateY(-2px)'" 
-             onmouseout="this.style.transform='translateY(0)'">
-            <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
-            <h3 style="font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 6px;">Google Analytics</h3>
-            <p style="font-size: 12px; color: #6b7280; margin-bottom: 8px; line-height: 1.4;">
+    <a href="analytics_settings.php" class="admin-system-card-link">
+        <div class="admin-card admin-system-card">
+            <div class="admin-system-card__icon">📊</div>
+            <h3 class="admin-system-card__title">Google Analytics</h3>
+            <p class="admin-system-card__description">
                 配置 Google Analytics 跟踪代码，监控网站访问数据
             </p>
-            <div style="font-size: 12px; color: #60a5fa;">
+            <div class="admin-system-card__meta">
                 数据跟踪 · 访问统计 · GA4 配置
             </div>
         </div>
@@ -278,16 +251,16 @@ ob_start();
 </div>
 
 <!-- 系统状态 -->
-<div class="admin-card" style="margin-bottom: 16px;">
-    <h2 class="admin-page-title" style="font-size: 15px; margin-bottom: 12px;">系统状态</h2>
+<div class="admin-card admin-card--spaced">
+    <h2 class="admin-card__title">系统状态</h2>
     <table class="admin-table admin-table--compact">
         <tbody>
         <tr>
-            <td style="width: 150px; color: #9ca3af;">PHP 版本</td>
+            <td class="admin-system-card__label">PHP 版本</td>
             <td><code class="code-badge"><?= PHP_VERSION ?></code></td>
         </tr>
         <tr>
-            <td style="color: #9ca3af;">服务器时间</td>
+            <td class="admin-system-card__label">服务器时间</td>
             <td><?= date('Y-m-d H:i:s') ?></td>
         </tr>
         <tr>
@@ -297,7 +270,7 @@ ob_start();
         <tr>
             <td style="color: #9ca3af;">调试模式</td>
             <td>
-                <span style="color: <?= $config['debug'] ? '#f59e0b' : '#34d399' ?>;">
+                <span class="admin-status-indicator admin-status-indicator--<?= $config['debug'] ? 'warning' : 'success' ?>">
                     <?= $config['debug'] ? '开启' : '关闭' ?>
                 </span>
             </td>
@@ -308,11 +281,11 @@ ob_start();
         </tr>
         <tr>
             <td style="color: #9ca3af;">日志目录</td>
-            <td><code class="code-badge" style="font-size: 11px;"><?= htmlspecialchars($logDir) ?></code></td>
+            <td><code class="code-badge code-badge--small"><?= htmlspecialchars($logDir) ?></code></td>
         </tr>
         <tr>
             <td style="color: #9ca3af;">缓存目录</td>
-            <td><code class="code-badge" style="font-size: 11px;"><?= htmlspecialchars($cacheDir) ?></code></td>
+            <td><code class="code-badge code-badge--small"><?= htmlspecialchars($cacheDir) ?></code></td>
         </tr>
         </tbody>
     </table>
@@ -350,11 +323,11 @@ require_once __DIR__ . '/../lib/Config.php';
 Config::init();
 $dbConfig = Config::get('db');
 ?>
-<div class="admin-card" style="margin-bottom: 16px;">
-    <h2 class="admin-page-title" style="font-size: 15px; margin-bottom: 12px;">
+<div class="admin-card admin-card--spaced">
+    <h2 class="admin-card__title">
         数据库连接状态
-        <span style="font-size: 12px; font-weight: normal; margin-left: 8px;">
-            <span style="color: <?= $dbConnected ? '#34d399' : '#ef4444' ?>;">
+        <span class="admin-card__title-badge">
+            <span class="admin-status-indicator admin-status-indicator--<?= $dbConnected ? 'connected' : 'disconnected' ?>">
                 <?= $dbConnected ? '● 已连接' : '● 未连接' ?>
             </span>
         </span>
@@ -363,7 +336,7 @@ $dbConfig = Config::get('db');
         <table class="admin-table admin-table--compact">
             <tbody>
             <tr>
-                <td style="width: 150px; color: #9ca3af;">数据库版本</td>
+                <td class="admin-system-card__label" style="width: 150px;">数据库版本</td>
                 <td><code class="code-badge"><?= htmlspecialchars($dbInfo['version'] ?? 'N/A') ?></code></td>
             </tr>
             <tr>
@@ -396,7 +369,7 @@ $dbConfig = Config::get('db');
             </tr>
             <tr>
                 <td style="color: #9ca3af;">数据库主机</td>
-                <td><code class="code-badge" style="font-size: 11px;"><?= htmlspecialchars($dbConfig['host'] ?? 'N/A') ?></code></td>
+                <td><code class="code-badge code-badge--small"><?= htmlspecialchars($dbConfig['host'] ?? 'N/A') ?></code></td>
             </tr>
             </tbody>
         </table>

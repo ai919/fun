@@ -156,13 +156,28 @@ class CacheHelper
     /**
      * 删除与测验相关的缓存
      * @param int|null $testId 测验ID，null 则删除所有测验相关缓存
+     * @param string|null $slug 测验的 slug（可选），如果提供则精确删除 slug 相关缓存
      */
-    public static function clearTestCache(?int $testId = null): void
+    public static function clearTestCache(?int $testId = null, ?string $slug = null): void
     {
         if ($testId !== null) {
             // 删除特定测验的缓存
             self::delete("test_{$testId}");
             self::delete("test_slug_{$testId}");
+            // 删除前台 test.php 使用的完整测验数据缓存（包含题目和选项）
+            self::delete("test_full_{$testId}");
+            // 删除测验人数缓存
+            self::delete("test_play_count_{$testId}");
+            
+            // 删除 slug 到 id 的映射缓存（test.php 中使用）
+            if ($slug !== null && $slug !== '') {
+                // 如果提供了 slug，精确删除该 slug 的缓存
+                self::delete('test_slug_' . md5($slug));
+                self::delete('test_slug_id_' . md5($slug));
+            } else {
+                // 如果没有提供 slug，删除所有 test_slug_id_* 缓存（影响较小，因为缓存时间只有5分钟）
+                self::deletePattern("test_slug_id_*");
+            }
         }
         // 删除测验列表缓存
         self::delete('published_tests_list');

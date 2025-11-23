@@ -86,11 +86,12 @@ class ScoreEngine
         }
 
         // 预加载当前测验涉及到的所有选项
+        // 只选择需要的字段，避免 SELECT * 加载不必要的数据
         $questionIds = array_keys($normalizedAnswers);
         $placeholders = implode(',', array_fill(0, count($questionIds), '?'));
 
         $optStmt = $pdo->prepare(
-            "SELECT * FROM question_options WHERE question_id IN ($placeholders)"
+            "SELECT id, question_id, option_key, option_text, score_value, map_result_code FROM question_options WHERE question_id IN ($placeholders)"
         );
         $optStmt->execute($questionIds);
         $options = $optStmt->fetchAll(\PDO::FETCH_ASSOC);

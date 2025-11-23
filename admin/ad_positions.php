@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/auth.php';
+require_admin_login();
 require_once __DIR__ . '/../lib/db_connect.php';
 require_once __DIR__ . '/../lib/AdHelper.php';
 require_once __DIR__ . '/../lib/csrf.php';
@@ -115,7 +116,7 @@ ob_start();
                                 </td>
                                 <td>
                                     <div class="admin-table__title">
-                                        <?= htmlspecialchars($ad['position_name']) ?>
+                                        <?= htmlspecialchars($ad['position_name'] ?? '') ?>
                                     </div>
                                 </td>
                                 <td>

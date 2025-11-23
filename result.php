@@ -9,14 +9,23 @@ require_once __DIR__ . '/lib/AdHelper.php';
 $shareTokenParam = isset($_GET['token']) ? trim((string)$_GET['token']) : '';
 $runIdParam      = isset($_GET['run']) ? (int)$_GET['run'] : 0;
 
+// 验证 token 格式（32位十六进制字符串）
+if ($shareTokenParam !== '' && !preg_match('/^[a-f0-9]{32}$/i', $shareTokenParam)) {
+    http_response_code(400);
+    echo '无效的分享链接。';
+    exit;
+}
+
 $runStmt = null;
 $runRow  = null;
 if ($shareTokenParam !== '') {
-    $runStmt = $pdo->prepare("SELECT * FROM test_runs WHERE share_token = :token LIMIT 1");
+    // 只选择需要的字段，避免 SELECT * 加载不必要的数据
+    $runStmt = $pdo->prepare("SELECT id, test_id, result_id, user_id, total_score, share_token, created_at FROM test_runs WHERE share_token = :token LIMIT 1");
     $runStmt->execute([':token' => $shareTokenParam]);
     $runRow = $runStmt->fetch(PDO::FETCH_ASSOC);
 } elseif ($runIdParam > 0) {
-    $runStmt = $pdo->prepare("SELECT * FROM test_runs WHERE id = :id LIMIT 1");
+    // 只选择需要的字段，避免 SELECT * 加载不必要的数据
+    $runStmt = $pdo->prepare("SELECT id, test_id, result_id, user_id, total_score, share_token, created_at FROM test_runs WHERE id = :id LIMIT 1");
     $runStmt->execute([':id' => $runIdParam]);
     $runRow = $runStmt->fetch(PDO::FETCH_ASSOC);
 }
@@ -30,13 +39,15 @@ if (!$runRow) {
 $testId   = (int)$runRow['test_id'];
 $resultId = isset($runRow['result_id']) ? (int)$runRow['result_id'] : 0;
 
-$testStmt = $pdo->prepare("SELECT * FROM tests WHERE id = ? LIMIT 1");
+// 只选择需要的字段，避免 SELECT * 加载不必要的数据（特别是 description TEXT 字段可能很大）
+$testStmt = $pdo->prepare("SELECT id, slug, title, subtitle, description, title_color, emoji, tags, scoring_mode FROM tests WHERE id = ? LIMIT 1");
 $testStmt->execute([$testId]);
 $finalTest = $testStmt->fetch(PDO::FETCH_ASSOC);
 
 $finalResult = null;
 if ($resultId > 0) {
-    $resStmt = $pdo->prepare("SELECT * FROM results WHERE id = ? AND test_id = ? LIMIT 1");
+    // 只选择需要的字段，避免 SELECT * 加载不必要的数据
+    $resStmt = $pdo->prepare("SELECT id, test_id, title, description, image_url, code, min_score, max_score FROM results WHERE id = ? AND test_id = ? LIMIT 1");
     $resStmt->execute([$resultId, $testId]);
     $finalResult = $resStmt->fetch(PDO::FETCH_ASSOC);
 }

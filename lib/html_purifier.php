@@ -35,6 +35,26 @@ class HTMLPurifier {
             return '';
         }
 
+        // 预处理：将 <font color="..."> 转换为 <span style="color: ...">
+        // document.execCommand('foreColor') 在不同浏览器中可能生成 <font> 或 <span> 标签
+        // 需要先转换 <font> 标签，否则会被 strip_tags 删除
+        $html = preg_replace_callback('/<font\s+color=["\']?([^"\'>\s]+)["\']?[^>]*>(.*?)<\/font>/is', function($matches) {
+            $color = trim($matches[1]);
+            $content = $matches[2];
+            // 清理颜色值，移除可能的引号
+            $color = trim($color, '"\'');
+            // 如果颜色值没有 # 号且是6位十六进制，添加 #
+            if (preg_match('/^[0-9a-fA-F]{6}$/', $color)) {
+                $color = '#' . $color;
+            }
+            // 验证颜色值格式（支持 #hex, rgb(), rgba(), 颜色名等）
+            if (preg_match('/^#[0-9a-fA-F]{3,6}$|^rgb\(|^rgba\(|^[a-zA-Z]+$/', $color)) {
+                $safeColor = htmlspecialchars($color, ENT_QUOTES, 'UTF-8');
+                return '<span style="color: ' . $safeColor . '">' . $content . '</span>';
+            }
+            return $content; // 如果颜色格式不正确，只返回内容
+        }, $html);
+
         // 先使用 strip_tags 移除所有不允许的标签
         $html = strip_tags($html, self::$allowedTags);
         

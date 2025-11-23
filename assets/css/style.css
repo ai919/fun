@@ -1496,12 +1496,12 @@ html[data-theme="dark"] .sticky-progress {
 .question-text {
     font-size: var(--font-2xl);
     line-height: var(--leading-loose);
-    color: var(--color-primary) !important;
+    color: var(--color-primary);
     font-weight: var(--font-semibold);
 }
 
 [data-theme="dark"] .question-text {
-    color: #818cf8 !important;
+    color: #818cf8;
 }
 
 .question-options {

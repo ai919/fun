@@ -499,6 +499,10 @@ html, body {
     opacity: 0.8;
 }
 
+.code-badge--small {
+    font-size: 11px;
+}
+
 .color-dot {
     width: 12px;
     height: 12px;
@@ -1418,4 +1422,250 @@ html, body {
 
 .trend-down {
     color: #059669;
+}
+
+/* 后台卡片间距 */
+.admin-card--spaced {
+    margin-bottom: 16px;
+}
+
+/* 卡片标题 */
+.admin-card__title {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 8px;
+    color: var(--admin-text-primary);
+    transition: color 0.3s ease;
+}
+
+/* 表格列宽 */
+.admin-table__col-id {
+    width: 70px;
+}
+
+.admin-table__col-slug {
+    width: 140px;
+}
+
+.admin-table__col-count {
+    width: 120px;
+}
+
+.admin-table__col-actions {
+    width: 120px;
+}
+
+/* 表格链接 */
+.admin-table__link {
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.admin-table__link:hover {
+    color: #4f46e5;
+}
+
+/* 仪表板样式 */
+.admin-dashboard-welcome {
+    margin: 0 0 10px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--admin-text-primary);
+    transition: color 0.3s ease;
+}
+
+.admin-dashboard-intro {
+    font-size: 13px;
+    color: var(--admin-text-secondary);
+    margin: 0 0 16px;
+    line-height: 1.6;
+    transition: color 0.3s ease;
+}
+
+.admin-dashboard-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.admin-dashboard-card {
+    flex: 1;
+    min-width: 220px;
+    background: var(--admin-bg-secondary);
+    border-radius: 10px;
+    padding: 14px 16px;
+    border: 1px solid var(--admin-border-color);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+[data-theme="dark"] .admin-dashboard-card {
+    background: #020617;
+    border-color: rgba(55, 65, 81, 0.85);
+}
+
+.admin-dashboard-card__label {
+    font-size: 12px;
+    color: var(--admin-text-secondary);
+    margin-bottom: 6px;
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .admin-dashboard-card__label {
+    color: #9ca3af;
+}
+
+.admin-dashboard-card__links {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.admin-dashboard-link {
+    font-size: 13px;
+    color: var(--admin-text-primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+[data-theme="dark"] .admin-dashboard-link {
+    color: #e5e7eb;
+}
+
+.admin-dashboard-link:hover {
+    color: #4f46e5;
+}
+
+.admin-dashboard-link--primary {
+    color: #a5b4fc;
+}
+
+.admin-dashboard-link--warning {
+    color: #fbbf24;
+}
+
+.admin-dashboard-card__text {
+    font-size: 13px;
+    color: var(--admin-text-secondary);
+    line-height: 1.6;
+    margin: 0;
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .admin-dashboard-card__text {
+    color: #cbd5f5;
+}
+
+/* 系统管理网格卡片 */
+.admin-system-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.admin-system-card-link {
+    text-decoration: none;
+    display: block;
+}
+
+.admin-system-card {
+    height: 100%;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+.admin-system-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px var(--admin-shadow);
+}
+
+.admin-system-card__icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.admin-system-card__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--admin-text-primary);
+    margin: 0 0 6px;
+    transition: color 0.3s ease;
+}
+
+.admin-system-card__description {
+    font-size: 12px;
+    color: var(--admin-text-secondary);
+    margin: 0 0 8px;
+    line-height: 1.4;
+    transition: color 0.3s ease;
+}
+
+.admin-system-card__meta {
+    font-size: 12px;
+    color: #60a5fa;
+}
+
+.admin-system-card__label {
+    width: 150px;
+    color: var(--admin-text-secondary);
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .admin-system-card__label {
+    color: #9ca3af;
+}
+
+/* 卡片标题徽章 */
+.admin-card__title-badge {
+    font-size: 12px;
+    font-weight: normal;
+    margin-left: 8px;
+}
+
+/* 状态指示器 */
+.admin-status-indicator {
+    display: inline-block;
+}
+
+.admin-status-indicator--connected,
+.admin-status-indicator--success {
+    color: #34d399;
+}
+
+.admin-status-indicator--disconnected,
+.admin-status-indicator--error {
+    color: #ef4444;
+}
+
+.admin-status-indicator--warning {
+    color: #f59e0b;
+}
+
+/* 统计卡片网格 */
+.admin-stats-grid {
+    display: flex;
+    justify-content: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.admin-stat-card {
+    padding: 10px 14px;
+    min-width: 160px;
+    box-shadow: none;
+    border: 1px solid var(--admin-border-color);
+    border-radius: 10px;
+    background: var(--admin-bg-secondary);
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.admin-stat-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--admin-text-primary);
+    margin-top: 4px;
+    transition: color 0.3s ease;
 }

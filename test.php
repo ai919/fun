@@ -99,7 +99,13 @@ if ($cachedData !== null && is_array($cachedData)) {
     }
 
     $questionOrderField = choose_order_field($pdo, 'questions');
-    $questionOrderSql = $questionOrderField ? "ORDER BY {$questionOrderField} ASC, id ASC" : "ORDER BY id ASC";
+    // 使用白名单验证，防止 SQL 注入
+    $allowedFields = ['sort_order', 'order_number', 'display_order'];
+    if ($questionOrderField && in_array($questionOrderField, $allowedFields, true)) {
+        $questionOrderSql = "ORDER BY `{$questionOrderField}` ASC, id ASC";
+    } else {
+        $questionOrderSql = "ORDER BY id ASC";
+    }
     // 只选择需要的字段，避免 SELECT * 加载不必要的数据
     $questionsStmt = $pdo->prepare("SELECT id, question_text, sort_order FROM questions WHERE test_id = ? {$questionOrderSql}");
     $questionsStmt->execute([$testId]);
@@ -110,7 +116,13 @@ if ($cachedData !== null && is_array($cachedData)) {
     if ($questionIds) {
         $placeholders = implode(',', array_fill(0, count($questionIds), '?'));
         $optionOrderField = choose_order_field($pdo, 'question_options');
-        $optionOrderSql = $optionOrderField ? "ORDER BY {$optionOrderField} ASC, id ASC" : "ORDER BY id ASC";
+        // 使用白名单验证，防止 SQL 注入
+        $allowedFields = ['sort_order', 'order_number', 'display_order'];
+        if ($optionOrderField && in_array($optionOrderField, $allowedFields, true)) {
+            $optionOrderSql = "ORDER BY `{$optionOrderField}` ASC, id ASC";
+        } else {
+            $optionOrderSql = "ORDER BY id ASC";
+        }
         // 只选择需要的字段，避免 SELECT * 加载不必要的数据
         $optStmt = $pdo->prepare(
             "SELECT id, question_id, option_key, option_text, map_result_code, score_value
@@ -276,7 +288,7 @@ if ($titleColorField !== '' && preg_match('/^#[0-9a-fA-F]{6}$/', $titleColorFiel
                          aria-label="问题 <?= $stepIndex ?>">
                         <div class="quiz-question-heading question-header">
                             <span class="quiz-q-number question-index" id="question-<?= $qid ?>">Q<?= htmlspecialchars($questionNo) ?></span>
-                            <span class="quiz-q-text question-text"><?= htmlspecialchars($text) ?></span>
+                            <span class="quiz-q-text question-text"><?= HTMLPurifier::purifyWithBreaks($text, true) ?></span>
                         </div>
 
                         <div class="quiz-options question-options">

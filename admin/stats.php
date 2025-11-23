@@ -42,8 +42,8 @@ $pageTitle    = '统计';
 
     ob_start();
     ?>
-    <div class="admin-tabs" style="margin-bottom: 20px; border-bottom: 1px solid #374151;">
-        <a href="stats.php?tab=tests" class="admin-tab <?= $currentTab === 'tests' ? 'admin-tab--active' : '' ?>" style="display: inline-block; padding: 10px 16px; color: #9ca3af; text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px;">
+    <div class="admin-subtabs">
+        <a href="stats.php?tab=tests" class="admin-subtab__item <?= $currentTab === 'tests' ? 'is-active' : '' ?>">
             测验统计
         </a>
         <!-- 后续可以添加其他统计标签 -->
@@ -55,11 +55,11 @@ $pageTitle    = '统计';
             <table class="admin-table">
                 <thead>
                 <tr>
-                    <th style="width:70px;">ID</th>
+                    <th class="admin-table__col-id">ID</th>
                     <th>标题</th>
-                    <th style="width:140px;">slug</th>
-                    <th style="width:120px;">问题回答次数</th>
-                    <th style="width:120px;">操作</th>
+                    <th class="admin-table__col-slug">slug</th>
+                    <th class="admin-table__col-count">问题回答次数</th>
+                    <th class="admin-table__col-actions">操作</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -84,7 +84,8 @@ $pageTitle    = '统计';
     exit;
 }
 
-$testStmt = $pdo->prepare("SELECT * FROM tests WHERE id = ? LIMIT 1");
+// 只选择需要的字段，避免 SELECT * 加载不必要的数据
+$testStmt = $pdo->prepare("SELECT id, slug, title, subtitle, scoring_mode FROM tests WHERE id = ? LIMIT 1");
 $testStmt->execute([$testId]);
 $test = $testStmt->fetch(PDO::FETCH_ASSOC);
 if (!$test) {
@@ -159,33 +160,33 @@ $currentTab   = isset($_GET['tab']) ? trim($_GET['tab']) : 'tests';
 
 ob_start();
 ?>
-<div class="admin-tabs" style="margin-bottom: 20px; border-bottom: 1px solid #374151;">
-    <a href="stats.php?tab=tests" class="admin-tab <?= $currentTab === 'tests' ? 'admin-tab--active' : '' ?>" style="display: inline-block; padding: 10px 16px; color: #9ca3af; text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; <?= $currentTab === 'tests' ? 'color: #3b82f6; border-bottom-color: #3b82f6;' : '' ?>">
+<div class="admin-subtabs">
+    <a href="stats.php?tab=tests" class="admin-subtab__item <?= $currentTab === 'tests' ? 'is-active' : '' ?>">
         测验统计
     </a>
     <!-- 后续可以添加其他统计标签 -->
 </div>
 
-<div class="admin-card" style="margin-bottom:16px;">
+<div class="admin-card admin-card--spaced">
     <?php if ($totalRuns === 0): ?>
         <p class="admin-table__muted">还没有任何完成记录，先在前台跑一次吧。</p>
     <?php else: ?>
-        <div class="admin-toolbar" style="justify-content:flex-start; gap:12px; flex-wrap:wrap;">
-            <div class="admin-card" style="padding:10px 14px; min-width:160px; box-shadow:none; border:1px solid #e5e7eb;">
+        <div class="admin-stats-grid">
+            <div class="admin-stat-card">
                 <div class="admin-table__subtitle">完成次数</div>
-                <div class="admin-table__title" style="font-size:18px;"><?= number_format($totalRuns) ?></div>
+                <div class="admin-stat-value"><?= number_format($totalRuns) ?></div>
             </div>
-            <div class="admin-card" style="padding:10px 14px; min-width:160px; box-shadow:none; border:1px solid #e5e7eb;">
+            <div class="admin-stat-card">
                 <div class="admin-table__subtitle">维度得分记录</div>
-                <div class="admin-table__title" style="font-size:18px;"><?= number_format($totalDims) ?></div>
+                <div class="admin-stat-value"><?= number_format($totalDims) ?></div>
             </div>
-            <div class="admin-card" style="padding:10px 14px; min-width:160px; box-shadow:none; border:1px solid #e5e7eb;">
+            <div class="admin-stat-card">
                 <div class="admin-table__subtitle">匹配到结果的 run</div>
-                <div class="admin-table__title" style="font-size:18px;"><?= number_format($matchedRuns) ?></div>
+                <div class="admin-stat-value"><?= number_format($matchedRuns) ?></div>
             </div>
-            <div class="admin-card" style="padding:10px 14px; min-width:160px; box-shadow:none; border:1px solid #e5e7eb;">
+            <div class="admin-stat-card">
                 <div class="admin-table__subtitle">未匹配结果的 run</div>
-                <div class="admin-table__title" style="font-size:18px;"><?= number_format($unmatchedRuns) ?></div>
+                <div class="admin-stat-value"><?= number_format($unmatchedRuns) ?></div>
             </div>
             <div class="admin-card" style="padding:10px 14px; min-width:160px; box-shadow:none; border:1px solid #e5e7eb;">
                 <div class="admin-table__subtitle">总分享次数</div>

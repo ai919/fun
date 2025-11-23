@@ -1,5 +1,10 @@
 <?php
 require_once __DIR__ . '/auth.php';
+// 确保所有使用 layout 的页面都需要登录（双重保护）
+if (!current_admin()) {
+    header('Location: /admin/login.php');
+    exit;
+}
 
 if (!isset($pageTitle)) {
     $pageTitle = 'DoFun心理实验空间 后台';

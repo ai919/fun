@@ -93,30 +93,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         input[type="text"], input[type="password"] {
             width:100%;
-            padding:8px 10px;
+            padding:10px 12px;
             border-radius:8px;
             border:1px solid rgba(148,163,184,0.55);
-            background:#020617;
+            background:#0f172a;
             color:#f9fafb;
             outline:none;
             font-size:14px;
+            box-sizing:border-box;
+            transition:border-color 0.2s, box-shadow 0.2s;
         }
         input:focus {
             border-color:#6366f1;
-            box-shadow:0 0 0 1px rgba(99,102,241,0.4);
+            box-shadow:0 0 0 2px rgba(99,102,241,0.3);
+        }
+        input::placeholder {
+            color:#64748b;
         }
         .btn {
             width:100%;
-            margin-top:14px;
-            padding:9px 0;
-            border-radius:999px;
+            margin-top:16px;
+            padding:11px 0;
+            border-radius:8px;
             border:none;
             background:#4f46e5;
             color:#fff;
             font-size:14px;
             font-weight:600;
             cursor:pointer;
-            box-shadow:0 12px 26px rgba(79,70,229,0.6);
+            box-shadow:0 4px 12px rgba(79,70,229,0.4);
+            transition:background 0.2s, box-shadow 0.2s, transform 0.1s;
+        }
+        .btn:hover {
+            background:#4338ca;
+            box-shadow:0 6px 16px rgba(79,70,229,0.5);
+        }
+        .btn:active {
+            transform:translateY(1px);
+            box-shadow:0 2px 8px rgba(79,70,229,0.4);
         }
         .error {
             margin-top:10px;

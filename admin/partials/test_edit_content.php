@@ -77,157 +77,19 @@ if (!$testId && $formData['title_color'] === '') {
     $formData['title_color'] = '#6366F1';
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!$testId || ($testId && $existingTest))) {
-    if (!CSRF::validateToken()) {
-        $errors[] = 'CSRF token 验证失败，请刷新页面后重试';
-    } else {
-    $formData['title']          = trim($_POST['title'] ?? '');
-    $formData['slug']           = strtolower(trim($_POST['slug'] ?? ''));
-    $formData['subtitle']       = trim($_POST['subtitle'] ?? '');
-    $formData['description']    = trim($_POST['description'] ?? '');
-    $titleColorClear            = ($_POST['title_color_clear'] ?? '0') === '1';
-    $formData['title_color']    = $titleColorClear ? '' : trim($_POST['title_color'] ?? '');
-    $selectedEmoji              = trim($_POST['emoji'] ?? '');
-    $customEmoji                = trim($_POST['emoji_custom'] ?? '');
-    $formData['emoji']          = $customEmoji !== '' ? $customEmoji : $selectedEmoji;
-    $formData['tags']           = trim($_POST['tags'] ?? '');
-    $formData['status']         = $_POST['status'] ?? Constants::TEST_STATUS_DRAFT;
-    $formData['sort_order']     = (int)($_POST['sort_order'] ?? 0);
-    $formData['scoring_mode']   = $_POST['scoring_mode'] ?? Constants::SCORING_MODE_SIMPLE;
-    $formData['scoring_config'] = trim($_POST['scoring_config'] ?? '');
-    $formData['display_mode']   = ($_POST['display_mode'] ?? Constants::DISPLAY_MODE_SINGLE_PAGE) === Constants::DISPLAY_MODE_STEP_BY_STEP ? Constants::DISPLAY_MODE_STEP_BY_STEP : Constants::DISPLAY_MODE_SINGLE_PAGE;
-
-    if ($formData['title'] === '') {
-        $errors[] = '测验标题不能为空。';
-    } elseif (mb_strlen($formData['title']) > 255) {
-        $errors[] = '测验标题最长支持 255 个字符。';
-    }
-    if ($formData['slug'] === '') {
-        $errors[] = 'Slug 不能为空。';
-    } elseif (!preg_match('/^[a-z0-9_-]+$/', $formData['slug'])) {
-        $errors[] = 'Slug 只能包含小写字母、数字、短横线和下划线。';
-    } elseif (mb_strlen($formData['slug']) > 100) {
-        $errors[] = 'Slug 最长支持 100 个字符。';
-    }
-    if (mb_strlen($formData['subtitle']) > 255) {
-        $errors[] = '副标题最长支持 255 个字符。';
-    }
-    if (!isset($statuses[$formData['status']])) {
-        $errors[] = '请选择有效的状态。';
-    }
-    if (!array_key_exists($formData['scoring_mode'], $scoringModes)) {
-        $errors[] = '请选择有效的评分模式。';
-    }
-    if ($hasTitleColorCol && $formData['title_color'] !== '' && !preg_match('/^#[0-9a-fA-F]{6}$/', $formData['title_color'])) {
-        $errors[] = '请输入合法的颜色值，例如 #6366F1。';
-    }
-    if (mb_strlen($formData['emoji']) > 16) {
-        $errors[] = 'Emoji 最长支持 16 个字符。';
-    }
-
-    $tagsNormalized = '';
-    if ($formData['tags'] !== '') {
-        $tagPieces = array_unique(array_filter(array_map('trim', explode(',', $formData['tags']))));
-        $tagsNormalized = implode(', ', $tagPieces);
-        if (mb_strlen($tagsNormalized) > 255) {
-            $errors[] = '标签总长度最长支持 255 个字符。';
-        }
-    }
-    $formData['tags'] = $tagsNormalized;
-
-    if ($formData['scoring_config'] !== '') {
-        json_decode($formData['scoring_config'], true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            $errors[] = '评分配置不是合法的 JSON。';
-        }
-    }
-
-    if ($formData['slug'] !== '') {
-        if ($testId) {
-            $slugStmt = $pdo->prepare('SELECT COUNT(*) FROM tests WHERE slug = :slug AND id != :id');
-            $slugStmt->execute([':slug' => $formData['slug'], ':id' => $testId]);
-        } else {
-            $slugStmt = $pdo->prepare('SELECT COUNT(*) FROM tests WHERE slug = :slug');
-            $slugStmt->execute([':slug' => $formData['slug']]);
-        }
-        if ((int)$slugStmt->fetchColumn() > 0) {
-            $errors[] = '该 slug 已存在，请换一个。';
-        }
-    }
-
-    if (!$errors) {
-        $payload = [
-            ':title'          => $formData['title'],
-            ':slug'           => $formData['slug'],
-            ':subtitle'       => $formData['subtitle'] !== '' ? $formData['subtitle'] : null,
-            ':description'    => $formData['description'] !== '' ? $formData['description'] : null,
-            ':tags'           => $formData['tags'] !== '' ? $formData['tags'] : null,
-            ':status'         => $formData['status'],
-            ':sort_order'     => $formData['sort_order'],
-            ':scoring_mode'   => $formData['scoring_mode'],
-            ':scoring_config' => $formData['scoring_config'] !== '' ? $formData['scoring_config'] : null,
-            ':display_mode'   => $formData['display_mode'],
-        ];
-        if ($hasEmojiCol) {
-            $payload[':emoji'] = $formData['emoji'] !== '' ? $formData['emoji'] : null;
-        }
-        if ($hasTitleColorCol) {
-            $payload[':title_color'] = $formData['title_color'] !== '' ? $formData['title_color'] : null;
-        }
-
-        if ($testId) {
-            $payload[':id'] = $testId;
-            $setParts = [
-                'title = :title',
-                'slug = :slug',
-                'subtitle = :subtitle',
-                'description = :description',
-                'tags = :tags',
-                'status = :status',
-                'sort_order = :sort_order',
-                'scoring_mode = :scoring_mode',
-                'scoring_config = :scoring_config',
-                'display_mode = :display_mode',
-                'updated_at = NOW()',
-            ];
-            if ($hasEmojiCol) {
-                $setParts[] = 'emoji = :emoji';
-            }
-            if ($hasTitleColorCol) {
-                $setParts[] = 'title_color = :title_color';
-            }
-            $updateSql = "UPDATE tests SET " . implode(",\n                ", $setParts) . " WHERE id = :id";
-            $updateStmt = $pdo->prepare($updateSql);
-            $updateStmt->execute($payload);
-        } else {
-            $columns = ['title', 'slug', 'subtitle', 'description', 'tags', 'status', 'sort_order', 'scoring_mode', 'scoring_config', 'display_mode'];
-            $placeholders = [':title', ':slug', ':subtitle', ':description', ':tags', ':status', ':sort_order', ':scoring_mode', ':scoring_config', ':display_mode'];
-            if ($hasEmojiCol) {
-                $columns[] = 'emoji';
-                $placeholders[] = ':emoji';
-            }
-            if ($hasTitleColorCol) {
-                $columns[] = 'title_color';
-                $placeholders[] = ':title_color';
-            }
-            $insertSql = "INSERT INTO tests (" . implode(', ', $columns) . ")
-                VALUES (" . implode(', ', $placeholders) . ")";
-            $insertStmt = $pdo->prepare($insertSql);
-            $insertStmt->execute($payload);
-            $testId = (int)$pdo->lastInsertId();
-        }
-
-        // 清除相关缓存
-        CacheHelper::clearTestCache($testId);
-        // 如果 slug 改变了，也需要清除旧的 slug 缓存
-        if ($testId && isset($formData['slug'])) {
-            CacheHelper::delete('test_slug_' . md5($formData['slug']));
-            CacheHelper::delete('test_slug_id_' . md5($formData['slug']));
-        }
-
-        header('Location: /admin/tests.php?msg=saved');
-        exit;
-    }
+// 从 session 中读取错误和表单数据（如果有的话，来自 POST 处理失败后的重定向）
+if (isset($_SESSION['test_edit_errors'])) {
+    $errors = $_SESSION['test_edit_errors'];
+    unset($_SESSION['test_edit_errors']);
+}
+if (isset($_SESSION['test_edit_form_data'])) {
+    $formData = array_merge($formData, $_SESSION['test_edit_form_data']);
+    unset($_SESSION['test_edit_form_data']);
+    // 如果从 session 读取了数据，需要重新检查 existingTest（因为可能是新建）
+    if ($testId) {
+        $stmt = $pdo->prepare('SELECT * FROM tests WHERE id = :id LIMIT 1');
+        $stmt->execute([':id' => $testId]);
+        $existingTest = $stmt->fetch(PDO::FETCH_ASSOC);
     }
 }
 ?>
@@ -296,6 +158,7 @@ if ($testId && $existingTest) {
     <div class="admin-card admin-card--form">
         <form method="post">
             <?php require_once __DIR__ . '/../../lib/csrf.php'; echo CSRF::getTokenField(); ?>
+            <input type="hidden" name="action" value="save_basic">
             <div class="form-section">
                 <div class="form-section__title">基础信息</div>
                 <div class="form-grid">

@@ -1,16 +1,19 @@
 <?php
 require_once __DIR__ . '/auth.php';
+require_admin_login();
 require_once __DIR__ . '/../lib/db_connect.php';
 
 $pageTitle = '测验管理';
 $pageSubtitle = '管理所有在线测验：标题、标签、排序、状态与答题数';
 $activeMenu = 'tests';
 
+// 使用 LEFT JOIN + GROUP BY 替代子查询，优化性能（避免 N+1 查询）
 $stmt = $pdo->query("
-    SELECT t.*,
-           (SELECT COUNT(*) FROM test_runs r WHERE r.test_id = t.id) AS run_count
+    SELECT t.*, COUNT(r.id) AS run_count
     FROM tests t
-    ORDER BY sort_order DESC, id DESC
+    LEFT JOIN test_runs r ON r.test_id = t.id
+    GROUP BY t.id
+    ORDER BY t.sort_order DESC, t.id DESC
 ");
 $tests = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -49,7 +52,7 @@ ob_start();
                 <td><?= (int)$test['id'] ?></td>
                 <td>
                     <div class="admin-table__title admin-table__title--lg">
-                        <a href="../test.php?slug=<?= urlencode($test['slug']) ?>" target="_blank" style="color: inherit; text-decoration: none; cursor: pointer;">
+                        <a href="../test.php?slug=<?= urlencode($test['slug']) ?>" target="_blank" class="admin-table__link">
                             <?= htmlspecialchars($test['title']) ?>
                         </a>
                     </div>
@@ -85,8 +88,7 @@ ob_start();
                 </td>
                 <td>
                     <?php if (!empty($test['title_color'])): ?>
-                        <span class="color-dot"
-                              style="background: <?= htmlspecialchars($test['title_color']) ?>"></span>
+                        <span class="color-dot" style="background: <?= htmlspecialchars($test['title_color']) ?>"></span>
                         <code class="code-badge code-badge--muted">
                             <?= htmlspecialchars($test['title_color']) ?>
                         </code>

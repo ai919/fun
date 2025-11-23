@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/auth.php';
+require_admin_login();
 require_once __DIR__ . '/../lib/db_connect.php';
 
 $testId = isset($_GET['test_id']) ? (int)$_GET['test_id'] : null;
