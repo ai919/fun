@@ -2216,9 +2216,10 @@ html[data-theme="dark"] .page-profile .profile-container {
     
     .top-user-bar-inner {
         padding: 8px 12px;
-        gap: 8px;
+        gap: 4px;
         font-size: 12px;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        justify-content: flex-end;
     }
     
     .topbar-home-link {
@@ -2260,9 +2261,9 @@ html[data-theme="dark"] .page-profile .profile-container {
     }
     
     .tub-link-icon {
-        padding: 8px;
-        min-width: 40px;
-        min-height: 40px;
+        padding: 6px;
+        min-width: 36px;
+        min-height: 36px;
         justify-content: center;
         align-items: center;
     }
@@ -2348,9 +2349,9 @@ html[data-theme="dark"] .page-profile .profile-container {
     }
     
     .topbar-right .tub-link-icon {
-        padding: 8px;
-        min-width: 40px;
-        min-height: 40px;
+        padding: 6px;
+        min-width: 36px;
+        min-height: 36px;
         justify-content: center;
         align-items: center;
     }
