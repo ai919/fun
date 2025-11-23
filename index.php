@@ -5,6 +5,7 @@ require_once __DIR__ . '/lib/user_auth.php';
 require_once __DIR__ . '/lib/html_purifier.php';
 require_once __DIR__ . '/lib/Constants.php';
 require_once __DIR__ . '/lib/CacheHelper.php';
+require_once __DIR__ . '/lib/SettingsHelper.php';
 
 // 尝试从缓存获取测验列表（缓存5分钟）
 $cacheKey = 'published_tests_list';
@@ -52,6 +53,7 @@ $user = UserAuth::currentUser();
             }
         });
     </script>
+    <?php SettingsHelper::renderGoogleAnalytics(); ?>
 </head>
 <body>
 <?php if (!defined('IN_ADMIN')): ?>

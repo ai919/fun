@@ -3,6 +3,7 @@ require __DIR__ . '/lib/db_connect.php';
 require_once __DIR__ . '/seo_helper.php';
 require_once __DIR__ . '/lib/html_purifier.php';
 require_once __DIR__ . '/lib/CacheHelper.php';
+require_once __DIR__ . '/lib/SettingsHelper.php';
 
 function pick_field(array $row, array $candidates, $default = '')
 {
@@ -154,6 +155,7 @@ $seo = build_seo_meta('test', [
 <?php render_seo_head($seo); ?>
     <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <?php SettingsHelper::renderGoogleAnalytics(); ?>
 </head>
 <body>
 

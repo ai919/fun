@@ -2,6 +2,7 @@
 require_once __DIR__ . '/seo_helper.php';
 require_once __DIR__ . '/lib/db_connect.php';
 require_once __DIR__ . '/lib/html_purifier.php';
+require_once __DIR__ . '/lib/SettingsHelper.php';
 
 $shareTokenParam = isset($_GET['token']) ? trim((string)$_GET['token']) : '';
 $runIdParam      = isset($_GET['run']) ? (int)$_GET['run'] : 0;
@@ -80,6 +81,7 @@ $seo = $finalTest && $finalResult
 <head>
 <?php render_seo_head($seo); ?>
     <link rel="stylesheet" href="/assets/css/style.css">
+    <?php SettingsHelper::renderGoogleAnalytics(); ?>
 </head>
 <body>
 
