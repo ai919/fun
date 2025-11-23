@@ -162,19 +162,19 @@ ob_start();
                 <div style="margin-bottom: 16px;">
                     <label style="display: block; margin-bottom: 4px; font-weight: 500;">广告位标识 *</label>
                     <input type="text" name="position_key" value="<?= htmlspecialchars($editAd['position_key'] ?? '') ?>" 
-                           required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
+                           required style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box;">
                     <small style="color: var(--text-secondary); font-size: 12px;">唯一标识，如：home_top, test_middle</small>
                 </div>
                 
                 <div style="margin-bottom: 16px;">
                     <label style="display: block; margin-bottom: 4px; font-weight: 500;">广告位名称 *</label>
                     <input type="text" name="position_name" value="<?= htmlspecialchars($editAd['position_name'] ?? '') ?>" 
-                           required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
+                           required style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box;">
                 </div>
                 
                 <div style="margin-bottom: 16px;">
                     <label style="display: block; margin-bottom: 4px; font-weight: 500;">广告类型 *</label>
-                    <select name="ad_type" id="ad_type" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
+                    <select name="ad_type" id="ad_type" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box;">
                         <option value="code" <?= ($editAd['ad_type'] ?? 'code') === 'code' ? 'selected' : '' ?>>代码广告（HTML/JavaScript）</option>
                         <option value="image" <?= ($editAd['ad_type'] ?? '') === 'image' ? 'selected' : '' ?>>图片广告</option>
                         <option value="text" <?= ($editAd['ad_type'] ?? '') === 'text' ? 'selected' : '' ?>>文字广告</option>
@@ -183,7 +183,7 @@ ob_start();
                 
                 <div id="ad_code_field" style="margin-bottom: 16px; <?= ($editAd['ad_type'] ?? 'code') !== 'code' ? 'display: none;' : '' ?>">
                     <label style="display: block; margin-bottom: 4px; font-weight: 500;">广告代码</label>
-                    <textarea name="ad_code" rows="6" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-family: monospace; font-size: 12px;"><?= htmlspecialchars($editAd['ad_code'] ?? '') ?></textarea>
+                    <textarea name="ad_code" rows="6" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-family: monospace; font-size: 12px; box-sizing: border-box;"><?= htmlspecialchars($editAd['ad_code'] ?? '') ?></textarea>
                     <small style="color: var(--text-secondary); font-size: 12px;">支持 HTML 和 JavaScript 代码</small>
                 </div>
                 
@@ -191,56 +191,56 @@ ob_start();
                     <div style="margin-bottom: 12px;">
                         <label style="display: block; margin-bottom: 4px; font-weight: 500;">图片URL</label>
                         <input type="url" name="image_url" value="<?= htmlspecialchars($editAd['image_url'] ?? '') ?>" 
-                               style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
+                               style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box;">
                     </div>
                     <div style="margin-bottom: 12px;">
                         <label style="display: block; margin-bottom: 4px; font-weight: 500;">链接地址</label>
                         <input type="url" name="link_url" value="<?= htmlspecialchars($editAd['link_url'] ?? '') ?>" 
-                               style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
+                               style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box;">
                     </div>
                     <div>
                         <label style="display: block; margin-bottom: 4px; font-weight: 500;">Alt文本</label>
                         <input type="text" name="alt_text" value="<?= htmlspecialchars($editAd['alt_text'] ?? '') ?>" 
-                               style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
+                               style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box;">
                     </div>
                 </div>
                 
                 <div id="text_fields" style="margin-bottom: 16px; <?= ($editAd['ad_type'] ?? 'code') !== 'text' ? 'display: none;' : '' ?>">
                     <div style="margin-bottom: 12px;">
                         <label style="display: block; margin-bottom: 4px; font-weight: 500;">文字内容</label>
-                        <textarea name="ad_code" rows="3" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;"><?= htmlspecialchars($editAd['ad_code'] ?? '') ?></textarea>
+                        <textarea name="ad_code" rows="3" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box;"><?= htmlspecialchars($editAd['ad_code'] ?? '') ?></textarea>
                     </div>
                     <div>
                         <label style="display: block; margin-bottom: 4px; font-weight: 500;">链接地址</label>
                         <input type="url" name="link_url" value="<?= htmlspecialchars($editAd['link_url'] ?? '') ?>" 
-                               style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
+                               style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box;">
                     </div>
                 </div>
                 
                 <div style="margin-bottom: 16px;">
                     <label style="display: block; margin-bottom: 4px; font-weight: 500;">显示页面</label>
                     <input type="text" name="display_pages" value="<?= htmlspecialchars($editAd['display_pages'] ?? '') ?>" 
-                           style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
+                           style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box;">
                     <small style="color: var(--text-secondary); font-size: 12px;">逗号分隔：home,test,result（留空表示全部页面）</small>
                 </div>
                 
                 <div style="margin-bottom: 16px;">
                     <label style="display: block; margin-bottom: 4px; font-weight: 500;">优先级</label>
                     <input type="number" name="priority" value="<?= $editAd['priority'] ?? 0 ?>" 
-                           style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
+                           style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box;">
                     <small style="color: var(--text-secondary); font-size: 12px;">数字越大越优先显示</small>
                 </div>
                 
                 <div style="margin-bottom: 16px;">
                     <label style="display: block; margin-bottom: 4px; font-weight: 500;">开始日期</label>
                     <input type="datetime-local" name="start_date" value="<?= $editAd['start_date'] ? date('Y-m-d\TH:i', strtotime($editAd['start_date'])) : '' ?>" 
-                           style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
+                           style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box;">
                 </div>
                 
                 <div style="margin-bottom: 16px;">
                     <label style="display: block; margin-bottom: 4px; font-weight: 500;">结束日期</label>
                     <input type="datetime-local" name="end_date" value="<?= $editAd['end_date'] ? date('Y-m-d\TH:i', strtotime($editAd['end_date'])) : '' ?>" 
-                           style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
+                           style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box;">
                 </div>
                 
                 <div style="margin-bottom: 16px;">

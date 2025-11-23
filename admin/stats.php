@@ -18,7 +18,21 @@ if (isset($_GET['test_id'])) {
 }
 
 if (!$testId) {
+    // 获取所有测验，并统计每个测验的问题回答次数
     $statsTests = $pdo->query("SELECT id, title, slug FROM tests ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+    
+    // 为每个测验统计问题回答次数
+    foreach ($statsTests as &$test) {
+        $questionAnswerStmt = $pdo->prepare(
+            "SELECT COUNT(DISTINCT qa.id) AS total_answers
+             FROM questions q
+             LEFT JOIN question_answers qa ON qa.question_id = q.id AND qa.test_id = ?
+             WHERE q.test_id = ?"
+        );
+        $questionAnswerStmt->execute([$test['id'], $test['id']]);
+        $test['total_question_answers'] = (int)$questionAnswerStmt->fetchColumn();
+    }
+    unset($test);
 
 $pageTitle    = '测验统计 - DoFun心理实验空间';
     $pageHeading  = '测验统计';
@@ -37,6 +51,7 @@ $pageTitle    = '测验统计 - DoFun心理实验空间';
                     <th style="width:70px;">ID</th>
                     <th>标题</th>
                     <th style="width:140px;">slug</th>
+                    <th style="width:120px;">问题回答次数</th>
                     <th style="width:120px;">操作</th>
                 </tr>
                 </thead>
@@ -46,6 +61,7 @@ $pageTitle    = '测验统计 - DoFun心理实验空间';
                         <td><?= (int)$row['id'] ?></td>
                         <td><?= htmlspecialchars($row['title']) ?></td>
                         <td><code class="code-badge code-badge--muted"><?= htmlspecialchars($row['slug']) ?></code></td>
+                        <td><?= number_format($row['total_question_answers']) ?></td>
                         <td class="admin-table__actions">
                             <a class="btn btn-xs" href="/admin/stats.php?test_id=<?= (int)$row['id'] ?>">查看统计</a>
                         </td>
@@ -108,6 +124,22 @@ $distStmt = $pdo->prepare(
 $distStmt->execute([$testId]);
 $resultStats = $distStmt->fetchAll(PDO::FETCH_ASSOC);
 
+// 获取问题回答次数统计
+$questionStatsStmt = $pdo->prepare(
+    "SELECT 
+         q.id,
+         q.question_text,
+         q.sort_order,
+         COUNT(qa.id) AS answer_count
+     FROM questions q
+     LEFT JOIN question_answers qa ON qa.question_id = q.id AND qa.test_id = ?
+     WHERE q.test_id = ?
+     GROUP BY q.id, q.question_text, q.sort_order
+     ORDER BY q.sort_order ASC, q.id ASC"
+);
+$questionStatsStmt->execute([$testId, $testId]);
+$questionStats = $questionStatsStmt->fetchAll(PDO::FETCH_ASSOC);
+
 // 获取分享统计
 $shareStats = ShareStats::getStats($testId);
 $totalShares = ShareStats::getTestShareCount($testId);
@@ -149,6 +181,40 @@ ob_start();
         <p class="hint">
             每一次测验会产生 1 条 run 记录，并记录该 run 的维度得分。
         </p>
+    <?php endif; ?>
+</div>
+
+<div class="admin-card" style="margin-bottom:16px;">
+    <h2 class="admin-page-title" style="font-size:15px;margin:0 0 10px;">问题回答次数</h2>
+    <?php if (!$questionStats): ?>
+        <p class="admin-table__muted">暂无问题数据，先在上方添加问题吧。</p>
+    <?php else: ?>
+        <table class="admin-table">
+            <thead>
+            <tr>
+                <th style="width:60px;">ID</th>
+                <th style="width:80px;">排序</th>
+                <th>问题内容</th>
+                <th style="width:120px;">回答次数</th>
+                <th style="width:140px;">回答率</th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($questionStats as $row): ?>
+                <?php
+                $answerCount = (int)$row['answer_count'];
+                $answerRate = $totalRuns > 0 ? round($answerCount * 100.0 / $totalRuns, 1) : 0.0;
+                ?>
+                <tr>
+                    <td><?= (int)$row['id'] ?></td>
+                    <td><?= (int)$row['sort_order'] ?></td>
+                    <td><?= htmlspecialchars(mb_substr($row['question_text'], 0, 100)) ?><?= mb_strlen($row['question_text']) > 100 ? '...' : '' ?></td>
+                    <td><?= number_format($answerCount) ?></td>
+                    <td><?= $answerRate ?>%</td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
     <?php endif; ?>
 </div>
 
