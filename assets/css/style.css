@@ -2254,6 +2254,13 @@ html[data-theme="dark"] .page-profile .profile-container {
         display: none;
     }
     
+    /* 登录按钮在移动端显示文字，更清晰 */
+    .tub-link-login .tub-text {
+        display: inline-block;
+        font-size: 11px;
+        margin-left: 2px;
+    }
+    
     .tub-link-icon .tub-icon {
         display: flex; /* 移动端显示图标 */
         align-items: center;
@@ -2266,6 +2273,12 @@ html[data-theme="dark"] .page-profile .profile-container {
         min-height: 36px;
         justify-content: center;
         align-items: center;
+    }
+    
+    /* 登录按钮在移动端显示文字，需要更多空间 */
+    .tub-link-login {
+        padding: 6px 8px;
+        min-width: auto;
     }
     
     .tub-link-icon .tub-icon svg {
@@ -2342,6 +2355,13 @@ html[data-theme="dark"] .page-profile .profile-container {
         display: none;
     }
     
+    /* 登录按钮在移动端显示文字，更清晰 */
+    .topbar-right .tub-link-login .tub-text {
+        display: inline-block;
+        font-size: 11px;
+        margin-left: 2px;
+    }
+    
     .topbar-right .tub-link-icon .tub-icon {
         display: flex; /* 移动端显示图标 */
         align-items: center;
@@ -2354,6 +2374,12 @@ html[data-theme="dark"] .page-profile .profile-container {
         min-height: 36px;
         justify-content: center;
         align-items: center;
+    }
+    
+    /* 登录按钮在移动端显示文字，需要更多空间 */
+    .topbar-right .tub-link-login {
+        padding: 6px 8px;
+        min-width: auto;
     }
     
     .topbar-right .tub-link-icon .tub-icon svg {
