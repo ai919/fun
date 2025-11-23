@@ -6,6 +6,7 @@ require_once __DIR__ . '/lib/html_purifier.php';
 require_once __DIR__ . '/lib/Constants.php';
 require_once __DIR__ . '/lib/CacheHelper.php';
 require_once __DIR__ . '/lib/SettingsHelper.php';
+require_once __DIR__ . '/lib/topbar.php';
 
 // 尝试从缓存获取测验列表（缓存5分钟）
 $cacheKey = 'published_tests_list';
@@ -57,24 +58,7 @@ $user = UserAuth::currentUser();
 </head>
 <body>
 <?php if (!defined('IN_ADMIN')): ?>
-<div class="top-user-bar">
-    <div class="top-user-bar-inner">
-        <button type="button" id="theme-toggle-btn" class="theme-toggle-btn" aria-label="切换主题" title="切换暗色/亮色模式">
-            <span class="theme-icon-light">☀️</span>
-            <span class="theme-icon-dark">🌙</span>
-        </button>
-        <?php if ($user): ?>
-            <span class="tub-nickname">
-                <?php echo htmlspecialchars($user['nickname'] ?: $user['email']); ?>
-            </span>
-            <a href="/my_tests.php" class="tub-link">我的测验</a>
-            <a href="/logout.php" class="tub-link">退出</a>
-        <?php else: ?>
-            <a href="/login.php" class="tub-link">登录</a>
-            <a href="/register.php" class="tub-link">注册</a>
-        <?php endif; ?>
-    </div>
-</div>
+<?php render_topbar(); ?>
 <?php endif; ?>
 <main class="home">
     <div class="page-container">

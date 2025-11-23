@@ -4,6 +4,7 @@ require_once __DIR__ . '/seo_helper.php';
 require_once __DIR__ . '/lib/html_purifier.php';
 require_once __DIR__ . '/lib/CacheHelper.php';
 require_once __DIR__ . '/lib/SettingsHelper.php';
+require_once __DIR__ . '/lib/topbar.php';
 
 function pick_field(array $row, array $candidates, $default = '')
 {
@@ -155,15 +156,22 @@ $seo = build_seo_meta('test', [
 <?php render_seo_head($seo); ?>
     <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <script src="/assets/js/theme-toggle.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            if (themeBtn) {
+                themeBtn.addEventListener('click', function() {
+                    window.ThemeToggle.toggle();
+                });
+            }
+        });
+    </script>
     <?php SettingsHelper::renderGoogleAnalytics(); ?>
 </head>
 <body>
 
-<?php if (!empty($test['display_mode']) && $test['display_mode'] === Constants::DISPLAY_MODE_STEP_BY_STEP): ?>
-<div class="quiz-exit-bar">
-    <a class="exit-btn" href="/index.php">← 返回首页</a>
-</div>
-<?php endif; ?>
+<?php render_topbar(true); ?>
 
 <?php
 $heroSubtitle = '';

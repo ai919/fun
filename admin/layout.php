@@ -61,6 +61,11 @@ if (!isset($activeMenu)) {
                 <span class="admin-nav__icon">⚙️</span>
                 <span class="admin-nav__label">系统管理</span>
             </a>
+            <a href="motivational_quotes.php"
+               class="admin-nav__item <?= $activeMenu === 'quotes' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">💬</span>
+                <span class="admin-nav__label">心理名言</span>
+            </a>
         </nav>
 
         <div class="admin-sidebar__footer">

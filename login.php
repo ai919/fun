@@ -2,6 +2,7 @@
 require_once __DIR__ . '/lib/user_auth.php';
 require_once __DIR__ . '/lib/csrf.php';
 require_once __DIR__ . '/lib/i18n.php';
+require_once __DIR__ . '/lib/topbar.php';
 
 // 初始化国际化
 if (session_status() === PHP_SESSION_NONE) {
@@ -39,8 +40,20 @@ if ($user) {
     <meta charset="UTF-8">
     <title>登录 DoFun</title>
     <link rel="stylesheet" href="/assets/css/style.css">
+    <script src="/assets/js/theme-toggle.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            if (themeBtn) {
+                themeBtn.addEventListener('click', function() {
+                    window.ThemeToggle.toggle();
+                });
+            }
+        });
+    </script>
 </head>
 <body class="page-auth">
+<?php render_topbar(); ?>
 <div class="auth-container">
     <h1>登录 DoFun</h1>
     <?php if (!empty($error)): ?>

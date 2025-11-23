@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/lib/user_auth.php';
 require_once __DIR__ . '/lib/db_connect.php';
+require_once __DIR__ . '/lib/topbar.php';
 
 $user = UserAuth::requireLogin();
 
@@ -55,19 +56,24 @@ $runs = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <meta charset="UTF-8">
     <title>我的测验记录 - DoFun</title>
     <link rel="stylesheet" href="/assets/css/style.css">
+    <script src="/assets/js/theme-toggle.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            if (themeBtn) {
+                themeBtn.addEventListener('click', function() {
+                    window.ThemeToggle.toggle();
+                });
+            }
+        });
+    </script>
 </head>
 <body class="page-my-tests">
+<?php render_topbar(); ?>
 <div class="my-tests-container">
     <header class="my-tests-header">
         <h1>我的测验记录</h1>
-        <div class="my-tests-user">
-            <span><?php echo htmlspecialchars($user['nickname'] ?: $user['email']); ?></span>
-            <a href="/logout.php" class="link-logout">退出</a>
-        </div>
     </header>
-    <div class="my-tests-actions">
-        <a href="/" class="btn-secondary">← 返回首页</a>
-    </div>
 
     <?php if (empty($runs)): ?>
         <p>你还没有任何测验记录，去首页找一个喜欢的测验试试吧～</p>

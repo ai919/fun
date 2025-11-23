@@ -89,7 +89,7 @@ a:hover {
 
 /* 首页整体 */
 .home {
-    padding: 24px 16px 40px;
+    padding: 64px 16px 40px; /* 增加顶部 padding，为固定 topbar 留出空间 */
 }
 .site-title {
     font-size: clamp(30px, 5vw, 42px);
@@ -487,7 +487,7 @@ a:active {
 /* ===== 单个测验页 ===== */
 .test-page {
     max-width: 760px;
-    margin: 24px auto 40px;
+    margin: 64px auto 40px; /* 增加顶部 margin，为固定 topbar 留出空间 */
     padding: 24px 24px 32px;
     background-color: #ffffff;
     border-radius: 16px;
@@ -822,42 +822,12 @@ a:active {
     100% { transform: translateX(0); }
 }
 
-/* 逐题作答模式顶部退出栏 */
-.quiz-exit-bar {
-    width: 100%;
-    background: #ffffffcc;
-    backdrop-filter: blur(6px);
-    position: sticky;
-    top: 0;
-    z-index: 999;
-    padding: 10px 14px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-}
-
-.quiz-exit-bar .exit-btn {
-    font-size: 15px;
-    font-weight: 600;
-    color: #555;
-    text-decoration: none;
-    padding: 6px 14px;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    background: #fafafa;
-    transition: all 0.25s ease;
-}
-
-.quiz-exit-bar .exit-btn:hover {
-    background: #f0f0f0;
-    color: #222;
-}
+/* 逐题作答模式顶部退出栏 - 已移除，统一使用 top-user-bar */
 
 .page-auth .auth-container,
 .page-my-tests .my-tests-container {
     max-width: 480px;
-    margin: 40px auto;
+    margin: 80px auto 40px; /* 增加顶部 margin，为固定 topbar 留出空间 */
     padding: 24px 20px;
     background: var(--bg-secondary);
     border-radius: 18px;
@@ -959,15 +929,22 @@ a:active {
 }
 
 .top-user-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
     width: 100%;
     background: rgba(255, 255, 255, 0.87);
     backdrop-filter: blur(6px);
     border-bottom: 1px solid var(--border-color);
     transition: background-color 0.3s ease, border-color 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 [data-theme="dark"] .top-user-bar {
     background: rgba(31, 41, 55, 0.87);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .top-user-bar-inner {
@@ -981,9 +958,187 @@ a:active {
     font-size: 14px;
 }
 
+.topbar-home-link {
+    color: #4b5563;
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 500;
+    margin-right: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    font-size: 14px;
+    position: relative;
+    overflow: hidden;
+}
+
+.topbar-home-link .home-arrow {
+    display: inline-block;
+    transition: transform 0.25s ease;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.topbar-home-link .home-text {
+    position: relative;
+    z-index: 1;
+}
+
+.topbar-home-link:hover .home-arrow {
+    transform: translateX(-3px);
+}
+
+.topbar-home-link::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.05));
+    transition: width 0.3s ease;
+    z-index: 0;
+}
+
+.topbar-home-link:hover {
+    background: rgba(99, 102, 241, 0.12);
+    color: #6366f1;
+    border-color: rgba(99, 102, 241, 0.3);
+    transform: translateX(-2px);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
+}
+
+.topbar-home-link:hover::before {
+    width: 100%;
+}
+
+.topbar-home-link:active {
+    transform: translateX(0);
+    box-shadow: 0 1px 4px rgba(99, 102, 241, 0.2);
+}
+
+[data-theme="dark"] .topbar-home-link {
+    color: #a5b4fc;
+    background: rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.25);
+}
+
+[data-theme="dark"] .topbar-home-link::before {
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.2), rgba(99, 102, 241, 0.1));
+}
+
+[data-theme="dark"] .topbar-home-link:hover {
+    background: rgba(99, 102, 241, 0.25);
+    color: #c7d2fe;
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+}
+
+.topbar-spacer {
+    flex: 1;
+}
+
+/* 测验页面特殊布局 */
+.top-user-bar--test {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] .top-user-bar--test {
+    background: rgba(31, 41, 55, 0.95);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.top-user-bar-inner--test {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 12px 20px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 20px;
+    align-items: center;
+    font-size: 14px;
+}
+
+.topbar-left {
+    display: flex;
+    align-items: center;
+}
+
+.topbar-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 0;
+}
+
+.topbar-quote {
+    text-align: center;
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.topbar-quote .quote-text {
+    display: block;
+    color: #6366f1;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    animation: fadeInQuote 0.5s ease-in;
+}
+
+@keyframes fadeInQuote {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+[data-theme="dark"] .topbar-quote {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.25);
+}
+
+[data-theme="dark"] .topbar-quote .quote-text {
+    color: #a5b4fc;
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 .tub-nickname {
     font-weight: 600;
     color: #333;
+}
+
+[data-theme="dark"] .tub-nickname {
+    color: #f9fafb;
 }
 
 .tub-link {
@@ -999,11 +1154,56 @@ a:active {
     color: #111;
 }
 
+[data-theme="dark"] .tub-link {
+    color: #d1d5db;
+}
+
+[data-theme="dark"] .tub-link:hover {
+    background: rgba(55, 65, 81, 0.5);
+    color: #f9fafb;
+}
+
 @media (max-width: 640px) {
     .test-page {
-        margin: 12px auto 24px;
+        margin: 64px auto 24px; /* 保持顶部间距，为固定 topbar 留出空间 */
         padding: 16px 12px 24px;
         border-radius: 12px;
+    }
+    
+    .top-user-bar-inner {
+        padding: 8px 12px;
+        gap: 12px;
+        font-size: 13px;
+    }
+    
+    .topbar-home-link {
+        font-size: 12px;
+        padding: 5px 10px;
+        gap: 4px;
+    }
+    
+    .tub-link {
+        padding: 4px 6px;
+        font-size: 13px;
+    }
+    
+    /* 测验页面布局响应式 */
+    .top-user-bar-inner--test {
+        grid-template-columns: auto 1fr auto;
+        gap: 12px;
+        padding: 10px 12px;
+    }
+    
+    .topbar-quote {
+        padding: 6px 12px;
+    }
+    
+    .topbar-quote .quote-text {
+        font-size: 12px;
+    }
+    
+    .topbar-right {
+        gap: 8px;
     }
 
     .test-hero-meta {
@@ -1034,7 +1234,7 @@ a:active {
 /* ===== 结果页整体 ===== */
 .result-page {
     max-width: 720px;
-    margin: 24px auto 40px;
+    margin: 64px auto 40px; /* 增加顶部 margin，为固定 topbar 留出空间 */
     padding: 24px 24px 32px;
     background-color: #ffffff;
     border-radius: 18px;
@@ -1371,7 +1571,7 @@ a:active {
 
 @media (max-width: 640px) {
     .result-page {
-        margin: 12px auto 24px;
+        margin: 64px auto 24px; /* 保持顶部间距，为固定 topbar 留出空间 */
         padding: 18px 14px 24px;
         border-radius: 14px;
     }
@@ -1384,6 +1584,15 @@ a:active {
     .btn-primary,
     .btn-secondary {
         width: 100%;
+    }
+    
+    .page-auth .auth-container,
+    .page-my-tests .my-tests-container {
+        margin: 64px auto 24px; /* 移动端保持顶部间距 */
+    }
+    
+    .home {
+        padding: 64px 12px 40px; /* 移动端保持顶部 padding */
     }
 }
 
