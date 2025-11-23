@@ -38,6 +38,7 @@ if ($user) {
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>登录 DoFun</title>
     <link rel="stylesheet" href="/assets/css/style.css">
     <script src="/assets/js/theme-toggle.js"></script>

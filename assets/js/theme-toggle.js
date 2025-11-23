@@ -8,11 +8,9 @@
     const THEME_DARK = 'dark';
     const THEME_LIGHT = 'light';
     
-    // 检测系统偏好
+    // 检测系统偏好（已弃用，默认使用亮色模式）
     function getSystemTheme() {
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            return THEME_DARK;
-        }
+        // 不再跟随系统偏好，默认返回亮色模式
         return THEME_LIGHT;
     }
     
@@ -22,7 +20,8 @@
         if (saved === THEME_DARK || saved === THEME_LIGHT) {
             return saved;
         }
-        return getSystemTheme();
+        // 默认返回亮色模式
+        return THEME_LIGHT;
     }
     
     // 设置主题
@@ -52,16 +51,8 @@
         const theme = getCurrentTheme();
         setTheme(theme);
         
-        // 监听系统主题变化
-        if (window.matchMedia) {
-            const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-            mediaQuery.addEventListener('change', function(e) {
-                // 如果用户没有手动设置过主题，跟随系统
-                if (!localStorage.getItem(THEME_KEY)) {
-                    setTheme(e.matches ? THEME_DARK : THEME_LIGHT);
-                }
-            });
-        }
+        // 不再监听系统主题变化，默认使用亮色模式
+        // 如果用户没有手动设置过主题，保持亮色模式
     });
     
     // 导出到全局

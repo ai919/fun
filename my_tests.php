@@ -54,6 +54,7 @@ $runs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的测验记录 - DoFun</title>
     <link rel="stylesheet" href="/assets/css/style.css">
     <script src="/assets/js/theme-toggle.js"></script>
@@ -96,12 +97,12 @@ $runs = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <tbody>
                 <?php foreach ($runs as $run): ?>
                     <tr>
-                        <td>
+                        <td data-label="测验">
                             <a href="/test.php?slug=<?php echo htmlspecialchars($run['test_slug']); ?>">
                                 <?php echo htmlspecialchars($run['test_title']); ?>
                             </a>
                         </td>
-                        <td>
+                        <td data-label="结果">
                             <?php
                             $shareLink = !empty($run['share_token'])
                                 ? '/result.php?token=' . urlencode($run['share_token'])
@@ -115,8 +116,8 @@ $runs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <?php echo htmlspecialchars($run['result_title'] ?: '-'); ?>
                             <?php endif; ?>
                         </td>
-                        <td><?php echo $run['total_score'] !== null ? (int)$run['total_score'] : '-'; ?></td>
-                        <td><?php echo htmlspecialchars($run['created_at']); ?></td>
+                        <td data-label="得分"><?php echo $run['total_score'] !== null ? (int)$run['total_score'] : '-'; ?></td>
+                        <td data-label="时间"><?php echo htmlspecialchars($run['created_at']); ?></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
