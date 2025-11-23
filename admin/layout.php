@@ -16,6 +16,7 @@ if (!isset($activeMenu)) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="../favicon.ico">
     <link rel="stylesheet" href="../assets/css/admin.css?v=20251120">
+    <script src="../assets/js/theme-toggle.js"></script>
 </head>
 <body class="admin-body">
 <div class="admin-shell">
@@ -108,6 +109,10 @@ if (!isset($activeMenu)) {
                 <?php endif; ?>
             </div>
             <div class="admin-topbar__right">
+                <button type="button" id="theme-toggle-btn" class="theme-toggle-btn" aria-label="切换主题" title="切换暗色/亮色模式">
+                    <span class="theme-icon-light">☀️</span>
+                    <span class="theme-icon-dark">🌙</span>
+                </button>
                 <span class="admin-topbar__user">👤 管理员</span>
                 <a class="admin-topbar__link" href="../" target="_blank">打开前台</a>
             </div>
@@ -209,6 +214,14 @@ document.addEventListener('DOMContentLoaded', function () {
             syncHidden();
         });
     });
+    
+    // 主题切换按钮事件
+    const themeBtn = document.getElementById('theme-toggle-btn');
+    if (themeBtn) {
+        themeBtn.addEventListener('click', function() {
+            window.ThemeToggle.toggle();
+        });
+    }
 });
 </script>
 </html>

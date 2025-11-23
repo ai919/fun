@@ -5,17 +5,39 @@
     box-sizing: border-box;
 }
 
+:root {
+    --admin-bg-primary: #f3f4f6;
+    --admin-bg-secondary: #ffffff;
+    --admin-bg-sidebar: radial-gradient(circle at top left, #1e293b, #020617 70%);
+    --admin-text-primary: #0f172a;
+    --admin-text-secondary: #6b7280;
+    --admin-border-color: #e5e7eb;
+    --admin-shadow: rgba(15, 23, 42, 0.06);
+}
+
+[data-theme="dark"] {
+    --admin-bg-primary: #111827;
+    --admin-bg-secondary: #1f2937;
+    --admin-bg-sidebar: radial-gradient(circle at top left, #0f172a, #020617 70%);
+    --admin-text-primary: #f9fafb;
+    --admin-text-secondary: #d1d5db;
+    --admin-border-color: #374151;
+    --admin-shadow: rgba(0, 0, 0, 0.3);
+}
+
 html, body {
     margin: 0;
     padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, -system-ui, "Segoe UI", sans-serif;
-    color: #0f172a;
-    background: #f3f4f6;
+    color: var(--admin-text-primary);
+    background: var(--admin-bg-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* 整体布局 */
 .admin-body {
-    background: #0f172a;
+    background: var(--admin-bg-primary);
+    transition: background-color 0.3s ease;
 }
 
 .admin-shell {
@@ -26,11 +48,12 @@ html, body {
 /* 侧边栏 */
 .admin-sidebar {
     width: 240px;
-    background: radial-gradient(circle at top left, #1e293b, #020617 70%);
+    background: var(--admin-bg-sidebar);
     color: #e5e7eb;
     padding: 16px 14px;
     display: flex;
     flex-direction: column;
+    transition: background 0.3s ease;
 }
 
 .admin-sidebar__logo {
@@ -122,7 +145,8 @@ html, body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: #f3f4f6;
+    background: var(--admin-bg-primary);
+    transition: background-color 0.3s ease;
 }
 
 /* 顶栏 */
@@ -132,25 +156,32 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--admin-border-color);
     backdrop-filter: blur(10px);
-    background: rgba(248, 250, 252, 0.92);
+    background: var(--admin-bg-secondary);
     position: sticky;
     top: 0;
     z-index: 10;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+[data-theme="dark"] .admin-topbar {
+    background: rgba(31, 41, 55, 0.92);
 }
 
 .admin-page-title {
     margin: 0;
     font-size: 20px;
     font-weight: 650;
-    color: #0f172a;
+    color: var(--admin-text-primary);
+    transition: color 0.3s ease;
 }
 
 .admin-page-subtitle {
     margin: 2px 0 0;
     font-size: 13px;
-    color: #6b7280;
+    color: var(--admin-text-secondary);
+    transition: color 0.3s ease;
 }
 
 .admin-topbar__right {
@@ -160,8 +191,9 @@ html, body {
 
 .admin-topbar__user {
     font-size: 13px;
-    color: #6b7280;
+    color: var(--admin-text-secondary);
     margin-right: 12px;
+    transition: color 0.3s ease;
 }
 
 .admin-topbar__link {
@@ -174,6 +206,73 @@ html, body {
     text-decoration: underline;
 }
 
+/* 后台主题切换按钮 */
+.admin-topbar .theme-toggle-btn {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid var(--admin-border-color);
+    background: var(--admin-bg-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    box-shadow: 0 2px 6px var(--admin-shadow);
+    margin-right: 12px;
+}
+
+.admin-topbar .theme-toggle-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px var(--admin-shadow);
+    border-color: #6366f1;
+}
+
+.admin-topbar .theme-toggle-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px var(--admin-shadow);
+}
+
+.admin-topbar .theme-toggle-btn .theme-icon-light,
+.admin-topbar .theme-toggle-btn .theme-icon-dark {
+    position: absolute;
+    font-size: 16px;
+    transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    line-height: 1;
+}
+
+.admin-topbar .theme-toggle-btn .theme-icon-light {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+.admin-topbar .theme-toggle-btn .theme-icon-dark {
+    opacity: 0;
+    transform: rotate(180deg) scale(0.5);
+}
+
+[data-theme="dark"] .admin-topbar .theme-toggle-btn .theme-icon-light {
+    opacity: 0;
+    transform: rotate(-180deg) scale(0.5);
+}
+
+[data-theme="dark"] .admin-topbar .theme-toggle-btn .theme-icon-dark {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+[data-theme="dark"] .admin-topbar .theme-toggle-btn {
+    background: var(--admin-bg-secondary);
+    border-color: var(--admin-border-color);
+}
+
+[data-theme="dark"] .admin-topbar .theme-toggle-btn:hover {
+    border-color: #818cf8;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
 /* 内容区域 */
 .admin-content {
     padding: 20px 24px 40px;
@@ -183,12 +282,13 @@ html, body {
 .admin-footer {
     padding: 10px 24px 16px;
     font-size: 12px;
-    color: #9ca3af;
-    border-top: 1px solid #e5e7eb;
+    color: var(--admin-text-secondary);
+    border-top: 1px solid var(--admin-border-color);
     margin-top: auto;
     display: flex;
     justify-content: flex-start;
     gap: 8px;
+    transition: color 0.3s ease, border-color 0.3s ease;
 }
 
 .admin-footer__dot {
@@ -214,11 +314,13 @@ html, body {
 
 .admin-input {
     border-radius: 999px;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--admin-border-color);
     padding: 6px 12px;
     font-size: 13px;
     outline: none;
-    background: #ffffff;
+    background: var(--admin-bg-secondary);
+    color: var(--admin-text-primary);
+    transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
 }
 
 .admin-input--search {
@@ -232,11 +334,12 @@ html, body {
 
 /* 卡片 */
 .admin-card {
-    background: #ffffff;
+    background: var(--admin-bg-secondary);
     border-radius: 14px;
     padding: 14px 16px;
-    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
-    border: 1px solid #e5e7eb;
+    box-shadow: 0 18px 40px var(--admin-shadow);
+    border: 1px solid var(--admin-border-color);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 /* 表格 */
@@ -247,26 +350,30 @@ html, body {
 }
 
 .admin-table thead tr {
-    background: #f9fafb;
+    background: var(--admin-bg-primary);
+    transition: background-color 0.3s ease;
 }
 
 .admin-table th,
 .admin-table td {
     padding: 8px 10px;
     text-align: left;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--admin-border-color);
     vertical-align: middle;
+    transition: border-color 0.3s ease;
 }
 
 .admin-table th {
     font-weight: 500;
-    color: #6b7280;
+    color: var(--admin-text-secondary);
     font-size: 12px;
+    transition: color 0.3s ease;
 }
 
 .admin-table__title {
     font-weight: 500;
-    color: #111827;
+    color: var(--admin-text-primary);
+    transition: color 0.3s ease;
 }
 
 .admin-table__subtitle {
@@ -289,19 +396,19 @@ html, body {
     align-items: center;
     justify-content: center;
     border-radius: 999px;
-    border: 1px solid #d1d5db;
-    background: #ffffff;
+    border: 1px solid var(--admin-border-color);
+    background: var(--admin-bg-secondary);
     font-size: 12px;
     padding: 4px 10px;
     text-decoration: none;
-    color: #111827;
+    color: var(--admin-text-primary);
     cursor: pointer;
-    transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+    transition: background 0.3s ease, box-shadow 0.15s ease, transform 0.1s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .btn:hover {
-    background: #f3f4f6;
-    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+    background: var(--admin-bg-primary);
+    box-shadow: 0 6px 16px var(--admin-shadow);
     transform: translateY(-1px);
 }
 
@@ -331,11 +438,12 @@ html, body {
 .btn-ghost {
     border-color: transparent;
     background: transparent;
-    color: #6b7280;
+    color: var(--admin-text-secondary);
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 .btn-ghost:hover {
-    background: #f3f4f6;
+    background: var(--admin-bg-primary);
 }
 
 /* Badge / Tag */
@@ -406,7 +514,8 @@ html, body {
     align-items: center;
     gap: 10px;
     margin-bottom: 18px;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--admin-border-color);
+    transition: border-color 0.3s ease;
 }
 
 .admin-subtab__item {
@@ -414,20 +523,20 @@ html, body {
     padding: 10px 14px;
     font-size: 14px;
     font-weight: 600;
-    color: #6b7280;
+    color: var(--admin-text-secondary);
     text-decoration: none;
     border-radius: 8px 8px 0 0;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 .admin-subtab__item:hover {
-    background: #e5e7eb;
-    color: #111827;
+    background: var(--admin-bg-primary);
+    color: var(--admin-text-primary);
 }
 
 .admin-subtab__item.is-active {
-    background: #ffffff;
-    color: #111827;
+    background: var(--admin-bg-secondary);
+    color: var(--admin-text-primary);
     font-weight: 600;
     border-bottom: 2px solid #4f46e5;
     margin-bottom: -1px;
@@ -467,7 +576,8 @@ html, body {
 .form-label {
     font-size: 13px;
     font-weight: 600;
-    color: #374151;
+    color: var(--admin-text-primary);
+    transition: color 0.3s ease;
 }
 
 .form-section {
@@ -478,8 +588,9 @@ html, body {
 .form-section__title {
     font-size: 14px;
     font-weight: 700;
-    color: #111827;
+    color: var(--admin-text-primary);
     margin: 0 0 8px;
+    transition: color 0.3s ease;
 }
 
 .form-section-title {
@@ -493,12 +604,14 @@ html, body {
 .form-textarea,
 .form-select {
     border-radius: 10px;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--admin-border-color);
     padding: 6px 10px;
     font-size: 13px;
     outline: none;
-    background: #ffffff;
+    background: var(--admin-bg-secondary);
+    color: var(--admin-text-primary);
     width: 100%;
+    transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
 }
 
 .form-input:focus,
@@ -534,7 +647,8 @@ html, body {
 .admin-kpi-number {
     font-size: 24px;
     font-weight: 700;
-    color: #111827;
+    color: var(--admin-text-primary);
+    transition: color 0.3s ease;
 }
 
 .admin-kpi-label {
@@ -691,10 +805,11 @@ html, body {
 
 .question-card {
     border-radius: 14px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--admin-border-color);
     padding: 12px 14px;
-    background: #ffffff;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+    background: var(--admin-bg-secondary);
+    box-shadow: 0 10px 24px var(--admin-shadow);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .question-card__header {
@@ -732,7 +847,8 @@ html, body {
 .question-card__title {
     font-size: 13px;
     font-weight: 600;
-    color: #111827;
+    color: var(--admin-text-primary);
+    transition: color 0.3s ease;
 }
 
 .question-card__textarea {
@@ -759,10 +875,11 @@ html, body {
 
 .result-card {
     border-radius: 14px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--admin-border-color);
     padding: 12px 14px;
-    background: #ffffff;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+    background: var(--admin-bg-secondary);
+    box-shadow: 0 10px 24px var(--admin-shadow);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .result-card__header {
