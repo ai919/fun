@@ -81,7 +81,7 @@ $runs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <p><a href="/">返回首页</a></p>
     <?php else: ?>
         <?php if ($totalRows > $perPage): ?>
-            <div style="margin-bottom: 16px; color: #666; font-size: 14px;">
+            <div class="my-tests-pagination-info">
                 共 <?php echo $totalRows; ?> 条记录，第 <?php echo $page; ?> / <?php echo $totalPages; ?> 页
             </div>
         <?php endif; ?>
@@ -123,13 +123,13 @@ $runs = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </tbody>
         </table>
         <?php if ($totalPages > 1): ?>
-            <div style="margin-top: 20px; display: flex; align-items: center; gap: 12px; justify-content: center;">
+            <div class="my-tests-pagination">
                 <?php if ($page > 1): ?>
-                    <a href="?page=<?php echo $page - 1; ?>" class="btn-secondary" style="text-decoration: none; padding: 6px 12px;">← 上一页</a>
+                    <a href="?page=<?php echo $page - 1; ?>" class="btn-secondary btn-pagination">← 上一页</a>
                 <?php endif; ?>
-                <span style="color: #666;">第 <?php echo $page; ?> / <?php echo $totalPages; ?> 页</span>
+                <span class="my-tests-pagination-text">第 <?php echo $page; ?> / <?php echo $totalPages; ?> 页</span>
                 <?php if ($page < $totalPages): ?>
-                    <a href="?page=<?php echo $page + 1; ?>" class="btn-secondary" style="text-decoration: none; padding: 6px 12px;">下一页 →</a>
+                    <a href="?page=<?php echo $page + 1; ?>" class="btn-secondary btn-pagination">下一页 →</a>
                 <?php endif; ?>
             </div>
         <?php endif; ?>

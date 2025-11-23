@@ -140,7 +140,7 @@ if ($resultTopAd):
                 <?= HTMLPurifier::purifyWithBreaks($finalResult['description'] ?? '', true) ?>
             </div>
             <?php if (!empty($dimensionScores)): ?>
-                <div class="dimension-distribution" style="margin-top:24px;">
+                <div class="dimension-distribution">
                     <h3 class="dimension-title">你的维度分布</h3>
                     <div class="dimension-list">
                         <?php 
@@ -190,8 +190,8 @@ if ($resultTopAd):
                 </div>
             <?php endif; ?>
             <?php if (!empty($finalResult['image_url'])): ?>
-                <div style="margin-top:12px;">
-                    <img src="<?= htmlspecialchars($finalResult['image_url']) ?>" alt="result image" style="max-width:100%;border-radius:12px;">
+                <div class="result-image-wrapper">
+                    <img src="<?= htmlspecialchars($finalResult['image_url']) ?>" alt="result image" class="result-image">
                 </div>
             <?php endif; ?>
         </section>

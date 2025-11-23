@@ -42,46 +42,6 @@ if (!isset($activeMenu)) {
                 <span class="admin-nav__icon">🧪</span>
                 <span class="admin-nav__label">测验管理</span>
             </a>
-            <a href="admin_users.php"
-               class="admin-nav__item <?= $activeMenu === 'admin_users' ? 'is-active' : '' ?>">
-                <span class="admin-nav__icon">👥</span>
-                <span class="admin-nav__label">管理员</span>
-            </a>
-            <a href="users.php"
-               class="admin-nav__item <?= $activeMenu === 'users' ? 'is-active' : '' ?>">
-                <span class="admin-nav__icon">👤</span>
-                <span class="admin-nav__label">用户管理</span>
-            </a>
-            <a href="stats.php"
-               class="admin-nav__item <?= $activeMenu === 'stats' ? 'is-active' : '' ?>">
-                <span class="admin-nav__icon">📈</span>
-                <span class="admin-nav__label">统计</span>
-            </a>
-            <a href="notifications.php"
-               class="admin-nav__item <?= $activeMenu === 'notifications' ? 'is-active' : '' ?>">
-                <span class="admin-nav__icon">🔔</span>
-                <span class="admin-nav__label">通知管理</span>
-            </a>
-            <a href="system.php"
-               class="admin-nav__item <?= $activeMenu === 'system' ? 'is-active' : '' ?>">
-                <span class="admin-nav__icon">⚙️</span>
-                <span class="admin-nav__label">系统管理</span>
-            </a>
-            <a href="motivational_quotes.php"
-               class="admin-nav__item <?= $activeMenu === 'quotes' ? 'is-active' : '' ?>">
-                <span class="admin-nav__icon">💬</span>
-                <span class="admin-nav__label">心理名言</span>
-            </a>
-            <a href="site_settings.php"
-               class="admin-nav__item <?= $activeMenu === 'site_settings' ? 'is-active' : '' ?>">
-                <span class="admin-nav__icon">🌐</span>
-                <span class="admin-nav__label">网站设置</span>
-            </a>
-            <a href="seo_optimizer.php"
-               class="admin-nav__item <?= $activeMenu === 'seo_optimizer' ? 'is-active' : '' ?>">
-                <span class="admin-nav__icon">📊</span>
-                <span class="admin-nav__label">SEO 优化器</span>
-            </a>
             <a href="ad_positions.php"
                class="admin-nav__item <?= $activeMenu === 'ads' ? 'is-active' : '' ?>">
                 <span class="admin-nav__icon">📢</span>
@@ -91,6 +51,46 @@ if (!isset($activeMenu)) {
                class="admin-nav__item <?= $activeMenu === 'test_beautify' ? 'is-active' : '' ?>">
                 <span class="admin-nav__icon">✨</span>
                 <span class="admin-nav__label">数据美化</span>
+            </a>
+            <a href="site_settings.php"
+               class="admin-nav__item <?= $activeMenu === 'site_settings' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">🌐</span>
+                <span class="admin-nav__label">网站设置</span>
+            </a>
+            <a href="notifications.php"
+               class="admin-nav__item <?= $activeMenu === 'notifications' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">🔔</span>
+                <span class="admin-nav__label">通知管理</span>
+            </a>
+            <a href="motivational_quotes.php"
+               class="admin-nav__item <?= $activeMenu === 'quotes' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">💬</span>
+                <span class="admin-nav__label">心理名言</span>
+            </a>
+            <a href="users.php"
+               class="admin-nav__item <?= $activeMenu === 'users' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">👤</span>
+                <span class="admin-nav__label">用户管理</span>
+            </a>
+            <a href="stats.php"
+               class="admin-nav__item <?= $activeMenu === 'stats' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">📈</span>
+                <span class="admin-nav__label">数据统计</span>
+            </a>
+            <a href="seo_optimizer.php"
+               class="admin-nav__item <?= $activeMenu === 'seo_optimizer' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">📊</span>
+                <span class="admin-nav__label">SEO 优化器</span>
+            </a>
+            <a href="admin_users.php"
+               class="admin-nav__item <?= $activeMenu === 'admin_users' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">👥</span>
+                <span class="admin-nav__label">管理员</span>
+            </a>
+            <a href="system.php"
+               class="admin-nav__item <?= $activeMenu === 'system' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">⚙️</span>
+                <span class="admin-nav__label">系统管理</span>
             </a>
         </nav>
 

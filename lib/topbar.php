@@ -61,7 +61,7 @@ function render_topbar($isTestPage = false, $isHomePage = false) {
                 </span>
             </button>
             <?php if ($user): ?>
-                <a href="/notifications.php" class="tub-link tub-link-icon" style="position: relative;" title="通知">
+                <a href="/notifications.php" class="tub-link tub-link-icon tub-link-notifications" title="通知">
                     <span class="tub-icon">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -70,20 +70,7 @@ function render_topbar($isTestPage = false, $isHomePage = false) {
                     </span>
                     <span class="tub-text">通知</span>
                     <?php if ($unreadCount > 0): ?>
-                        <span style="
-                            position: absolute;
-                            top: -4px;
-                            right: -8px;
-                            background: #ef4444;
-                            color: white;
-                            font-size: 11px;
-                            font-weight: 600;
-                            padding: 2px 6px;
-                            border-radius: 10px;
-                            min-width: 18px;
-                            text-align: center;
-                            line-height: 1.4;
-                        "><?= $unreadCount > 99 ? '99+' : $unreadCount ?></span>
+                        <span class="tub-badge"><?= $unreadCount > 99 ? '99+' : $unreadCount ?></span>
                     <?php endif; ?>
                 </a>
                 <a href="/profile.php" class="tub-link tub-link-icon tub-nickname" title="<?php echo htmlspecialchars($user['nickname'] ?: $user['email']); ?>">
@@ -121,8 +108,8 @@ function render_topbar($isTestPage = false, $isHomePage = false) {
                 <a href="/login.php" class="tub-link tub-link-icon tub-link-login" title="登录">
                     <span class="tub-icon">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
                         </svg>
                     </span>
                     <span class="tub-text">登录</span>
@@ -155,7 +142,7 @@ function render_topbar($isTestPage = false, $isHomePage = false) {
             <span class="theme-icon-dark">🌙</span>
         </button>
         <?php if ($user): ?>
-            <a href="/notifications.php" class="tub-link tub-link-icon" style="position: relative;" title="通知">
+            <a href="/notifications.php" class="tub-link tub-link-icon tub-link-notifications" title="通知">
                 <span class="tub-icon">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -164,20 +151,7 @@ function render_topbar($isTestPage = false, $isHomePage = false) {
                 </span>
                 <span class="tub-text">通知</span>
                 <?php if ($unreadCount > 0): ?>
-                    <span style="
-                        position: absolute;
-                        top: -4px;
-                        right: -8px;
-                        background: #ef4444;
-                        color: white;
-                        font-size: 11px;
-                        font-weight: 600;
-                        padding: 2px 6px;
-                        border-radius: 10px;
-                        min-width: 18px;
-                        text-align: center;
-                        line-height: 1.4;
-                    "><?= $unreadCount > 99 ? '99+' : $unreadCount ?></span>
+                    <span class="tub-badge"><?= $unreadCount > 99 ? '99+' : $unreadCount ?></span>
                 <?php endif; ?>
             </a>
             <a href="/profile.php" class="tub-link tub-link-icon tub-nickname" title="<?php echo htmlspecialchars($user['nickname'] ?: $user['email']); ?>">
@@ -215,8 +189,8 @@ function render_topbar($isTestPage = false, $isHomePage = false) {
             <a href="/login.php" class="tub-link tub-link-icon tub-link-login" title="登录">
                 <span class="tub-icon">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
                     </svg>
                 </span>
                 <span class="tub-text">登录</span>

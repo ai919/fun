@@ -281,7 +281,7 @@ if ($titleColorField !== '' && preg_match('/^#[0-9a-fA-F]{6}$/', $titleColorFiel
 
                         <div class="quiz-options question-options">
                             <?php if (!$options): ?>
-                                <p style="color:#ef4444;">该题暂无可选项。</p>
+                                <p class="quiz-option-error">该题暂无可选项。</p>
                             <?php else: ?>
                                 <?php foreach ($options as $optionIndex => $option): ?>
                                     <?php

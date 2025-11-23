@@ -196,13 +196,13 @@ $recentRuns = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
     </header>
 
     <?php if ($success): ?>
-        <div class="alert alert-success" style="margin-bottom: 20px; padding: 12px 16px; background: #d1fae5; color: #065f46; border-radius: 8px; border: 1px solid #6ee7b7;">
+        <div class="alert alert-success">
             <?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8') ?>
         </div>
     <?php endif; ?>
 
     <?php if (isset($errors['general'])): ?>
-        <div class="alert alert-error" style="margin-bottom: 20px; padding: 12px 16px; background: #fee2e2; color: #991b1b; border-radius: 8px; border: 1px solid #fca5a5;">
+        <div class="alert alert-error">
             <?= htmlspecialchars($errors['general'], ENT_QUOTES, 'UTF-8') ?>
         </div>
     <?php endif; ?>
@@ -298,7 +298,7 @@ $recentRuns = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
                     >
                     <small class="form-hint">昵称长度需在 3-15 位，留空则清除昵称</small>
                     <div class="form-error" id="nickname-error" style="display: none;"></div>
-                    <div class="form-success" id="nickname-success" style="display: none; color: #065f46; margin-top: 8px;"></div>
+                    <div class="form-success" id="nickname-success" style="display: none;"></div>
                 </div>
                 <button type="submit" class="btn-primary">更新昵称</button>
             </form>
@@ -389,7 +389,7 @@ $recentRuns = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
                     <small class="form-hint">MBTI 16型人格类型</small>
                 </div>
                 <div class="form-error" id="profile-error" style="display: none;"></div>
-                <div class="form-success" id="profile-success" style="display: none; color: #065f46; margin-top: 8px;"></div>
+                <div class="form-success" id="profile-success" style="display: none;"></div>
                 <button type="submit" class="btn-primary">更新个人信息</button>
             </form>
         </section>
@@ -448,7 +448,7 @@ $recentRuns = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php endforeach; ?>
                 </div>
                 <?php if ($totalRuns > 5): ?>
-                    <div style="margin-top: 16px; text-align: center;">
+                    <div class="profile-runs-more">
                         <a href="/my_tests.php" class="btn-secondary">查看全部记录</a>
                     </div>
                 <?php endif; ?>
