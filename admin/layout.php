@@ -66,6 +66,16 @@ if (!isset($activeMenu)) {
                 <span class="admin-nav__icon">💬</span>
                 <span class="admin-nav__label">心理名言</span>
             </a>
+            <a href="seo_settings.php"
+               class="admin-nav__item <?= $activeMenu === 'seo' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">🔍</span>
+                <span class="admin-nav__label">SEO 设置</span>
+            </a>
+            <a href="seo_optimizer.php"
+               class="admin-nav__item <?= $activeMenu === 'seo_optimizer' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">📊</span>
+                <span class="admin-nav__label">SEO 优化器</span>
+            </a>
         </nav>
 
         <div class="admin-sidebar__footer">

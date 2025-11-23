@@ -220,8 +220,33 @@ class ScoreEngine
         }
 
         $weights = $config['weights'] ?? [];
+        $mapping = $config['mapping'] ?? null; // 支持旧的 mapping 格式
 
-        // 2. 遍历答案，根据 weights 累加各维度
+        // 如果使用旧的 mapping 格式，需要构建 question_id 到 q1, q2 的映射
+        $questionIdToQKey = null;
+        if ($mapping && empty($weights)) {
+            // 获取所有问题的 ID 和排序，构建映射
+            $questionIds = array_keys($answers);
+            if (!empty($questionIds)) {
+                $placeholders = implode(',', array_fill(0, count($questionIds), '?'));
+                $qStmt = $pdo->prepare(
+                    "SELECT id, sort_order FROM questions 
+                     WHERE id IN ($placeholders) AND test_id = ?
+                     ORDER BY sort_order ASC, id ASC"
+                );
+                $qStmt->execute(array_merge($questionIds, [$testId]));
+                $questions = $qStmt->fetchAll(\PDO::FETCH_ASSOC);
+                
+                $questionIdToQKey = [];
+                $index = 1;
+                foreach ($questions as $q) {
+                    $questionIdToQKey[(int)$q['id']] = 'q' . $index;
+                    $index++;
+                }
+            }
+        }
+
+        // 2. 遍历答案，根据 weights 或 mapping 累加各维度
         foreach ($answers as $qId => $optId) {
             if (!isset($optionsByQuestion[$qId][$optId])) {
                 continue;
@@ -232,13 +257,30 @@ class ScoreEngine
                 continue;
             }
 
-            $qKey = (string)$qId; // JSON 里用字符串保存 question_id
+            // 确定使用哪个配置键
+            $configKey = null;
+            $dimWeights = null;
 
-            if (!isset($weights[$qKey][$optionKey]) || !is_array($weights[$qKey][$optionKey])) {
+            if (!empty($weights)) {
+                // 使用新的 weights 格式
+                $qKey = (string)$qId;
+                if (isset($weights[$qKey][$optionKey]) && is_array($weights[$qKey][$optionKey])) {
+                    $dimWeights = $weights[$qKey][$optionKey];
+                }
+            } elseif ($mapping && $questionIdToQKey) {
+                // 使用旧的 mapping 格式
+                $qKey = $questionIdToQKey[$qId] ?? null;
+                if ($qKey && isset($mapping[$qKey][$optionKey]) && is_array($mapping[$qKey][$optionKey])) {
+                    $dimWeights = $mapping[$qKey][$optionKey];
+                }
+            }
+
+            if (!$dimWeights) {
                 continue;
             }
 
-            foreach ($weights[$qKey][$optionKey] as $dimKey => $val) {
+            // 累加维度分数
+            foreach ($dimWeights as $dimKey => $val) {
                 $dimKey = (string)$dimKey;
                 if (!array_key_exists($dimKey, $dims)) {
                     // 未在 dimensions 声明的维度忽略

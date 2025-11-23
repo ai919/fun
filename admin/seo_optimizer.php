@@ -5,14 +5,32 @@ require_once __DIR__ . '/../lib/SEOContentOptimizer.php';
 
 $pageTitle = 'SEO 内容优化';
 $pageSubtitle = '批量检查测验 SEO 分数并提供优化建议';
-$activeMenu = 'system';
+$activeMenu = 'seo_optimizer';
+
+// 检查 cover_image 字段是否存在
+$hasCoverImage = false;
+try {
+    $pdo->query("SELECT cover_image FROM tests LIMIT 1");
+    $hasCoverImage = true;
+} catch (PDOException $e) {
+    // 字段不存在，继续执行
+}
 
 // 获取所有测验
+$coverImageField = $hasCoverImage ? ', cover_image' : '';
 $tests = $pdo->query("
-    SELECT id, title, description, slug, cover_image, status, created_at
+    SELECT id, title, description, slug{$coverImageField}, status, created_at
     FROM tests
     ORDER BY created_at DESC
 ")->fetchAll(PDO::FETCH_ASSOC);
+
+// 如果 cover_image 字段不存在，为每个测试添加空值
+if (!$hasCoverImage) {
+    foreach ($tests as &$test) {
+        $test['cover_image'] = null;
+    }
+    unset($test);
+}
 
 // 分析每个测验的 SEO 分数
 $seoReports = [];

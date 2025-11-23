@@ -110,23 +110,32 @@ function build_quiz_structured_data(array $test, $questions = []): array
  */
 function build_seo_meta(string $pageType, array $data = []): array
 {
-    $siteName = 'DoFun心理实验空间';
+    // 从 settings 表读取 SEO 配置
+    require_once __DIR__ . '/lib/SettingsHelper.php';
+    
+    $siteName = SettingsHelper::get('seo_site_name', 'DoFun心理实验空间');
     $baseUrl  = get_base_url();
-    $defaultImage = $baseUrl . '/assets/img/dofun-poster-bg.jpg';
+    
+    // 获取默认图片，如果设置了自定义图片则使用，否则使用默认路径
+    $defaultImageSetting = SettingsHelper::get('seo_default_image', '');
+    $defaultImage = !empty($defaultImageSetting) 
+        ? $defaultImageSetting 
+        : ($baseUrl . '/assets/img/dofun-poster-bg.jpg');
 
-    $title = $siteName;
-    $desc  = '心理 性格 性情：更专业的在线测验实验室。';
+    $title = SettingsHelper::get('seo_default_title', $siteName);
+    $desc  = SettingsHelper::get('seo_default_description', '心理 性格 性情：更专业的在线测验实验室。');
     $canonical = build_canonical_url();
     $image = $defaultImage;
-    $type  = 'website';
-    $robots = 'index,follow';
+    $type  = SettingsHelper::get('seo_og_type_default', 'website');
+    $robots = SettingsHelper::get('seo_robots_default', 'index,follow');
     $additionalStructuredData = [];
 
     if ($pageType === 'home') {
-        $title = $siteName . '｜心理 性格 性情：更专业的在线测验实验室';
-        $desc  = 'DoFun心理实验空间，是一个轻量、有趣的在线测验实验室，提供人格、情感、社交、生活方式等多个方向的心理小测试，帮你以更轻松的方式认识自己。';
+        // 使用 settings 中的默认标题和描述，如果没有则使用默认值
+        $title = SettingsHelper::get('seo_default_title', $siteName . '｜心理 性格 性情：更专业的在线测验实验室');
+        $desc  = SettingsHelper::get('seo_default_description', 'DoFun心理实验空间，是一个轻量、有趣的在线测验实验室，提供人格、情感、社交、生活方式等多个方向的心理小测试，帮你以更轻松的方式认识自己。');
         $canonical = build_canonical_url('/');
-        $type = 'website';
+        $type = SettingsHelper::get('seo_og_type_default', 'website');
     } elseif ($pageType === 'test') {
         $test = $data['test'] ?? [];
         $slug = $test['slug'] ?? '';
@@ -261,6 +270,9 @@ function build_seo_meta(string $pageType, array $data = []): array
     $allStructuredData = [$jsonLdData];
     $allStructuredData = array_merge($allStructuredData, $additionalStructuredData);
 
+    // 获取默认关键词
+    $keywords = SettingsHelper::get('seo_default_keywords', '');
+    
     return [
         'title'       => $title,
         'description' => $desc,
@@ -268,6 +280,7 @@ function build_seo_meta(string $pageType, array $data = []): array
         'image'       => $image,
         'type'        => $type,
         'robots'      => $robots,
+        'keywords'    => $keywords,
         'json_ld'     => json_encode($jsonLdData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         'json_ld_all' => array_map(function($data) {
             return json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -280,21 +293,31 @@ function build_seo_meta(string $pageType, array $data = []): array
  */
 function render_seo_head(array $seo): void
 {
+    // 从 settings 表读取 SEO 配置
+    require_once __DIR__ . '/lib/SettingsHelper.php';
+    
     $title       = htmlspecialchars($seo['title'] ?? '', ENT_QUOTES, 'UTF-8');
     $description = htmlspecialchars($seo['description'] ?? '', ENT_QUOTES, 'UTF-8');
     $canonical   = htmlspecialchars($seo['canonical'] ?? '', ENT_QUOTES, 'UTF-8');
     $image       = htmlspecialchars($seo['image'] ?? '', ENT_QUOTES, 'UTF-8');
-    $type        = htmlspecialchars($seo['type'] ?? 'website', ENT_QUOTES, 'UTF-8');
-    $robots      = htmlspecialchars($seo['robots'] ?? 'index,follow', ENT_QUOTES, 'UTF-8');
+    $type        = htmlspecialchars($seo['type'] ?? SettingsHelper::get('seo_og_type_default', 'website'), ENT_QUOTES, 'UTF-8');
+    $robots      = htmlspecialchars($seo['robots'] ?? SettingsHelper::get('seo_robots_default', 'index,follow'), ENT_QUOTES, 'UTF-8');
     $jsonLd      = $seo['json_ld'] ?? '';
     $jsonLdAll   = $seo['json_ld_all'] ?? [];
-    $siteName    = 'DoFun心理实验空间';
+    $siteName    = SettingsHelper::get('seo_site_name', 'DoFun心理实验空间');
     $siteNameEsc = htmlspecialchars($siteName, ENT_QUOTES, 'UTF-8');
 
     echo "<title>{$title}</title>\n";
     echo "<meta charset=\"UTF-8\">\n";
     echo "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n";
     echo "<meta name=\"description\" content=\"{$description}\">\n";
+    
+    // 输出 keywords meta 标签（如果 SEO 数据中有提供，否则使用默认值）
+    $keywords = $seo['keywords'] ?? SettingsHelper::get('seo_default_keywords', '');
+    if (!empty($keywords)) {
+        echo "<meta name=\"keywords\" content=\"" . htmlspecialchars($keywords, ENT_QUOTES, 'UTF-8') . "\">\n";
+    }
+    
     echo "<meta name=\"robots\" content=\"{$robots}\">\n";
     echo "<link rel=\"canonical\" href=\"{$canonical}\">\n";
 
@@ -305,7 +328,8 @@ function render_seo_head(array $seo): void
     echo "<meta property=\"og:image\" content=\"{$image}\">\n";
     echo "<meta property=\"og:site_name\" content=\"{$siteNameEsc}\">\n";
 
-    echo "<meta name=\"twitter:card\" content=\"summary_large_image\">\n";
+    $twitterCard = SettingsHelper::get('seo_twitter_card', 'summary_large_image');
+    echo "<meta name=\"twitter:card\" content=\"" . htmlspecialchars($twitterCard, ENT_QUOTES, 'UTF-8') . "\">\n";
     echo "<meta name=\"twitter:title\" content=\"{$title}\">\n";
     echo "<meta name=\"twitter:description\" content=\"{$description}\">\n";
     echo "<meta name=\"twitter:image\" content=\"{$image}\">\n";

@@ -129,13 +129,53 @@ $emoji = trim($finalTest['emoji'] ?? ($finalTest['title_emoji'] ?? ''));
                 <?= HTMLPurifier::purifyWithBreaks($finalResult['description'] ?? '', true) ?>
             </div>
             <?php if (!empty($dimensionScores)): ?>
-                <div class="result-description" style="margin-top:12px;">
-                    <strong>你的维度分布：</strong>
-                    <?php foreach ($dimensionScores as $dimKey => $dimScore): ?>
-                        <span style="display:inline-block;margin-right:8px;">
-                            <?= htmlspecialchars($dimKey) ?> <?= htmlspecialchars((string)$dimScore) ?>
-                        </span>
-                    <?php endforeach; ?>
+                <div class="dimension-distribution" style="margin-top:24px;">
+                    <h3 class="dimension-title">你的维度分布</h3>
+                    <div class="dimension-list">
+                        <?php 
+                        // 计算最大值用于百分比显示
+                        $maxScore = max(array_values($dimensionScores));
+                        $maxScore = $maxScore > 0 ? $maxScore : 1; // 避免除零
+                        
+                        // 维度名称映射（可选，用于显示中文名称）
+                        $dimensionNames = [
+                            'CAT' => ['name' => '猫系', 'emoji' => '🐱', 'color' => '#8b5cf6'],
+                            'DOG' => ['name' => '狗系', 'emoji' => '🐶', 'color' => '#f59e0b'],
+                            'FOX' => ['name' => '狐系', 'emoji' => '🦊', 'color' => '#ef4444'],
+                            'DEER' => ['name' => '鹿系', 'emoji' => '🦌', 'color' => '#10b981'],
+                            'OWL' => ['name' => '鸮系', 'emoji' => '🦉', 'color' => '#3b82f6'],
+                            'P' => ['name' => '氛围型', 'emoji' => '✨', 'color' => '#ec4899'],
+                            'C' => ['name' => '冷静型', 'emoji' => '🧊', 'color' => '#06b6d4'],
+                            'E' => ['name' => '自信型', 'emoji' => '🔥', 'color' => '#f97316'],
+                            'W' => ['name' => '有趣型', 'emoji' => '🎭', 'color' => '#a855f7'],
+                        ];
+                        
+                        // 按分数排序（从高到低）
+                        arsort($dimensionScores);
+                        
+                        foreach ($dimensionScores as $dimKey => $dimScore): 
+                            $dimInfo = $dimensionNames[$dimKey] ?? ['name' => $dimKey, 'emoji' => '📊', 'color' => '#6b7280'];
+                            $percentage = ($dimScore / $maxScore) * 100;
+                        ?>
+                            <div class="dimension-item">
+                                <div class="dimension-header">
+                                    <div class="dimension-label">
+                                        <span class="dimension-emoji"><?= htmlspecialchars($dimInfo['emoji']) ?></span>
+                                        <span class="dimension-name"><?= htmlspecialchars($dimInfo['name']) ?></span>
+                                        <span class="dimension-key"><?= htmlspecialchars($dimKey) ?></span>
+                                    </div>
+                                    <div class="dimension-value"><?= htmlspecialchars((string)$dimScore) ?></div>
+                                </div>
+                                <div class="dimension-bar-container">
+                                    <div class="dimension-bar" 
+                                         style="width: <?= $percentage ?>%; background-color: <?= htmlspecialchars($dimInfo['color']) ?>;"
+                                         data-dim="<?= htmlspecialchars($dimKey) ?>"
+                                         data-score="<?= htmlspecialchars((string)$dimScore) ?>">
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             <?php endif; ?>
             <?php if (!empty($finalResult['image_url'])): ?>
