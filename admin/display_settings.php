@@ -19,32 +19,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $beautifiedValue = trim($_POST['play_count_beautified'] ?? '');
+    $tagLimit = trim($_POST['home_tag_limit'] ?? '');
     
-    // 验证输入：必须是正整数或空字符串
+    $errors = [];
+    
+    // 验证美化数据：必须是正整数或空字符串
     if ($beautifiedValue !== '' && (!is_numeric($beautifiedValue) || (int)$beautifiedValue <= 0)) {
-        $message = '美化数据必须是正整数，或留空以使用真实数据。';
-        $messageType = 'error';
-    } else {
+        $errors[] = '美化数据必须是正整数，或留空以使用真实数据。';
+    }
+    
+    // 验证标签数量：必须是1-50之间的正整数
+    if ($tagLimit === '' || !is_numeric($tagLimit) || (int)$tagLimit < 1 || (int)$tagLimit > 50) {
+        $errors[] = '首页标签数量必须是1-50之间的正整数。';
+    }
+    
+    if (empty($errors)) {
         // 保存设置
-        $success = SettingsHelper::set(
+        $success = true;
+        $success = $success && SettingsHelper::set(
             'play_count_beautified', 
             $beautifiedValue, 
             '测验人数美化数据（仅用于前台显示，不影响真实数据）'
         );
+        $success = $success && SettingsHelper::set(
+            'home_tag_limit', 
+            (string)(int)$tagLimit, 
+            '首页标签筛选器显示的标签数量（1-50）'
+        );
         
         if ($success) {
             SettingsHelper::clearCache();
+            // 清除标签缓存，使新设置立即生效
+            require_once __DIR__ . '/../lib/CacheHelper.php';
+            CacheHelper::delete('top_tags_' . (int)$tagLimit);
+            // 清除所有可能的标签缓存
+            for ($i = 1; $i <= 50; $i++) {
+                CacheHelper::delete('top_tags_' . $i);
+            }
             $message = '设置已保存成功！';
             $messageType = 'success';
         } else {
             $message = '保存失败，请重试。';
             $messageType = 'error';
         }
+    } else {
+        $message = implode(' ', $errors);
+        $messageType = 'error';
     }
 }
 
 // 获取当前设置
 $beautifiedValue = SettingsHelper::get('play_count_beautified', '');
+$tagLimit = SettingsHelper::get('home_tag_limit', '10');
 
 // 获取真实测验人数（用于对比显示）
 $realPlayCount = 0;
@@ -147,9 +173,57 @@ ob_start();
         </div>
     </div>
     
+    <div class="admin-card" style="margin-bottom: 16px;">
+        <h2 class="admin-page-title" style="font-size: 15px; margin-bottom: 16px;">首页标签筛选设置</h2>
+        
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #e5e7eb;">
+                显示标签数量
+            </label>
+            <div style="margin-bottom: 8px;">
+                <input 
+                    type="number" 
+                    name="home_tag_limit" 
+                    value="<?= htmlspecialchars($tagLimit) ?>"
+                    min="1"
+                    max="50"
+                    step="1"
+                    required
+                    style="width: 100%; max-width: 300px; padding: 8px 12px; background: #020617; border: 1px solid rgba(55,65,81,0.85); border-radius: 6px; color: #e5e7eb; font-size: 14px;"
+                >
+            </div>
+            <div style="font-size: 12px; color: #9ca3af; line-height: 1.6;">
+                <p style="margin: 0 0 8px 0;">设置首页标签筛选器显示的热门标签数量。</p>
+                <ul style="margin: 0; padding-left: 20px;">
+                    <li style="margin-bottom: 4px;">
+                        <strong>范围：</strong>1-50 个标签
+                    </li>
+                    <li style="margin-bottom: 4px;">
+                        <strong>默认：</strong>10 个标签
+                    </li>
+                    <li style="margin-bottom: 4px;">
+                        <strong>说明：</strong>系统会自动统计使用最多的标签，并按使用频率排序显示
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 20px; padding: 12px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 6px;">
+            <div style="font-size: 12px; color: #93c5fd; line-height: 1.6;">
+                <p style="margin: 0 0 8px 0; font-weight: 600;">📊 标签统计说明</p>
+                <ul style="margin: 0; padding-left: 20px;">
+                    <li style="margin-bottom: 4px;">标签从所有已发布的测验中统计</li>
+                    <li style="margin-bottom: 4px;">按标签使用次数降序排列</li>
+                    <li style="margin-bottom: 4px;">用户点击标签后可以筛选出包含该标签的测验</li>
+                    <li style="margin-bottom: 4px;">标签数据缓存10分钟，修改设置后会自动清除缓存</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
     <div class="admin-toolbar">
         <div class="admin-toolbar__left">
-            <span class="admin-table__muted">设置保存后，前台显示的测验人数将使用美化数据（如果已设置）。</span>
+            <span class="admin-table__muted">设置保存后，前台显示的测验人数和标签筛选器将使用新配置。</span>
         </div>
         <div class="admin-toolbar__right">
             <button type="submit" class="btn btn-primary">保存设置</button>

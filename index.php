@@ -30,6 +30,35 @@ if ($tests === null) {
     CacheHelper::set($cacheKey, $tests);
 }
 
+// 获取热门标签（使用最多的标签）
+$tagLimit = (int)SettingsHelper::get('home_tag_limit', 10);
+$tagLimit = max(1, min(50, $tagLimit)); // 限制在1-50之间
+
+$topTagsCacheKey = 'top_tags_' . $tagLimit;
+$topTags = CacheHelper::get($topTagsCacheKey, 600); // 缓存10分钟
+
+if ($topTags === null) {
+    // 从所有已发布的测验中统计标签使用次数
+    $tagCounts = [];
+    foreach ($tests as $test) {
+        if (!empty($test['tags'])) {
+            $tags = array_filter(array_map('trim', explode(',', $test['tags'])));
+            foreach ($tags as $tag) {
+                if (!empty($tag)) {
+                    $tagCounts[$tag] = ($tagCounts[$tag] ?? 0) + 1;
+                }
+            }
+        }
+    }
+    
+    // 按使用次数排序，取前N个
+    arsort($tagCounts);
+    $topTags = array_slice(array_keys($tagCounts), 0, $tagLimit, true);
+    
+    // 存入缓存
+    CacheHelper::set($topTagsCacheKey, $topTags);
+}
+
 $seo = build_seo_meta('home', [
     'breadcrumbs' => [
         ['name' => '首页', 'url' => '/'],
@@ -53,6 +82,90 @@ $user = UserAuth::currentUser();
                     window.ThemeToggle.toggle();
                 });
             }
+        });
+    </script>
+    <script>
+        // 标签筛选功能（客户端筛选，提升用户体验）
+        document.addEventListener('DOMContentLoaded', function() {
+            const tagFilterItems = document.querySelectorAll('.tag-filter-item');
+            const testCards = document.querySelectorAll('.test-card');
+            
+            // 从URL获取当前选中的标签
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentTag = urlParams.get('tag') || '';
+            
+            // 筛选函数
+            function filterByTag(tag) {
+                let visibleCount = 0;
+                testCards.forEach(function(card) {
+                    const cardTags = card.getAttribute('data-tags');
+                    if (!tag || (cardTags && cardTags.includes(tag))) {
+                        card.style.display = '';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+                
+                // 更新活动状态
+                tagFilterItems.forEach(function(btn) {
+                    btn.classList.remove('active');
+                    const btnTag = btn.getAttribute('data-tag') || '';
+                    if ((!tag && !btnTag) || (tag && btnTag === tag)) {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                // 显示/隐藏无结果提示
+                const grid = document.getElementById('testsGrid');
+                let noResultsMsg = document.getElementById('noResultsMessage');
+                if (visibleCount === 0) {
+                    if (!noResultsMsg) {
+                        noResultsMsg = document.createElement('div');
+                        noResultsMsg.id = 'noResultsMessage';
+                        noResultsMsg.className = 'no-results-message';
+                        noResultsMsg.textContent = '暂无匹配的测验';
+                        grid.parentNode.insertBefore(noResultsMsg, grid.nextSibling);
+                    }
+                    noResultsMsg.style.display = 'block';
+                } else {
+                    if (noResultsMsg) {
+                        noResultsMsg.style.display = 'none';
+                    }
+                }
+            }
+            
+            // 页面加载时应用筛选
+            if (currentTag) {
+                filterByTag(currentTag);
+            }
+            
+            // 绑定点击事件（包括"全部"按钮）
+            tagFilterItems.forEach(function(item) {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const tag = this.getAttribute('data-tag') || '';
+                    
+                    // 更新URL（不刷新页面）
+                    const url = new URL(window.location);
+                    if (tag) {
+                        url.searchParams.set('tag', tag);
+                    } else {
+                        url.searchParams.delete('tag');
+                    }
+                    window.history.pushState({}, '', url);
+                    
+                    // 应用筛选
+                    filterByTag(tag);
+                });
+            });
+            
+            // 处理浏览器前进/后退
+            window.addEventListener('popstate', function() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const tag = urlParams.get('tag') || '';
+                filterByTag(tag);
+            });
         });
     </script>
     <?php SettingsHelper::renderGoogleAnalytics(); ?>
@@ -80,7 +193,32 @@ $user = UserAuth::currentUser();
         </div>
         <?php endif; ?>
 
-        <div class="quiz-grid tests-grid">
+        <!-- 标签筛选器 -->
+        <?php if (!empty($topTags)): ?>
+        <?php
+        // 获取当前选中的标签（用于高亮显示）
+        $selectedTag = isset($_GET['tag']) ? trim($_GET['tag']) : '';
+        // 定义标签颜色主题数组
+        $tagColors = ['blue', 'purple', 'pink', 'green', 'orange', 'teal', 'indigo', 'rose', 'amber', 'cyan'];
+        ?>
+        <div class="tag-filter-section">
+            <div class="tag-filter-list">
+                <a href="/" class="tag-filter-item tag-color-default <?= $selectedTag === '' ? 'active' : '' ?>">
+                    全部
+                </a>
+                <?php foreach ($topTags as $index => $tag): ?>
+                <?php $colorClass = 'tag-color-' . $tagColors[$index % count($tagColors)]; ?>
+                <a href="/?tag=<?= urlencode($tag) ?>" 
+                   class="tag-filter-item <?= $colorClass ?> <?= $selectedTag === $tag ? 'active' : '' ?>"
+                   data-tag="<?= htmlspecialchars($tag, ENT_QUOTES, 'UTF-8') ?>">
+                    <?= htmlspecialchars($tag, ENT_QUOTES, 'UTF-8') ?>
+                </a>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <div class="quiz-grid tests-grid" id="testsGrid">
         <?php foreach ($tests as $test): ?>
             <?php
             $tags = [];
@@ -103,7 +241,7 @@ $user = UserAuth::currentUser();
             $playCount = SettingsHelper::getBeautifiedPlayCount($realPlayCount, $testId);
             $playText = $playCount > 0 ? "已有 {$playCount} 人测验" : '等待第一位测验者';
             ?>
-                <article class="quiz-card test-card">
+                <article class="quiz-card test-card" data-tags="<?= htmlspecialchars(implode(',', $tags ?: ['测验']), ENT_QUOTES, 'UTF-8') ?>">
                     <div class="quiz-card-top">
                         <div class="quiz-tag-list">
                             <?php if ($tags): ?>
