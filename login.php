@@ -1,11 +1,18 @@
 <?php
 require_once __DIR__ . '/lib/user_auth.php';
 require_once __DIR__ . '/lib/csrf.php';
+require_once __DIR__ . '/lib/i18n.php';
+
+// 初始化国际化
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+I18n::setLanguage(I18n::detectLanguage());
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!CSRF::validateToken()) {
-        $error = 'CSRF token 验证失败，请刷新页面后重试';
+        $error = I18n::t('error.csrf_failed');
     } else {
         $username = $_POST['username'] ?? '';
         $password = $_POST['password'] ?? '';
@@ -15,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: /my_tests.php');
             exit;
         } else {
-            $error = $result['message'] ?? '登录失败，请稍后再试';
+            $error = $result['message'] ?? I18n::t('error.login_failed');
         }
     }
 }
@@ -42,14 +49,14 @@ if ($user) {
     <form method="post">
         <?php echo CSRF::getTokenField(); ?>
         <div class="form-group">
-            <label>用户名</label>
-            <input type="text" name="username" required placeholder="注册时设置的用户名" maxlength="25" minlength="3">
+            <label for="username"><?php echo I18n::t('form.username'); ?></label>
+            <input type="text" id="username" name="username" required placeholder="<?php echo I18n::t('form.username'); ?>" maxlength="25" minlength="3" aria-required="true">
         </div>
         <div class="form-group">
-            <label>密码</label>
-            <input type="password" name="password" required maxlength="20" minlength="6">
+            <label for="password"><?php echo I18n::t('form.password'); ?></label>
+            <input type="password" id="password" name="password" required maxlength="20" minlength="6" aria-required="true">
         </div>
-        <button type="submit" class="btn btn-primary auth-submit-btn">登录</button>
+        <button type="submit" class="btn btn-primary auth-submit-btn" aria-label="<?php echo I18n::t('button.login'); ?>"><?php echo I18n::t('button.login'); ?></button>
     </form>
     <p class="auth-footer">
         还没有账号？ <a href="/register.php">立即注册</a>

@@ -37,11 +37,26 @@ $user = UserAuth::currentUser();
     <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="shortcut icon" href="/favicon.ico">
+    <script src="/assets/js/theme-toggle.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            if (themeBtn) {
+                themeBtn.addEventListener('click', function() {
+                    window.ThemeToggle.toggle();
+                });
+            }
+        });
+    </script>
 </head>
 <body>
 <?php if (!defined('IN_ADMIN')): ?>
 <div class="top-user-bar">
     <div class="top-user-bar-inner">
+        <button type="button" id="theme-toggle-btn" class="theme-toggle-btn" aria-label="切换主题" title="切换暗色/亮色模式">
+            <span class="theme-icon-light">☀️</span>
+            <span class="theme-icon-dark">🌙</span>
+        </button>
         <?php if ($user): ?>
             <span class="tub-nickname">
                 <?php echo htmlspecialchars($user['nickname'] ?: $user['email']); ?>

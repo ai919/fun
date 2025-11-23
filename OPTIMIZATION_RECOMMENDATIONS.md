@@ -186,20 +186,110 @@ ErrorHandler::renderError(400, '参数错误', true); // JSON API
 
 ### 3. 代码复用
 
-#### 3.1 公共组件提取
-**建议提取的公共组件**:
-- 分页组件（`lib/Pagination.php`）
-- 表单验证器（`lib/Validator.php`）
-- 文件上传处理（`lib/FileUpload.php`）
-- 图片处理工具（`lib/ImageHelper.php`）
+#### 3.1 公共组件提取 ✅ **已实现**
+**现状**: 公共组件已成功提取并实现。
 
-#### 3.2 模板系统
-**现状**: PHP 模板混合在业务逻辑中。
+**实现内容**:
+- ✅ 分页组件（`lib/Pagination.php`）
+- ✅ 表单验证器（`lib/Validator.php`）
+- ✅ 文件上传处理（`lib/FileUpload.php`）
+- ✅ 图片处理工具（`lib/ImageHelper.php`）
+- ✅ 轻量级模板系统（`lib/View.php`）
+- ✅ CDN 集成和资源版本控制（`lib/AssetHelper.php`）
 
-**建议**:
-- 考虑引入轻量级模板引擎（如 Twig 或原生 PHP 模板系统）
-- 分离视图和逻辑
-- 实现布局系统（header, footer, sidebar）
+**分页组件 (`lib/Pagination.php`)**:
+- 自动计算总页数、偏移量
+- 生成分页 URL（保留查询参数）
+- 两种渲染模式：简单样式、完整页码列表
+- 支持自定义 CSS 类名
+
+**主要方法**:
+- `new Pagination($page, $totalItems, $perPage, $baseUrl, $queryParams)`
+- `getOffset()` - 获取 SQL 偏移量
+- `render()` - 渲染简单分页
+- `renderWithPages($range)` - 渲染完整分页
+
+**数据验证器 (`lib/Validator.php`)**:
+- 常用验证规则：required, length, email, url, integer, numeric
+- 特殊验证：username, password, slug, date
+- 文件验证：fileType, fileSize
+- 批量验证支持
+
+**验证规则**:
+- `required()` - 必填验证
+- `length()` - 长度验证
+- `email()` - 邮箱验证
+- `username()` - 用户名验证（字母、数字、下划线）
+- `password()` - 密码验证（6-20字符）
+- `slug()` - URL 友好字符串验证
+- `fileType()` - 文件类型验证
+- `fileSize()` - 文件大小验证
+- `validate()` - 批量验证
+
+**文件上传 (`lib/FileUpload.php`)**:
+- 安全的文件上传处理
+- MIME 类型验证
+- 文件大小限制
+- 自动生成唯一文件名
+- 按日期创建子目录
+- 文件名清理（移除危险字符）
+
+**主要方法**:
+- `upload($file, $filename)` - 上传文件
+- `delete($path)` - 删除文件
+
+**图片处理 (`lib/ImageHelper.php`)**:
+- 图片缩放（支持保持宽高比）
+- 图片裁剪
+- 生成缩略图（正方形）
+- WebP 格式转换
+- 获取图片信息
+
+**主要方法**:
+- `resize()` - 缩放图片
+- `crop()` - 裁剪图片
+- `createThumbnail()` - 生成缩略图
+- `convertToWebP()` - 转换为 WebP
+- `getInfo()` - 获取图片信息
+
+**文档**: 详见 `docs/COMPONENTS_USAGE.md` 和 `IMPLEMENTATION_SUMMARY.md`
+
+#### 3.2 模板系统 ✅ **已实现**
+**现状**: 已实现轻量级模板系统，支持视图和逻辑分离。
+
+**实现内容**:
+- ✅ 创建了 `lib/View.php` 轻量级模板系统
+- ✅ 支持变量替换和模板包含
+- ✅ HTML 转义和日期格式化辅助方法
+- ✅ 单例模式
+
+**主要功能**:
+- `assign($key, $value)` - 设置变量
+- `render($template, $data)` - 渲染模板
+- `display($template, $data)` - 直接输出
+- `include($template, $data)` - 包含子模板
+- `View::make()` - 静态方法快速渲染
+
+**辅助方法**:
+- `e($string)` - HTML 转义
+- `formatDate($date, $format)` - 日期格式化
+
+**使用示例**:
+```php
+// 方式1：使用单例
+$view = View::getInstance();
+$view->assign('title', '页面标题');
+$view->display('template.php');
+
+// 方式2：静态方法
+echo View::make('template.php', ['title' => '页面标题']);
+
+// 在模板中
+<?= $this->e($userInput) ?>
+<?= $this->include('partials/header.php') ?>
+```
+
+**文档**: 详见 `docs/COMPONENTS_USAGE.md`
 
 ---
 
@@ -207,31 +297,81 @@ ErrorHandler::renderError(400, '参数错误', true); // JSON API
 
 ### 1. 缓存策略优化
 
-#### 1.1 缓存层级
-**现状**: 已实现文件缓存，但可以进一步优化。
+#### 1.1 缓存层级 ✅ **已实现**
+**现状**: 已实现完整的多层级缓存系统。
 
-**建议**:
-- **L1 缓存**: 内存缓存（APCu，如果可用）
-- **L2 缓存**: 文件缓存（当前实现）
-- **L3 缓存**: Redis（可选，用于分布式部署）
+**实现内容**:
+- ✅ **L1 缓存**: APCu（内存缓存，最快）
+- ✅ **L2 缓存**: 文件缓存（持久化）
+- ✅ **L3 缓存**: Redis（可选，分布式缓存）
+- ✅ 自动降级：如果上层缓存未命中，自动查找下层缓存
+- ✅ 自动回写：从下层缓存获取数据后，自动回写到上层缓存
 
-**缓存策略**:
+**主要功能** (`lib/Cache.php`):
+- `Cache::get($key, $ttl)` - 获取缓存
+- `Cache::set($key, $value, $ttl, $tags)` - 设置缓存（支持标签）
+- `Cache::delete($key)` - 删除缓存
+- `Cache::deleteByTag($tags)` - 根据标签批量删除
+- `Cache::clear()` - 清空所有缓存
+- `Cache::getStats()` - 获取统计信息
+
+**缓存策略建议**:
 - 热点数据（测验列表、热门测验）: 5-10 分钟
 - 静态数据（测验详情、题目）: 10-30 分钟
 - 统计数据（play_count）: 1-5 分钟
 - 用户数据: 不缓存或短时间缓存
 
-#### 1.2 缓存失效策略
-**建议**:
-- 实现标签化缓存（Cache Tags）
-- 相关数据更新时批量清除缓存
-- 实现缓存预热机制
+**文档**: 详见 `docs/COMPONENTS_USAGE.md` 和 `IMPLEMENTATION_SUMMARY.md`
 
-#### 1.3 CDN 集成
-**建议**:
-- 静态资源（CSS, JS, 图片）使用 CDN
-- 实现资源版本控制（防止缓存问题）
-- 图片懒加载和 WebP 格式支持
+#### 1.2 缓存失效策略 ✅ **已实现**
+**现状**: 已实现标签化缓存失效策略。
+
+**实现内容**:
+- ✅ 标签化缓存（Cache Tags）
+- ✅ 相关数据更新时批量清除缓存
+- ✅ 使用 JSON 文件存储标签到缓存键的映射
+
+**使用示例**:
+```php
+// 设置缓存（带标签）
+Cache::set('test_1', $data, 1800, ['test', 'test_1']);
+
+// 批量删除相关缓存
+Cache::deleteByTag('test'); // 清除所有测验相关缓存
+Cache::deleteByTag('user_123'); // 清除该用户的所有缓存
+```
+
+**文档**: 详见 `docs/COMPONENTS_USAGE.md`
+
+#### 1.3 CDN 集成 ✅ **已实现**
+**现状**: 已实现 CDN 集成和资源版本控制。
+
+**实现内容**:
+- ✅ 静态资源（CSS, JS, 图片）CDN 支持（`lib/AssetHelper.php`）
+- ✅ 资源版本控制（防止缓存问题）
+- ✅ 图片 WebP 格式支持（`lib/ImageHelper.php`）
+
+**主要功能** (`lib/AssetHelper.php`):
+- `url($path, $useVersion)` - 生成资源 URL
+- `css($path, $attributes)` - 生成 CSS 链接
+- `js($path, $attributes)` - 生成 JS 脚本
+- `img($path, $alt, $attributes)` - 生成图片标签
+- `updateVersion($version)` - 更新版本号
+- `setCdnBaseUrl($url)` - 设置 CDN URL
+
+**配置方式**:
+```php
+// 通过环境变量
+$_ENV['CDN_BASE_URL'] = 'https://cdn.example.com';
+
+// 或代码设置
+AssetHelper::setCdnBaseUrl('https://cdn.example.com');
+```
+
+**图片 WebP 支持** (`lib/ImageHelper.php`):
+- `convertToWebP()` - 转换为 WebP 格式
+
+**文档**: 详见 `docs/COMPONENTS_USAGE.md`
 
 ### 2. 数据库查询优化
 
@@ -268,11 +408,36 @@ ErrorHandler::renderError(400, '参数错误', true); // JSON API
 - 按功能模块拆分 JS 文件
 - 实现懒加载（Lazy Loading）
 
-#### 3.3 图片优化
-**建议**:
-- 自动生成多种尺寸的缩略图
-- 支持 WebP 格式（现代浏览器）
-- 实现图片 CDN 或对象存储
+#### 3.3 图片优化 ✅ **部分实现**
+**现状**: 已实现图片处理和 WebP 格式支持。
+
+**实现内容** (`lib/ImageHelper.php`):
+- ✅ 自动生成多种尺寸的缩略图
+- ✅ 支持 WebP 格式转换
+- ✅ 图片缩放（支持保持宽高比）
+- ✅ 图片裁剪
+- ⚠️ 图片 CDN 或对象存储（需外部服务支持，可通过 `AssetHelper` 配置 CDN）
+
+**主要功能**:
+- `resize($source, $destination, $width, $height, $maintainAspectRatio)` - 缩放图片
+- `crop($source, $destination, $x, $y, $width, $height)` - 裁剪图片
+- `createThumbnail($source, $destination, $size)` - 生成缩略图（正方形）
+- `convertToWebP($source, $destination, $quality)` - 转换为 WebP 格式
+- `getInfo($path)` - 获取图片信息（尺寸、类型等）
+
+**使用示例**:
+```php
+// 生成缩略图
+ImageHelper::createThumbnail('original.jpg', 'thumb.jpg', 200);
+
+// 转换为 WebP
+ImageHelper::convertToWebP('image.jpg', 'image.webp', 85);
+
+// 缩放图片
+ImageHelper::resize('large.jpg', 'medium.jpg', 800, 600, true);
+```
+
+**文档**: 详见 `docs/COMPONENTS_USAGE.md`
 
 ---
 
@@ -280,28 +445,73 @@ ErrorHandler::renderError(400, '参数错误', true); // JSON API
 
 ### 1. 输入验证增强
 
-#### 1.1 统一验证器
-**建议**:
-- 创建 `lib/Validator.php` 统一验证规则
-- 支持规则链式调用
-- 提供常用验证规则（email, url, length, range 等）
+#### 1.1 统一验证器 ✅ **已实现**
+**现状**: 已创建 `lib/Validator.php` 统一验证规则。
 
-**示例**:
+**实现内容**:
+- ✅ 创建了 `lib/Validator.php` 统一验证规则
+- ✅ 支持批量验证
+- ✅ 提供常用验证规则（email, url, length, range 等）
+- ✅ 特殊验证：username, password, slug, date
+- ✅ 文件验证：fileType, fileSize
+
+**验证规则**:
+- `required()` - 必填验证
+- `length($min, $max)` - 长度验证
+- `email()` - 邮箱验证
+- `url()` - URL 验证
+- `integer()` / `numeric()` - 数字验证
+- `username()` - 用户名验证（字母、数字、下划线）
+- `password()` - 密码验证（6-20字符）
+- `slug()` - URL 友好字符串验证
+- `date($format)` - 日期验证
+- `fileType($allowedTypes)` - 文件类型验证
+- `fileSize($maxSize)` - 文件大小验证
+
+**使用示例**:
 ```php
 $validator = new Validator();
-$validator->validate($data, [
-    'title' => ['required', 'string', 'max:200'],
-    'slug' => ['required', 'string', 'regex:/^[a-z0-9-]+$/'],
+
+// 单个字段验证
+$errors = $validator->required($value, '字段名');
+$errors = $validator->email($value, '邮箱');
+
+// 批量验证
+$data = ['title' => 'Test', 'email' => 'test@example.com'];
+$errors = $validator->validate($data, [
+    'title' => ['required', 'length:1,200'],
     'email' => ['required', 'email'],
 ]);
+
+if (!empty($errors)) {
+    // 处理错误
+}
 ```
 
-#### 1.2 文件上传安全
-**建议**:
-- 严格的文件类型验证（MIME 类型 + 文件扩展名）
+**文档**: 详见 `docs/COMPONENTS_USAGE.md`
+
+#### 1.2 文件上传安全 ✅ **已实现**
+**现状**: 已实现安全的文件上传处理。
+
+**实现内容** (`lib/FileUpload.php`):
+- ✅ 严格的文件类型验证（MIME 类型 + 文件扩展名）
+- ✅ 文件大小限制
+- ✅ 文件名安全处理（防止路径遍历）
+- ✅ 自动生成唯一文件名
+- ✅ 按日期创建子目录
+
+**主要功能**:
+- `upload($file, $filename)` - 上传文件（自动验证类型和大小）
+- `delete($path)` - 删除文件
+
+**安全特性**:
+- MIME 类型白名单验证
+- 文件扩展名验证
+- 文件名清理（移除危险字符）
+- 自动生成唯一文件名（防止文件名冲突）
 - 文件大小限制
-- 文件名安全处理（防止路径遍历）
-- 病毒扫描（如果可能）
+
+**文档**: 详见 `docs/COMPONENTS_USAGE.md`
 
 ### 2. 认证与授权
 
@@ -343,58 +553,175 @@ $validator->validate($data, [
 
 ### 1. 前端交互优化
 
-#### 1.1 加载状态
-**建议**:
-- 表单提交时显示加载状态
-- 防止重复提交
-- 实现进度指示器（对于长操作）
+#### 1.1 加载状态 ⚠️ **部分实现**
+**现状**: 已实现表单验证反馈动画，但缺少明确的加载状态指示器。
 
-#### 1.2 错误提示
-**建议**:
-- 友好的错误消息（避免技术术语）
-- 表单验证实时反馈
-- 错误消息国际化支持（如果有多语言需求）
+**实现内容**:
+- ✅ 表单验证实时反馈（shake 动画，`assets/js/main.js`）
+- ✅ 防止重复提交（通过表单验证阻止）
+- ⚠️ 表单提交加载状态（建议添加按钮禁用和加载指示器）
+- ⚠️ 进度指示器（长操作暂未实现）
 
-#### 1.3 响应式设计
-**建议**:
-- 移动端适配优化
-- 触摸操作优化
-- 字体大小自适应
+**当前实现**:
+- 未选择答案时显示 shake 动画提示（`assets/css/style.css`）
+- 表单验证通过 shake 动画提供视觉反馈
+
+**建议改进**:
+```javascript
+// 表单提交时显示加载状态
+form.addEventListener('submit', function() {
+    submitBtn.disabled = true;
+    submitBtn.textContent = '提交中...';
+    // 显示加载指示器
+});
+```
+
+#### 1.2 错误提示 ✅ **已实现**
+**现状**: 已实现友好的错误消息和表单验证反馈。
+
+**实现内容**:
+- ✅ 友好的错误消息（避免技术术语，如 `login.php` 中的 `auth-error`）
+- ✅ 表单验证实时反馈（shake 动画）
+- ✅ 错误消息显示（`.auth-error` 样式）
+- ⚠️ 错误消息国际化支持（当前仅支持中文）
+
+**主要功能**:
+- 登录/注册页面错误提示（`login.php`, `register.php`）
+- 表单验证错误反馈（shake 动画）
+- 统一的错误消息样式（`.auth-error`）
+
+**使用示例**:
+```php
+<?php if (!empty($error)): ?>
+    <div class="auth-error"><?php echo htmlspecialchars($error); ?></div>
+<?php endif; ?>
+```
+
+#### 1.3 响应式设计 ✅ **已实现**
+**现状**: 已实现完整的响应式设计，支持移动端适配。
+
+**实现内容** (`assets/css/style.css`):
+- ✅ 移动端适配优化（多个 `@media` 查询）
+- ✅ 触摸操作优化（按钮大小和间距优化）
+- ✅ 字体大小自适应（`clamp()` 函数，响应式网格布局）
+
+**响应式断点**:
+- `@media (max-width: 1024px)` - 平板适配（2列布局）
+- `@media (max-width: 768px)` - 移动端适配（1列布局）
+- `@media (max-width: 640px)` - 小屏移动端（全宽按钮）
+
+**主要特性**:
+- 响应式网格布局（`grid-template-columns: repeat(auto-fill, minmax(260px, 1fr))`）
+- 自适应字体大小（`font-size: clamp(28px, 5vw, 40px)`）
+- 移动端按钮优化（全宽、居中对齐）
+- 触摸友好的交互区域
 
 ### 2. 功能增强
 
-#### 2.1 搜索功能
+#### 2.1 搜索功能 ❌ **未实现**
 **建议**:
 - 全文搜索（如使用 Elasticsearch 或 MySQL Full-Text Search）
 - 搜索建议和自动完成
 - 搜索结果高亮
 
-#### 2.2 分享功能增强
-**建议**:
-- 支持更多分享平台（微信、微博、QQ 等）
-- 生成分享卡片（OG 图片优化）
-- 分享统计（追踪分享来源）
+**实现建议**:
+```php
+// 使用 MySQL Full-Text Search
+SELECT * FROM tests 
+WHERE MATCH(title, description) AGAINST(? IN NATURAL LANGUAGE MODE)
+AND status = ?
+```
 
-#### 2.3 用户系统增强
-**建议**:
-- 用户个人资料页面
-- 收藏/喜欢功能
-- 历史记录和推荐
+#### 2.2 分享功能增强 ✅ **已实现**
+**现状**: 已实现完整的分享功能，包括分享链接、文案、海报和 OG 图片。
+
+**实现内容**:
+- ✅ 分享链接生成（`result.php` - 通过 share_token）
+- ✅ 分享文案生成（自定义模板）
+- ✅ 结果海报生成（使用 html2canvas）
+- ✅ OG 图片优化（`og.php` - 动态生成分享卡片）
+- ✅ 复制到剪贴板功能（支持现代浏览器 Clipboard API）
+- ⚠️ 分享统计（当前未实现追踪分享来源）
+- ⚠️ 更多分享平台（当前仅支持复制链接/文案，未集成微信/微博/QQ）
+
+**主要功能** (`result.php`):
+- `复制结果链接` - 复制分享 URL
+- `复制分享文案` - 复制格式化分享文本
+- `保存结果海报` - 生成并下载结果海报图片
+
+**OG 图片生成** (`og.php`):
+- 动态生成 1200x630 分享图片
+- 支持测验和结果两种模式
+- 渐变背景和品牌标识
+
+**使用示例**:
+```javascript
+// 复制分享链接
+copyLinkBtn.addEventListener('click', function() {
+    copyText(shareUrl);
+});
+
+// 生成分享文案
+var shareText = '我在「DoFun心理实验空间」做了《' + testTitle + '》测验，结果是：' + resultTitle + '。你也可以来测测看：' + shareUrl;
+```
+
+**文档**: 详见 `result.php` 和 `og.php`
+
+#### 2.3 用户系统增强 ⚠️ **部分实现**
+**现状**: 已实现基础用户认证系统，但缺少个人资料和收藏功能。
+
+**已实现**:
+- ✅ 用户注册和登录（`lib/user_auth.php`）
+- ✅ 用户会话管理
+- ✅ 我的测验页面（`my_tests.php`）
+
+**未实现**:
+- ❌ 用户个人资料页面
+- ❌ 收藏/喜欢功能
+- ❌ 历史记录和推荐
+
+**建议实现**:
+- 添加用户个人资料编辑页面
+- 实现测验收藏功能（新增 `user_favorites` 表）
+- 记录用户测验历史（已有 `test_runs` 表，可扩展）
 
 ### 3. 可访问性（A11y）
 
-#### 3.1 基础优化
-**建议**:
-- 语义化 HTML
-- ARIA 标签支持
-- 键盘导航支持
-- 屏幕阅读器友好
+#### 3.1 基础优化 ⚠️ **部分实现**
+**现状**: 基础 HTML 语义化已实现，但 ARIA 标签支持有限。
 
-#### 3.2 视觉优化
-**建议**:
-- 颜色对比度符合 WCAG 标准
-- 支持暗色模式
-- 字体大小可调节
+**已实现**:
+- ✅ 语义化 HTML（使用 `<main>`, `<section>`, `<header>`, `<footer>` 等）
+- ✅ 基础表单标签（`<label>` 关联）
+- ⚠️ ARIA 标签支持（部分实现，建议增强）
+- ⚠️ 键盘导航支持（基础支持，可优化）
+- ⚠️ 屏幕阅读器友好（需要更多 ARIA 标签）
+
+**建议改进**:
+```html
+<!-- 添加 ARIA 标签 -->
+<button aria-label="提交测验" aria-busy="false">提交</button>
+<div role="alert" aria-live="polite">错误消息</div>
+```
+
+#### 3.2 视觉优化 ⚠️ **部分实现**
+**现状**: 已实现字体大小自适应，但缺少暗色模式。
+
+**已实现**:
+- ✅ 字体大小自适应（使用 `clamp()` 和响应式单位）
+- ✅ 颜色对比度（基础符合，建议验证 WCAG 标准）
+- ❌ 支持暗色模式（未实现）
+
+**建议实现**:
+```css
+/* 暗色模式支持 */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: #1a1a1a;
+        color: #ffffff;
+    }
+}
+```
 
 ---
 

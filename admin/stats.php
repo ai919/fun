@@ -3,6 +3,7 @@ require __DIR__ . '/auth.php';
 require_admin_login();
 
 require __DIR__ . '/../lib/db_connect.php';
+require_once __DIR__ . '/../lib/ShareStats.php';
 
 $testId = null;
 if (isset($_GET['test_id'])) {
@@ -107,6 +108,10 @@ $distStmt = $pdo->prepare(
 $distStmt->execute([$testId]);
 $resultStats = $distStmt->fetchAll(PDO::FETCH_ASSOC);
 
+// 获取分享统计
+$shareStats = ShareStats::getStats($testId);
+$totalShares = ShareStats::getTestShareCount($testId);
+
 $pageTitle    = '统计 - ' . ($test['title'] ?? '');
 $pageHeading  = '测验统计：' . ($test['title'] ?? '');
 $pageSubtitle = 'slug: ' . ($test['slug'] ?? '');
@@ -135,6 +140,10 @@ ob_start();
             <div class="admin-card" style="padding:10px 14px; min-width:160px; box-shadow:none; border:1px solid #e5e7eb;">
                 <div class="admin-table__subtitle">未匹配结果的 run</div>
                 <div class="admin-table__title" style="font-size:18px;"><?= number_format($unmatchedRuns) ?></div>
+            </div>
+            <div class="admin-card" style="padding:10px 14px; min-width:160px; box-shadow:none; border:1px solid #e5e7eb;">
+                <div class="admin-table__subtitle">总分享次数</div>
+                <div class="admin-table__title" style="font-size:18px;"><?= number_format($totalShares) ?></div>
             </div>
         </div>
         <p class="hint">
@@ -181,6 +190,32 @@ ob_start();
         </table>
     <?php endif; ?>
 </div>
+
+<?php if (!empty($shareStats)): ?>
+<div class="admin-card">
+    <h2 class="admin-page-title" style="font-size:15px;margin:0 0 10px;">分享统计</h2>
+    <table class="admin-table">
+        <thead>
+        <tr>
+            <th>分享平台</th>
+            <th style="width:120px;">分享次数</th>
+            <th style="width:140px;">唯一分享</th>
+            <th style="width:140px;">唯一IP</th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($shareStats as $stat): ?>
+            <tr>
+                <td><?= htmlspecialchars($stat['platform'] ?: '未知') ?></td>
+                <td><?= number_format((int)$stat['share_count']) ?></td>
+                <td><?= number_format((int)$stat['unique_shares']) ?></td>
+                <td><?= number_format((int)$stat['unique_ips']) ?></td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
+<?php endif; ?>
 
 <p class="admin-table__muted">
     更多维度（如渠道、来源等）可以在 <code>test_runs</code> 或 <code>test_run_scores</code> 表中自行扩展字段，并在此处增加相应的统计查询。

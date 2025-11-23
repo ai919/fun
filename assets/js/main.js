@@ -2,6 +2,54 @@ document.addEventListener('DOMContentLoaded', function () {
     var quizForm = document.getElementById('quiz-form');
     if (!quizForm) return;
 
+    // 表单提交加载状态处理
+    var submitButtons = quizForm.querySelectorAll('button[type="submit"]');
+    var originalButtonTexts = {};
+    
+    submitButtons.forEach(function(btn) {
+        originalButtonTexts[btn.id || btn.className] = btn.textContent || btn.innerHTML;
+    });
+
+    function setLoadingState(isLoading) {
+        submitButtons.forEach(function(btn) {
+            if (isLoading) {
+                btn.disabled = true;
+                btn.setAttribute('aria-busy', 'true');
+                var btnKey = btn.id || btn.className;
+                btn.dataset.originalText = btn.textContent || btn.innerHTML;
+                btn.innerHTML = '<span class="btn-loading-spinner"></span> 提交中...';
+                btn.classList.add('btn-loading');
+            } else {
+                btn.disabled = false;
+                btn.removeAttribute('aria-busy');
+                var btnKey = btn.id || btn.className;
+                var originalText = btn.dataset.originalText || originalButtonTexts[btnKey];
+                if (originalText) {
+                    btn.innerHTML = originalText;
+                }
+                btn.classList.remove('btn-loading');
+            }
+        });
+    }
+
+    quizForm.addEventListener('submit', function(e) {
+        // 验证表单
+        if (!quizForm.checkValidity()) {
+            return;
+        }
+        
+        setLoadingState(true);
+        
+        // 如果表单提交失败（网络错误等），恢复按钮状态
+        // 注意：如果提交成功会跳转，所以这里主要是处理失败情况
+        setTimeout(function() {
+            // 如果5秒后还在当前页面，说明可能提交失败，恢复按钮
+            if (document.getElementById('quiz-form')) {
+                setLoadingState(false);
+            }
+        }, 5000);
+    });
+
     // 只有 step_by_step 模式下，题目容器才会带 .question-step
     var stepBlocks = quizForm.querySelectorAll('.question-step');
     if (!stepBlocks.length) return; // single_page 模式直接退出

@@ -211,6 +211,8 @@ var shareUrl = <?php echo json_encode($shareUrl); ?> || window.location.href;
     if (copyLinkBtn) {
         copyLinkBtn.addEventListener('click', function () {
             copyText(shareUrl);
+            // 记录分享统计
+            recordShare('copy_link');
         });
     }
 
@@ -221,6 +223,28 @@ var shareUrl = <?php echo json_encode($shareUrl); ?> || window.location.href;
         ?> + shareUrl;
         copyTextBtn.addEventListener('click', function () {
             copyText(shareText);
+            // 记录分享统计
+            recordShare('copy_text');
+        });
+    }
+    
+    // 记录分享统计
+    function recordShare(platform) {
+        var shareToken = <?php echo json_encode($shareToken ?? ''); ?>;
+        if (!shareToken) return;
+        
+        // 使用 fetch API 发送统计请求
+        fetch('/api/share_stats.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                share_token: shareToken,
+                platform: platform
+            })
+        }).catch(function(err) {
+            console.log('Share stats error:', err);
         });
     }
 })();

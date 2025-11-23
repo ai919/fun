@@ -204,11 +204,15 @@ if ($titleColorField !== '' && preg_match('/^#[0-9a-fA-F]{6}$/', $titleColorFiel
         </div>
     </header>
 
+    <div class="progress-indicator" id="global-progress" role="progressbar" aria-label="页面加载进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="progress-indicator-bar" id="global-progress-bar"></div>
+    </div>
+    
     <div class="test-progress sticky-progress">
         <div class="test-progress-label">
             <span id="answered-count">0</span> / <?= $questionCount ?> 题已作答
         </div>
-        <div class="test-progress-bar">
+        <div class="test-progress-bar" role="progressbar" aria-label="答题进度" aria-valuemin="0" aria-valuemax="<?= $questionCount ?>" aria-valuenow="0">
             <div class="test-progress-fill" id="progress-fill"></div>
         </div>
     </div>
@@ -231,9 +235,12 @@ if ($titleColorField !== '' && preg_match('/^#[0-9a-fA-F]{6}$/', $titleColorFiel
                     $stepIndex  = $idx + 1;
                     ?>
                     <div class="quiz-question-block question-block<?= $isStepByStep ? ' question-step' : '' ?>"
-                         data-step="<?= $stepIndex ?>">
+                         data-step="<?= $stepIndex ?>"
+                         role="group"
+                         aria-labelledby="question-<?= $qid ?>"
+                         aria-label="问题 <?= $stepIndex ?>">
                         <div class="quiz-question-heading question-header">
-                            <span class="quiz-q-number question-index">Q<?= htmlspecialchars($questionNo) ?></span>
+                            <span class="quiz-q-number question-index" id="question-<?= $qid ?>">Q<?= htmlspecialchars($questionNo) ?></span>
                             <span class="quiz-q-text question-text"><?= htmlspecialchars($text) ?></span>
                         </div>
 
@@ -250,12 +257,14 @@ if ($titleColorField !== '' && preg_match('/^#[0-9a-fA-F]{6}$/', $titleColorFiel
                                         $label = chr(ord('A') + $optionIndex);
                                     }
                                     ?>
-                                    <label class="quiz-option-item option-card">
+                                    <label class="quiz-option-item option-card" role="radio" aria-checked="false" tabindex="0">
                                         <input
                                             type="radio"
                                             name="q[<?= $qid ?>]"
                                             value="<?= $optionId ?>"
                                             required
+                                            aria-label="<?= htmlspecialchars($text) ?> - 选项 <?= htmlspecialchars($label) ?>"
+                                            aria-required="true"
                                         >
                                         <div class="option-inner">
                                             <span class="quiz-option-key option-key"><?= htmlspecialchars($label) ?>.</span>
@@ -277,13 +286,13 @@ if ($titleColorField !== '' && preg_match('/^#[0-9a-fA-F]{6}$/', $titleColorFiel
                     <div class="quiz-step-buttons">
                         <button type="button" class="btn-secondary" id="btn-prev-question">上一题</button>
                         <button type="button" class="btn-primary" id="btn-next-question">下一题</button>
-                        <button type="submit" class="btn-primary" id="btn-submit-quiz">提交结果</button>
+                        <button type="submit" class="btn-primary" id="btn-submit-quiz" aria-label="提交测验结果">提交结果</button>
                     </div>
                 </div>
             <?php else: ?>
                 <div class="test-actions">
                     <a href="/index.php" class="btn-secondary">返回测验列表</a>
-                    <button type="submit" class="btn-primary">提交测验</button>
+                    <button type="submit" class="btn-primary" aria-label="提交测验">提交测验</button>
                 </div>
             <?php endif; ?>
         </form>
@@ -296,6 +305,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const radios = document.querySelectorAll('input[type="radio"][name^="q["]');
     const answeredLabel = document.getElementById('answered-count');
     const progressFill = document.getElementById('progress-fill');
+    const globalProgress = document.getElementById('global-progress');
+    const globalProgressBar = document.getElementById('global-progress-bar');
 
     function updateProgress() {
         const answeredQuestions = new Set();
@@ -311,7 +322,41 @@ document.addEventListener('DOMContentLoaded', function () {
         if (progressFill) {
             const percent = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
             progressFill.style.width = percent + '%';
+            progressFill.parentElement.setAttribute('aria-valuenow', answeredCount);
         }
+    }
+
+    // 全局进度指示器（用于表单提交等长操作）
+    function showGlobalProgress(percent) {
+        if (globalProgress && globalProgressBar) {
+            if (percent > 0 && percent < 100) {
+                globalProgress.classList.add('active');
+                globalProgressBar.style.width = percent + '%';
+                globalProgress.setAttribute('aria-valuenow', Math.round(percent));
+            } else {
+                globalProgress.classList.remove('active');
+                globalProgressBar.style.width = '0%';
+            }
+        }
+    }
+
+    // 表单提交时显示进度
+    const quizForm = document.getElementById('quiz-form');
+    if (quizForm) {
+        quizForm.addEventListener('submit', function() {
+            showGlobalProgress(30);
+            // 模拟进度更新
+            let progress = 30;
+            const progressInterval = setInterval(function() {
+                progress += 10;
+                if (progress < 90) {
+                    showGlobalProgress(progress);
+                } else {
+                    clearInterval(progressInterval);
+                    showGlobalProgress(90);
+                }
+            }, 200);
+        });
     }
 
     radios.forEach(function (radio) {
