@@ -47,6 +47,11 @@ if (!isset($activeMenu)) {
                 <span class="admin-nav__icon">👥</span>
                 <span class="admin-nav__label">管理员</span>
             </a>
+            <a href="users.php"
+               class="admin-nav__item <?= $activeMenu === 'users' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">👤</span>
+                <span class="admin-nav__label">用户管理</span>
+            </a>
             <a href="stats.php"
                class="admin-nav__item <?= $activeMenu === 'stats' ? 'is-active' : '' ?>">
                 <span class="admin-nav__icon">📈</span>
@@ -81,6 +86,11 @@ if (!isset($activeMenu)) {
                class="admin-nav__item <?= $activeMenu === 'ads' ? 'is-active' : '' ?>">
                 <span class="admin-nav__icon">📢</span>
                 <span class="admin-nav__label">广告位管理</span>
+            </a>
+            <a href="test_beautify.php"
+               class="admin-nav__item <?= $activeMenu === 'test_beautify' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">✨</span>
+                <span class="admin-nav__label">数据美化</span>
             </a>
         </nav>
 

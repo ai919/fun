@@ -120,4 +120,94 @@ class UserAuth
         }
         return $user;
     }
+
+    /**
+     * 更新用户名
+     */
+    public static function updateUsername($userId, $newUsername)
+    {
+        global $pdo;
+
+        $username = trim($newUsername);
+
+        // 用户名规则：英文 + 数字，3-25 位
+        if (!preg_match('/^[A-Za-z0-9]{3,25}$/', $username)) {
+            return ['success' => false, 'message' => '用户名需为 3-25 位英文和数字组合'];
+        }
+
+        // 检查用户名是否已被使用
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = :email AND id != :id LIMIT 1");
+        $stmt->execute([':email' => $username, ':id' => $userId]);
+        if ($stmt->fetch()) {
+            return ['success' => false, 'message' => '该用户名已被使用'];
+        }
+
+        // 更新用户名
+        $stmt = $pdo->prepare("UPDATE users SET email = :email WHERE id = :id");
+        $stmt->execute([':email' => $username, ':id' => $userId]);
+
+        // 清除缓存
+        static $cached = null;
+        $cached = null;
+
+        return ['success' => true];
+    }
+
+    /**
+     * 更新密码
+     */
+    public static function updatePassword($userId, $oldPassword, $newPassword)
+    {
+        global $pdo;
+
+        // 验证旧密码
+        $stmt = $pdo->prepare("SELECT password_hash FROM users WHERE id = :id LIMIT 1");
+        $stmt->execute([':id' => $userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user || !password_verify($oldPassword, $user['password_hash'])) {
+            return ['success' => false, 'message' => '原密码不正确'];
+        }
+
+        // 验证新密码长度
+        $pwdLen = mb_strlen($newPassword);
+        if ($pwdLen < 6 || $pwdLen > 20) {
+            return ['success' => false, 'message' => '密码长度需在 6-20 位'];
+        }
+
+        // 更新密码
+        $hash = password_hash($newPassword, PASSWORD_DEFAULT);
+        $stmt = $pdo->prepare("UPDATE users SET password_hash = :hash WHERE id = :id");
+        $stmt->execute([':hash' => $hash, ':id' => $userId]);
+
+        return ['success' => true];
+    }
+
+    /**
+     * 更新昵称
+     */
+    public static function updateNickname($userId, $nickname)
+    {
+        global $pdo;
+
+        $nickname = trim($nickname);
+
+        // 如果昵称不为空，验证长度
+        if ($nickname !== '') {
+            $nLen = mb_strlen($nickname);
+            if ($nLen < 3 || $nLen > 15) {
+                return ['success' => false, 'message' => '昵称长度需在 3-15 位'];
+            }
+        }
+
+        // 更新昵称
+        $stmt = $pdo->prepare("UPDATE users SET nickname = :nickname WHERE id = :id");
+        $stmt->execute([':nickname' => $nickname ?: null, ':id' => $userId]);
+
+        // 清除缓存
+        static $cached = null;
+        $cached = null;
+
+        return ['success' => true];
+    }
 }

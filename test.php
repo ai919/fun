@@ -139,14 +139,17 @@ $isStepByStep = (!empty($test['display_mode']) && $test['display_mode'] === Cons
 
 // play_count 变化频繁，使用较短的缓存时间（1分钟）
 $playCountCacheKey = 'test_play_count_' . $testId;
-$playCount = CacheHelper::get($playCountCacheKey, 60);
+$realPlayCount = CacheHelper::get($playCountCacheKey, 60);
 
-if ($playCount === null) {
+if ($realPlayCount === null) {
     $playCountStmt = $pdo->prepare("SELECT COUNT(*) FROM test_runs WHERE test_id = ?");
     $playCountStmt->execute([$testId]);
-    $playCount = (int)$playCountStmt->fetchColumn();
-    CacheHelper::set($playCountCacheKey, $playCount);
+    $realPlayCount = (int)$playCountStmt->fetchColumn();
+    CacheHelper::set($playCountCacheKey, $realPlayCount);
 }
+
+// 使用美化后的测验人数（仅用于显示，不影响真实数据）
+$playCount = SettingsHelper::getBeautifiedPlayCount($realPlayCount, $testId);
 
 // 构建 SEO 数据（包含结构化数据）
 // 只传递题目数量，避免传递完整数组导致内存问题
@@ -308,8 +311,8 @@ if ($titleColorField !== '' && preg_match('/^#[0-9a-fA-F]{6}$/', $titleColorFiel
                         </div>
                     </div>
                     <?php
-                    // 在题目中间插入广告（每3题后）
-                    if (($idx + 1) % 3 === 0 && $idx < count($questions) - 1):
+                    // 在题目中间插入广告（每4题后）
+                    if (($idx + 1) % 4 === 0 && $idx < count($questions) - 1):
                         $testMiddleAd = AdHelper::render('test_middle', 'test');
                         if ($testMiddleAd):
                     ?>

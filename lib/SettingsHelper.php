@@ -143,6 +143,52 @@ class SettingsHelper
     }
 
     /**
+     * 获取美化后的测验人数
+     * 美化数据作为基础值，真实播放次数叠加在上面
+     * 例如：美化为100，真实数据为1，则显示101
+     * 
+     * @param int $realCount 真实的测验人数
+     * @param int|null $testId 测验ID，如果提供则使用该测验的美化数据，否则使用全局设置
+     * @return int 美化后的测验人数
+     */
+    public static function getBeautifiedPlayCount(int $realCount, ?int $testId = null): int
+    {
+        $beautifiedValue = null;
+        
+        // 如果提供了测验ID，优先使用测验级别的美化数据
+        if ($testId !== null) {
+            self::initPdo();
+            try {
+                $stmt = self::$pdo->prepare("SELECT play_count_beautified FROM tests WHERE id = ? LIMIT 1");
+                $stmt->execute([$testId]);
+                $result = $stmt->fetchColumn();
+                if ($result !== false && $result !== null) {
+                    $beautifiedValue = (int)$result;
+                }
+            } catch (PDOException $e) {
+                // 如果字段不存在或查询失败，继续使用全局设置
+            }
+        }
+        
+        // 如果测验级别没有设置，使用全局设置（向后兼容）
+        if ($beautifiedValue === null) {
+            $beautifiedValue = self::get('play_count_beautified', '');
+            if ($beautifiedValue === '' || $beautifiedValue === null) {
+                return $realCount;
+            }
+            $beautifiedValue = (int)$beautifiedValue;
+        }
+        
+        // 如果转换失败或为0，返回真实数据
+        if ($beautifiedValue <= 0) {
+            return $realCount;
+        }
+        
+        // 美化数据作为基础值，真实数据叠加在上面
+        return $beautifiedValue + $realCount;
+    }
+
+    /**
      * 清除所有缓存
      */
     public static function clearCache(): void

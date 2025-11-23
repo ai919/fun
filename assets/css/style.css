@@ -1114,7 +1114,8 @@ html[data-theme="dark"] .option-card input[type="radio"]:checked ~ .option-inner
 /* 逐题作答模式顶部退出栏 - 已移除，统一使用 top-user-bar */
 
 .page-auth .auth-container,
-.page-my-tests .my-tests-container {
+.page-my-tests .my-tests-container,
+.page-profile .profile-container {
     max-width: 480px;
     margin: 80px auto 40px; /* 增加顶部 margin，为固定 topbar 留出空间 */
     padding: 24px 20px;
@@ -1124,8 +1125,14 @@ html[data-theme="dark"] .option-card input[type="radio"]:checked ~ .option-inner
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
+[data-theme="dark"] .page-profile .profile-container,
+html[data-theme="dark"] .page-profile .profile-container {
+    background-color: #1f2937 !important;
+}
+
 .auth-container h1,
-.my-tests-header h1 {
+.my-tests-header h1,
+.profile-header h1 {
     font-size: 22px;
     margin-bottom: 16px;
     color: var(--text-primary);
@@ -1214,6 +1221,25 @@ html[data-theme="dark"] .option-card input[type="radio"]:checked ~ .option-inner
     text-align: left;
     color: var(--text-secondary);
     transition: color 0.3s ease;
+}
+
+.my-tests-table td a {
+    color: #4f46e5;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.my-tests-table td a:hover {
+    color: #4338ca;
+    text-decoration: underline;
+}
+
+[data-theme="dark"] .my-tests-table td a {
+    color: #818cf8;
+}
+
+[data-theme="dark"] .my-tests-table td a:hover {
+    color: #a5b4fc;
 }
 
 .my-tests-actions {
@@ -1456,9 +1482,24 @@ html[data-theme="dark"] .option-card input[type="radio"]:checked ~ .option-inner
 .tub-nickname {
     font-weight: 600;
     color: #333;
+    text-decoration: none;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: 0.2s;
+    display: inline-block;
+}
+
+.tub-nickname:hover {
+    background: #f7f7f7;
+    color: #111;
 }
 
 [data-theme="dark"] .tub-nickname {
+    color: #f9fafb;
+}
+
+[data-theme="dark"] .tub-nickname:hover {
+    background: rgba(55, 65, 81, 0.5);
     color: #f9fafb;
 }
 
@@ -2384,6 +2425,244 @@ html[data-theme="dark"] .quiz-option-item {
 .ad-text {
     font-size: 14px;
     color: var(--text-secondary);
+}
+
+/* ===== 用户资料页面样式 ===== */
+.profile-content {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.profile-section {
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border-color);
+    transition: border-color 0.3s ease;
+}
+
+.profile-section:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+[data-theme="dark"] .profile-section,
+html[data-theme="dark"] .profile-section {
+    border-bottom-color: #374151 !important;
+}
+
+.profile-section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 16px 0;
+    transition: color 0.3s ease;
+}
+
+.profile-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-hint {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    transition: color 0.3s ease;
+}
+
+.form-error {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #ef4444;
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .form-error,
+html[data-theme="dark"] .form-error {
+    color: #f87171 !important;
+}
+
+.profile-form .btn-primary {
+    align-self: flex-start;
+}
+
+.btn-link {
+    color: #4f46e5;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .btn-link,
+html[data-theme="dark"] .btn-link {
+    color: #818cf8 !important;
+}
+
+.btn-link:hover {
+    text-decoration: underline;
+}
+
+.profile-stats {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+[data-theme="dark"] .profile-stats,
+html[data-theme="dark"] .profile-stats {
+    background-color: #111827 !important;
+    border-color: #374151 !important;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    transition: color 0.3s ease;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    transition: color 0.3s ease;
+}
+
+.profile-empty {
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 32px 0;
+    transition: color 0.3s ease;
+}
+
+.profile-runs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.profile-run-item {
+    padding: 16px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+}
+
+[data-theme="dark"] .profile-run-item,
+html[data-theme="dark"] .profile-run-item {
+    background-color: #111827 !important;
+    border-color: #374151 !important;
+}
+
+.profile-run-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow);
+}
+
+.run-item-main {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.run-item-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.run-item-title a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.run-item-title a:hover {
+    color: #4f46e5;
+}
+
+[data-theme="dark"] .run-item-title a:hover,
+html[data-theme="dark"] .run-item-title a:hover {
+    color: #818cf8 !important;
+}
+
+.run-item-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    transition: color 0.3s ease;
+}
+
+.run-item-result a {
+    color: #4f46e5;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .run-item-result a,
+html[data-theme="dark"] .run-item-result a {
+    color: #818cf8 !important;
+}
+
+.run-item-result a:hover {
+    text-decoration: underline;
+}
+
+.run-item-score {
+    font-weight: 600;
+}
+
+.run-item-time {
+    color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+    .page-profile .profile-container {
+        margin: 64px auto 24px;
+        padding: 20px 16px;
+    }
+
+    .profile-content {
+        gap: 24px;
+    }
+
+    .profile-section {
+        padding-bottom: 24px;
+    }
+
+    .profile-stats {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .run-item-meta {
+        flex-direction: column;
+        gap: 6px;
+    }
 }
 
 [data-theme="dark"] .ad-wrapper,

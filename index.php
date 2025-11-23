@@ -59,7 +59,7 @@ $user = UserAuth::currentUser();
 </head>
 <body>
 <?php if (!defined('IN_ADMIN')): ?>
-<?php render_topbar(); ?>
+<?php render_topbar(false, true); ?>
 <?php endif; ?>
 <main class="home">
     <div class="page-container">
@@ -98,7 +98,9 @@ $user = UserAuth::currentUser();
                 $emojiRaw = trim($test['emoji'] ?? ($test['title_emoji'] ?? ''));
                 $emoji = $emojiRaw !== '' ? htmlspecialchars($emojiRaw, ENT_QUOTES, 'UTF-8') : '';
 
-            $playCount = isset($test['play_count']) ? (int)$test['play_count'] : 0;
+            $realPlayCount = isset($test['play_count']) ? (int)$test['play_count'] : 0;
+            $testId = (int)$test['id'];
+            $playCount = SettingsHelper::getBeautifiedPlayCount($realPlayCount, $testId);
             $playText = $playCount > 0 ? "已有 {$playCount} 人测验" : '等待第一位测验者';
             ?>
                 <article class="quiz-card test-card">

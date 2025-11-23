@@ -6,7 +6,7 @@
 require_once __DIR__ . '/user_auth.php';
 require_once __DIR__ . '/motivational_quotes.php';
 
-function render_topbar($isTestPage = false) {
+function render_topbar($isTestPage = false, $isHomePage = false) {
     $user = UserAuth::currentUser();
     
     // 如果在测验页面，显示特殊布局
@@ -39,9 +39,9 @@ function render_topbar($isTestPage = false) {
                 <span class="theme-icon-dark">🌙</span>
             </button>
             <?php if ($user): ?>
-                <span class="tub-nickname">
+                <a href="/profile.php" class="tub-nickname">
                     <?php echo htmlspecialchars($user['nickname'] ?: $user['email']); ?>
-                </span>
+                </a>
                 <a href="/my_tests.php" class="tub-link">我的测验</a>
                 <a href="/logout.php" class="tub-link">退出</a>
             <?php else: ?>
@@ -59,19 +59,21 @@ function render_topbar($isTestPage = false) {
     ?>
 <div class="top-user-bar">
     <div class="top-user-bar-inner">
+        <?php if (!$isHomePage): ?>
         <a href="/" class="topbar-home-link">
             <span class="home-arrow">←</span>
             <span class="home-text">返回首页</span>
         </a>
+        <?php endif; ?>
         <div class="topbar-spacer"></div>
         <button type="button" id="theme-toggle-btn" class="theme-toggle-btn" aria-label="切换主题" title="切换暗色/亮色模式">
             <span class="theme-icon-light">☀️</span>
             <span class="theme-icon-dark">🌙</span>
         </button>
         <?php if ($user): ?>
-            <span class="tub-nickname">
+            <a href="/profile.php" class="tub-nickname">
                 <?php echo htmlspecialchars($user['nickname'] ?: $user['email']); ?>
-            </span>
+            </a>
             <a href="/my_tests.php" class="tub-link">我的测验</a>
             <a href="/logout.php" class="tub-link">退出</a>
         <?php else: ?>
