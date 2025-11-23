@@ -18,10 +18,8 @@ $errorStats = $analyzer->analyze('error', $hours);
 $warningStats = $analyzer->analyze('warning', $hours);
 $alerts = $analyzer->checkAlerts(10);
 
-require __DIR__ . '/partials/header.php';
+ob_start();
 ?>
-
-<div class="admin-content">
     <div class="admin-header">
         <h1><?= htmlspecialchars($pageTitle) ?></h1>
         <p class="admin-subtitle"><?= htmlspecialchars($pageSubtitle) ?></p>
@@ -200,7 +198,6 @@ require __DIR__ . '/partials/header.php';
             </tbody>
         </table>
     </div>
-</div>
 
 <script>
 // 自动刷新
@@ -222,5 +219,8 @@ autoRefreshCheckbox.addEventListener('change', startAutoRefresh);
 startAutoRefresh();
 </script>
 
-<?php require __DIR__ . '/partials/footer.php'; ?>
+<?php
+$content = ob_get_clean();
+include __DIR__ . '/layout.php';
+?>
 

@@ -26,10 +26,8 @@ $errorTrend = $analyzer->getErrorTrend($hours);
 $alerts = $analyzer->checkAlerts(10);
 $performanceStats = $analyzer->getPerformanceStats($hours);
 
-require __DIR__ . '/partials/header.php';
+ob_start();
 ?>
-
-<div class="admin-content">
     <div class="admin-header">
         <h1><?= htmlspecialchars($pageTitle) ?></h1>
         <p class="admin-subtitle"><?= htmlspecialchars($pageSubtitle) ?></p>
@@ -186,7 +184,9 @@ require __DIR__ . '/partials/header.php';
         </div>
     </div>
     <?php endif; ?>
-</div>
 
-<?php require __DIR__ . '/partials/footer.php'; ?>
+<?php
+$content = ob_get_clean();
+include __DIR__ . '/layout.php';
+?>
 
