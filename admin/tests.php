@@ -28,6 +28,7 @@ ob_start();
     </div>
     <div class="admin-toolbar__right">
         <a href="new_test.php" class="btn btn-primary btn-lg">+ 新建测验</a>
+        <a href="quiz_import.php" class="btn btn-lg">JSON 导入</a>
     </div>
 </div>
 

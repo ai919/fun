@@ -47,6 +47,11 @@ if (!isset($activeMenu)) {
                 <span class="admin-nav__icon">🧪</span>
                 <span class="admin-nav__label">测验管理</span>
             </a>
+            <a href="quiz_import.php"
+               class="admin-nav__item <?= $activeMenu === 'quiz_import' ? 'is-active' : '' ?>">
+                <span class="admin-nav__icon">📥</span>
+                <span class="admin-nav__label">测验导入</span>
+            </a>
             <a href="ad_positions.php"
                class="admin-nav__item <?= $activeMenu === 'ads' ? 'is-active' : '' ?>">
                 <span class="admin-nav__icon">📢</span>
