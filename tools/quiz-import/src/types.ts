@@ -13,6 +13,8 @@ export type QuizImportPayload = {
     display_mode?: 'single_page' | 'step_by_step';
     play_count_beautified?: number | null;
     emoji?: string;
+    show_secondary_archetype?: boolean;
+    show_dimension_table?: boolean;
   };
   questions: Array<{
     text: string;

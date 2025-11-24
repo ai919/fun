@@ -163,13 +163,16 @@ async function upsertTest(
     : null;
   const displayMode = test.display_mode ?? 'single_page';
   const emoji = test.emoji ?? DEFAULT_EMOJI;
+  const showSecondary = test.show_secondary_archetype !== false;
+  const showDimensions = test.show_dimension_table !== false;
 
   if (existingId) {
     await connection.execute(
       `UPDATE tests
        SET title = ?, subtitle = ?, description = ?, title_color = ?, tags = ?,
            status = ?, sort_order = ?, scoring_mode = ?, scoring_config = ?,
-           display_mode = ?, play_count_beautified = ?, emoji = ?
+           display_mode = ?, play_count_beautified = ?, emoji = ?,
+           show_secondary_archetype = ?, show_dimension_table = ?
        WHERE id = ?`,
       [
         test.title,
@@ -184,6 +187,8 @@ async function upsertTest(
         displayMode,
         test.play_count_beautified ?? null,
         emoji,
+        showSecondary ? 1 : 0,
+        showDimensions ? 1 : 0,
         existingId
       ]
     );
@@ -193,8 +198,9 @@ async function upsertTest(
   const [result] = await connection.execute(
     `INSERT INTO tests
        (slug, title, subtitle, description, title_color, tags, status, sort_order,
-        scoring_mode, scoring_config, display_mode, play_count_beautified, emoji)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        scoring_mode, scoring_config, display_mode, play_count_beautified, emoji,
+        show_secondary_archetype, show_dimension_table)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       test.slug,
       test.title,
@@ -208,7 +214,9 @@ async function upsertTest(
       scoringConfig,
       displayMode,
       test.play_count_beautified ?? null,
-      emoji
+      emoji,
+      showSecondary ? 1 : 0,
+      showDimensions ? 1 : 0
     ]
   );
 

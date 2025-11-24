@@ -138,6 +138,8 @@ CREATE TABLE `tests` (
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `scoring_mode` enum('simple','dimensions','range','custom') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'simple',
   `scoring_config` json DEFAULT NULL,
+  `show_secondary_archetype` tinyint(1) NOT NULL DEFAULT '1',
+  `show_dimension_table` tinyint(1) NOT NULL DEFAULT '1',
   `display_mode` enum('single_page','step_by_step') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'single_page'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

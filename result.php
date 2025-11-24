@@ -40,7 +40,7 @@ $testId   = (int)$runRow['test_id'];
 $resultId = isset($runRow['result_id']) ? (int)$runRow['result_id'] : 0;
 
 // 只选择需要的字段，避免 SELECT * 加载不必要的数据（特别是 description TEXT 字段可能很大）
-$testStmt = $pdo->prepare("SELECT id, slug, title, subtitle, description, title_color, emoji, tags, scoring_mode FROM tests WHERE id = ? LIMIT 1");
+$testStmt = $pdo->prepare("SELECT id, slug, title, subtitle, description, title_color, emoji, tags, scoring_mode, show_secondary_archetype, show_dimension_table FROM tests WHERE id = ? LIMIT 1");
 $testStmt->execute([$testId]);
 $finalTest = $testStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -71,6 +71,58 @@ if (strtolower($finalTest['scoring_mode'] ?? Constants::SCORING_MODE_SIMPLE) ===
     while ($row = $dimStmt->fetch(PDO::FETCH_ASSOC)) {
         $dimensionScores[$row['dimension_key']] = (float)$row['score_value'];
     }
+}
+
+$showSecondaryArchetype = (int)($finalTest['show_secondary_archetype'] ?? 1) === 1;
+$showDimensionTable = (int)($finalTest['show_dimension_table'] ?? 1) === 1;
+
+$dimensionMeta = [
+    'CAT' => ['name' => '猫系', 'emoji' => '🐱', 'color' => '#8b5cf6'],
+    'DOG' => ['name' => '狗系', 'emoji' => '🐶', 'color' => '#f59e0b'],
+    'FOX' => ['name' => '狐系', 'emoji' => '🦊', 'color' => '#ef4444'],
+    'DEER' => ['name' => '鹿系', 'emoji' => '🦌', 'color' => '#10b981'],
+    'OWL' => ['name' => '鸮系', 'emoji' => '🦉', 'color' => '#3b82f6'],
+    'P' => ['name' => '氛围型', 'emoji' => '✨', 'color' => '#ec4899'],
+    'C' => ['name' => '冷静型', 'emoji' => '🧊', 'color' => '#06b6d4'],
+    'E' => ['name' => '自信型', 'emoji' => '🔥', 'color' => '#f97316'],
+    'W' => ['name' => '有趣型', 'emoji' => '🎭', 'color' => '#a855f7'],
+];
+
+$dimensionMetaOverrides = [
+    'soldier-poet-king' => [
+        'S' => ['name' => '士兵', 'emoji' => '🛡️', 'color' => '#f97316'],
+        'P' => ['name' => '诗人', 'emoji' => '🎭', 'color' => '#a855f7'],
+        'K' => ['name' => '国王', 'emoji' => '👑', 'color' => '#f59e0b'],
+    ],
+];
+
+if (!empty($finalTest['slug']) && isset($dimensionMetaOverrides[$finalTest['slug']])) {
+    $dimensionMeta = array_merge($dimensionMeta, $dimensionMetaOverrides[$finalTest['slug']]);
+}
+
+$hasDimensionScores = !empty($dimensionScores);
+$sortedDimensionScores = $hasDimensionScores ? $dimensionScores : [];
+if ($hasDimensionScores) {
+    arsort($sortedDimensionScores);
+}
+
+$secondaryArchetype = null;
+if ($showSecondaryArchetype && count($sortedDimensionScores) >= 2) {
+    $dimKeys = array_keys($sortedDimensionScores);
+    $primaryKey = $dimKeys[0];
+    $secondaryKey = $dimKeys[1];
+    $secondaryArchetype = [
+        'primary' => [
+            'key' => $primaryKey,
+            'score' => $sortedDimensionScores[$primaryKey],
+            'meta' => $dimensionMeta[$primaryKey] ?? ['name' => $primaryKey, 'emoji' => '📊', 'color' => '#4f46e5'],
+        ],
+        'secondary' => [
+            'key' => $secondaryKey,
+            'score' => $sortedDimensionScores[$secondaryKey],
+            'meta' => $dimensionMeta[$secondaryKey] ?? ['name' => $secondaryKey, 'emoji' => '📊', 'color' => '#6b7280'],
+        ],
+    ];
 }
 
 $shareToken = $shareTokenParam;
@@ -147,36 +199,47 @@ if ($resultTopAd):
                 这代表你在此次测验中，呈现出的核心倾向是：
                 <strong><?= htmlspecialchars($finalResult['title']) ?></strong>
             </p>
+            <?php if ($secondaryArchetype): ?>
+                <div class="archetype-summary">
+                    <div class="archetype-summary__header">
+                        <h3>主 / 副原型</h3>
+                        <p>根据你的维度得分，主导能量与次要能量如下：</p>
+                    </div>
+                    <div class="archetype-cards">
+                        <?php foreach (['primary' => '主原型', 'secondary' => '副原型'] as $role => $label): ?>
+                            <?php
+                                $data = $secondaryArchetype[$role];
+                                $meta = $data['meta'];
+                                $accent = $meta['color'] ?? '#4f46e5';
+                            ?>
+                            <div class="archetype-card archetype-card--<?= $role ?>" style="--archetype-accent: <?= htmlspecialchars($accent) ?>;">
+                                <div class="archetype-card__label"><?= htmlspecialchars($label) ?></div>
+                                <div class="archetype-card__title">
+                                    <span class="archetype-card__emoji"><?= htmlspecialchars($meta['emoji'] ?? '📊') ?></span>
+                                    <span class="archetype-card__name"><?= htmlspecialchars($meta['name'] ?? $data['key']) ?></span>
+                                    <span class="archetype-card__key"><?= htmlspecialchars($data['key']) ?></span>
+                                </div>
+                                <div class="archetype-card__score">
+                                    得分 <?= htmlspecialchars((string)$data['score']) ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
             <div class="result-description">
                 <?= HTMLPurifier::purifyWithBreaks($finalResult['description'] ?? '', true) ?>
             </div>
-            <?php if (!empty($dimensionScores)): ?>
+            <?php if ($showDimensionTable && $hasDimensionScores): ?>
                 <div class="dimension-distribution">
                     <h3 class="dimension-title">你的维度分布</h3>
                     <div class="dimension-list">
                         <?php 
                         // 计算最大值用于百分比显示
-                        $maxScore = max(array_values($dimensionScores));
+                        $maxScore = max(array_values($sortedDimensionScores));
                         $maxScore = $maxScore > 0 ? $maxScore : 1; // 避免除零
-                        
-                        // 维度名称映射（可选，用于显示中文名称）
-                        $dimensionNames = [
-                            'CAT' => ['name' => '猫系', 'emoji' => '🐱', 'color' => '#8b5cf6'],
-                            'DOG' => ['name' => '狗系', 'emoji' => '🐶', 'color' => '#f59e0b'],
-                            'FOX' => ['name' => '狐系', 'emoji' => '🦊', 'color' => '#ef4444'],
-                            'DEER' => ['name' => '鹿系', 'emoji' => '🦌', 'color' => '#10b981'],
-                            'OWL' => ['name' => '鸮系', 'emoji' => '🦉', 'color' => '#3b82f6'],
-                            'P' => ['name' => '氛围型', 'emoji' => '✨', 'color' => '#ec4899'],
-                            'C' => ['name' => '冷静型', 'emoji' => '🧊', 'color' => '#06b6d4'],
-                            'E' => ['name' => '自信型', 'emoji' => '🔥', 'color' => '#f97316'],
-                            'W' => ['name' => '有趣型', 'emoji' => '🎭', 'color' => '#a855f7'],
-                        ];
-                        
-                        // 按分数排序（从高到低）
-                        arsort($dimensionScores);
-                        
-                        foreach ($dimensionScores as $dimKey => $dimScore): 
-                            $dimInfo = $dimensionNames[$dimKey] ?? ['name' => $dimKey, 'emoji' => '📊', 'color' => '#6b7280'];
+                        foreach ($sortedDimensionScores as $dimKey => $dimScore): 
+                            $dimInfo = $dimensionMeta[$dimKey] ?? ['name' => $dimKey, 'emoji' => '📊', 'color' => '#6b7280'];
                             $percentage = ($dimScore / $maxScore) * 100;
                         ?>
                             <div class="dimension-item">

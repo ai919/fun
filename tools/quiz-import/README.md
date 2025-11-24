@@ -51,7 +51,7 @@ yarn install
 
 2. **`test` 对象**
    - 必填：`slug`（≤80，`[a-z0-9-]`），`title`，`description`，`tags`（≤8 个、唯一且非空），`status`（`draft|published|archived`）。
-   - 可选：`subtitle`、`title_color`（HEX）、`sort_order`（≥0）、`scoring_mode`（默认 `simple`）、`scoring_config`、`display_mode`（默认 `single_page`）、`play_count_beautified`、`emoji`。
+   - 可选：`subtitle`、`title_color`（HEX）、`sort_order`（≥0）、`scoring_mode`（默认 `simple`）、`scoring_config`、`display_mode`（默认 `single_page`）、`play_count_beautified`、`emoji`、`show_secondary_archetype`（默认 `true`）、`show_dimension_table`（默认 `true`）。
    - 若未填写 `emoji`，CLI 会基于显式值、标签映射或 slug 哈希自动填充。
 
 3. **`questions` 数组**
@@ -87,6 +87,8 @@ yarn install
     "scoring_mode": "range",
     "display_mode": "single_page",
     "emoji": "🧠",
+    "show_secondary_archetype": true,
+    "show_dimension_table": true,
     "scoring_config": {
       "option_scores": {
         "A": 0,

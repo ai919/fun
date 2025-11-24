@@ -46,6 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     
     $hasEmojiCol = admin_column_exists($pdo, 'tests', 'emoji');
     $hasTitleColorCol = admin_column_exists($pdo, 'tests', 'title_color');
+    $hasShowSecondaryCol = admin_column_exists($pdo, 'tests', 'show_secondary_archetype');
+    $hasShowDimensionCol = admin_column_exists($pdo, 'tests', 'show_dimension_table');
     $statuses = Constants::getTestStatusLabels();
     $scoringModes = Constants::getScoringModeLabels();
     $errors = [];
@@ -74,6 +76,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         'scoring_mode'   => $_POST['scoring_mode'] ?? Constants::SCORING_MODE_SIMPLE,
         'scoring_config' => trim($_POST['scoring_config'] ?? ''),
         'display_mode'   => ($_POST['display_mode'] ?? Constants::DISPLAY_MODE_SINGLE_PAGE) === Constants::DISPLAY_MODE_STEP_BY_STEP ? Constants::DISPLAY_MODE_STEP_BY_STEP : Constants::DISPLAY_MODE_SINGLE_PAGE,
+        'show_secondary_archetype' => isset($_POST['show_secondary_archetype']) ? 1 : 0,
+        'show_dimension_table'     => isset($_POST['show_dimension_table']) ? 1 : 0,
     ];
     
     $titleColorClear = ($_POST['title_color_clear'] ?? '0') === '1';
@@ -162,6 +166,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         if ($hasTitleColorCol) {
             $payload[':title_color'] = $formData['title_color'] !== '' ? $formData['title_color'] : null;
         }
+        if ($hasShowSecondaryCol) {
+            $payload[':show_secondary_archetype'] = $formData['show_secondary_archetype'] ? 1 : 0;
+        }
+        if ($hasShowDimensionCol) {
+            $payload[':show_dimension_table'] = $formData['show_dimension_table'] ? 1 : 0;
+        }
         
         if ($testId) {
             $payload[':id'] = $testId;
@@ -184,6 +194,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             if ($hasTitleColorCol) {
                 $setParts[] = 'title_color = :title_color';
             }
+            if ($hasShowSecondaryCol) {
+                $setParts[] = 'show_secondary_archetype = :show_secondary_archetype';
+            }
+            if ($hasShowDimensionCol) {
+                $setParts[] = 'show_dimension_table = :show_dimension_table';
+            }
             $updateSql = "UPDATE tests SET " . implode(",\n                ", $setParts) . " WHERE id = :id";
             $updateStmt = $pdo->prepare($updateSql);
             $updateStmt->execute($payload);
@@ -197,6 +213,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             if ($hasTitleColorCol) {
                 $columns[] = 'title_color';
                 $placeholders[] = ':title_color';
+            }
+            if ($hasShowSecondaryCol) {
+                $columns[] = 'show_secondary_archetype';
+                $placeholders[] = ':show_secondary_archetype';
+            }
+            if ($hasShowDimensionCol) {
+                $columns[] = 'show_dimension_table';
+                $placeholders[] = ':show_dimension_table';
             }
             $insertSql = "INSERT INTO tests (" . implode(', ', $columns) . ")
                 VALUES (" . implode(', ', $placeholders) . ")";

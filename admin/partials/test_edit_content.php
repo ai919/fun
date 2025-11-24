@@ -30,6 +30,8 @@ function admin_column_exists(PDO $pdo, string $table, string $column): bool
 }
 $hasEmojiCol = admin_column_exists($pdo, 'tests', 'emoji');
 $hasTitleColorCol = admin_column_exists($pdo, 'tests', 'title_color');
+$hasShowSecondaryCol = admin_column_exists($pdo, 'tests', 'show_secondary_archetype');
+$hasShowDimensionCol = admin_column_exists($pdo, 'tests', 'show_dimension_table');
 // 30个常用emoji，一行10个显示
 $emojiOptions = [
     '' => '（不选择）',
@@ -52,6 +54,8 @@ $formData = [
     'scoring_mode'   => Constants::SCORING_MODE_SIMPLE,
     'scoring_config' => '',
     'display_mode'   => Constants::DISPLAY_MODE_SINGLE_PAGE,
+    'show_secondary_archetype' => 1,
+    'show_dimension_table'     => 1,
 ];
 
 $existingTest = null;
@@ -388,6 +392,40 @@ if ($testId && $existingTest) {
                     <p class="form-help">仅在部分评分模式下有效，请输入合法的 JSON。</p>
                 </div>
             </div>
+
+            <?php if ($hasShowSecondaryCol || $hasShowDimensionCol): ?>
+            <div class="form-section">
+                <div class="form-section__title">结果展示设置</div>
+                <div class="form-grid">
+                    <?php if ($hasShowSecondaryCol): ?>
+                    <div class="form-field">
+                        <label class="form-label">副原型展示</label>
+                        <label style="display:flex;align-items:center;gap:8px;">
+                            <input type="checkbox"
+                                   name="show_secondary_archetype"
+                                   value="1"
+                                   <?= (int)($formData['show_secondary_archetype'] ?? 1) === 1 ? 'checked' : '' ?>>
+                            <span>在结果页同时展示主原型与副原型</span>
+                        </label>
+                        <p class="form-help">默认开启；关闭后结果页仅显示主原型，不提示得分第二高的维度。</p>
+                    </div>
+                    <?php endif; ?>
+                    <?php if ($hasShowDimensionCol): ?>
+                    <div class="form-field">
+                        <label class="form-label">维度分布表</label>
+                        <label style="display:flex;align-items:center;gap:8px;">
+                            <input type="checkbox"
+                                   name="show_dimension_table"
+                                   value="1"
+                                   <?= (int)($formData['show_dimension_table'] ?? 1) === 1 ? 'checked' : '' ?>>
+                            <span>结果页展示“你的维度分布”图表</span>
+                        </label>
+                        <p class="form-help">默认展示；关闭后即使为维度/区间模式也不会渲染分布条。</p>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endif; ?>
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">保存</button>
