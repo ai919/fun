@@ -43,6 +43,107 @@ yarn install
 - `questions`：题干与选项，支持选项单独覆写分值
 - `results`：分数区间与文案（可包含分享语、图片地址）
 
+## JSON 导入规则
+
+1. **文件要求**
+   - 单个 UTF-8 编码 `.json` 文件，内容必须是合法 JSON；不要携带注释、BOM 或 Markdown。
+   - 需通过 `schema/quiz-import.schema.json` 校验；推荐在编辑器接入 AJV、或运行 `yarn quiz:import <file> --dry-run` 即时验证。
+
+2. **`test` 对象**
+   - 必填：`slug`（≤80，`[a-z0-9-]`），`title`，`description`，`tags`（≤8 个、唯一且非空），`status`（`draft|published|archived`）。
+   - 可选：`subtitle`、`title_color`（HEX）、`sort_order`（≥0）、`scoring_mode`（默认 `simple`）、`scoring_config`、`display_mode`（默认 `single_page`）、`play_count_beautified`、`emoji`。
+   - 若未填写 `emoji`，CLI 会基于显式值、标签映射或 slug 哈希自动填充。
+
+3. **`questions` 数组**
+   - 至少 1 题；每题包含 `text` 与 `options`，可配 `hint`。
+   - `options` 至少 2 个，每个包含唯一的 `key`（单个大写字母）、`text`；可选 `map_result_code` 与 `score_override`。
+
+4. **`results` 数组**
+   - 至少 1 个结果，包含 `code`、`title`、`description`；可选 `image_url`、`min_score`、`max_score`、`social_quote`。
+   - 若使用分数区间，确保区间连续覆盖全部可能得分，且 `min_score <= max_score`。
+
+5. **计分逻辑**
+   - `simple`：按 `map_result_code` 计数或默认投票。
+   - `dimensions`：在 `scoring_config` 中定义维度权重，结果层可自定义解释。
+   - `range`：使用 `scoring_config.option_scores` 或 `score_override` 给选项打分，再通过结果的 `min_score/max_score` 落档。
+   - `custom`：工具只负责存储 JSON，业务侧自行解析。
+
+6. **质量自检**
+   - 跑 `yarn quiz:import payload.json --dry-run`，确认 Schema、slug、emoji、分数段等检查通过。
+   - 题目/选项不可留空，标签应贴合主题，避免违规内容。
+   - 如需上线数据库新字段或逻辑，先更新 schema、`src/types.ts`、`import-quiz.ts` 并同步 README 示例。
+
+## 格式范例
+
+```json
+{
+  "test": {
+    "slug": "mental-age-2025",
+    "title": "你的心智年龄有多大？",
+    "subtitle": "6 道题测出真实心态",
+    "description": "通过生活习惯、决策偏好，判断更贴近少年还是老灵魂。",
+    "tags": ["心理", "性格"],
+    "status": "draft",
+    "scoring_mode": "range",
+    "display_mode": "single_page",
+    "emoji": "🧠",
+    "scoring_config": {
+      "option_scores": {
+        "A": 0,
+        "B": 1,
+        "C": 2,
+        "D": 3
+      }
+    }
+  },
+  "questions": [
+    {
+      "text": "周末你最想做什么？",
+      "options": [
+        { "key": "A", "text": "补觉", "score_override": 0 },
+        { "key": "B", "text": "看展", "score_override": 1 },
+        { "key": "C", "text": "学习新技能", "score_override": 2 },
+        { "key": "D", "text": "爬山", "score_override": 3 }
+      ]
+    },
+    {
+      "text": "遇到难题的第一反应是？",
+      "options": [
+        { "key": "A", "text": "先放一边", "map_result_code": "CHILL" },
+        { "key": "B", "text": "请教朋友" },
+        { "key": "C", "text": "搜资料" },
+        { "key": "D", "text": "立刻开干" }
+      ]
+    }
+  ],
+  "results": [
+    {
+      "code": "YOUTH",
+      "title": "元气少年",
+      "description": "热情且敢于尝试，一切都刚刚开始！",
+      "min_score": 0,
+      "max_score": 6
+    },
+    {
+      "code": "BALANCED",
+      "title": "稳重青年",
+      "description": "权衡理性与感性，是队友最信赖的伙伴。",
+      "min_score": 7,
+      "max_score": 12,
+      "social_quote": "稳就是帅"
+    },
+    {
+      "code": "OLD_SOUL",
+      "title": "老灵魂",
+      "description": "经验丰富、洞察敏锐，对生活有自己的一套。",
+      "min_score": 13,
+      "max_score": 18,
+      "image_url": "https://cdn.dofun/quiz/old-soul.png"
+    }
+  ]
+}
+```
+
 ## 使用方式
 
 ```bash
