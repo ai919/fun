@@ -223,28 +223,12 @@ class ScoreEngine
         $weights = $config['weights'] ?? [];
         $mapping = $config['mapping'] ?? null; // 支持旧的 mapping 格式
 
-        // 如果使用旧的 mapping 格式，需要构建 question_id 到 q1, q2 的映射
+        $weightsUseOrderKeys = self::weightsUseQuestionOrderKeys($weights);
+
+        // 如果需要按题目顺序映射（旧 mapping 或 weights 使用 q1/q2 写法），构建 question_id => qN
         $questionIdToQKey = null;
-        if ($mapping && empty($weights)) {
-            // 获取所有问题的 ID 和排序，构建映射
-            $questionIds = array_keys($answers);
-            if (!empty($questionIds)) {
-                $placeholders = implode(',', array_fill(0, count($questionIds), '?'));
-                $qStmt = $pdo->prepare(
-                    "SELECT id, sort_order FROM questions 
-                     WHERE id IN ($placeholders) AND test_id = ?
-                     ORDER BY sort_order ASC, id ASC"
-                );
-                $qStmt->execute(array_merge($questionIds, [$testId]));
-                $questions = $qStmt->fetchAll(\PDO::FETCH_ASSOC);
-                
-                $questionIdToQKey = [];
-                $index = 1;
-                foreach ($questions as $q) {
-                    $questionIdToQKey[(int)$q['id']] = 'q' . $index;
-                    $index++;
-                }
-            }
+        if (($mapping && empty($weights)) || $weightsUseOrderKeys) {
+            $questionIdToQKey = self::buildQuestionOrderMap($answers, $testId, $pdo);
         }
 
         // 2. 遍历答案，根据 weights 或 mapping 累加各维度
@@ -263,10 +247,15 @@ class ScoreEngine
             $dimWeights = null;
 
             if (!empty($weights)) {
-                // 使用新的 weights 格式
-                $qKey = (string)$qId;
-                if (isset($weights[$qKey][$optionKey]) && is_array($weights[$qKey][$optionKey])) {
-                    $dimWeights = $weights[$qKey][$optionKey];
+                // 使用新的 weights 格式（支持 question_id 或 q1/q2 写法）
+                $qKeyById = (string)$qId;
+                if (isset($weights[$qKeyById][$optionKey]) && is_array($weights[$qKeyById][$optionKey])) {
+                    $dimWeights = $weights[$qKeyById][$optionKey];
+                } elseif ($questionIdToQKey) {
+                    $qKeyOrder = $questionIdToQKey[$qId] ?? null;
+                    if ($qKeyOrder && isset($weights[$qKeyOrder][$optionKey]) && is_array($weights[$qKeyOrder][$optionKey])) {
+                        $dimWeights = $weights[$qKeyOrder][$optionKey];
+                    }
                 }
             } elseif ($mapping && $questionIdToQKey) {
                 // 使用旧的 mapping 格式
@@ -287,7 +276,8 @@ class ScoreEngine
                     // 未在 dimensions 声明的维度忽略
                     continue;
                 }
-                $dims[$dimKey] += (int)$val;
+                // 支持小数权重，避免被 int 转换抹成 0
+                $dims[$dimKey] += (float)$val;
             }
         }
 
@@ -310,6 +300,58 @@ class ScoreEngine
             'dimension_scores' => $dims,
             'result'           => $result,
         ];
+    }
+
+    /**
+     * 检查 weights 是否使用了 q1/q2 这种题目顺序键
+     */
+    protected static function weightsUseQuestionOrderKeys($weights): bool
+    {
+        if (!is_array($weights) || empty($weights)) {
+            return false;
+        }
+        foreach ($weights as $key => $value) {
+            if (is_string($key) && preg_match('/^q\d+$/i', $key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 构建 question_id => qN 映射，便于按题目顺序读写配置
+     */
+    protected static function buildQuestionOrderMap(array $answers, int $testId, \PDO $pdo): ?array
+    {
+        $questionIds = array_keys($answers);
+        if (empty($questionIds)) {
+            return null;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($questionIds), '?'));
+        $qStmt = $pdo->prepare(
+            "SELECT id, sort_order FROM questions 
+             WHERE id IN ($placeholders) AND test_id = ?
+             ORDER BY sort_order ASC, id ASC"
+        );
+        $qStmt->execute(array_merge($questionIds, [$testId]));
+        $questions = $qStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (!$questions) {
+            return null;
+        }
+
+        $questionIdToQKey = [];
+        $index = 1;
+        foreach ($questions as $q) {
+            $questionId = isset($q['id']) ? (int)$q['id'] : null;
+            if ($questionId) {
+                $questionIdToQKey[$questionId] = 'q' . $index;
+                $index++;
+            }
+        }
+
+        return $questionIdToQKey ?: null;
     }
 
     /**

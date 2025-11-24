@@ -6,6 +6,28 @@ require_once __DIR__ . '/lib/SettingsHelper.php';
 require_once __DIR__ . '/lib/topbar.php';
 require_once __DIR__ . '/lib/AdHelper.php';
 
+/**
+ * 轻量缓存列存在性，避免在旧版本数据库上查询不存在的字段导致报错。
+ */
+function result_column_exists(PDO $pdo, string $table, string $column): bool
+{
+    static $cache = [];
+    $dbName = (string)$pdo->query('SELECT DATABASE()')->fetchColumn();
+    $key = "{$dbName}.{$table}.{$column}";
+    if (array_key_exists($key, $cache)) {
+        return $cache[$key];
+    }
+    $stmt = $pdo->prepare("
+        SELECT 1
+        FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?
+        LIMIT 1
+    ");
+    $stmt->execute([$dbName, $table, $column]);
+    $cache[$key] = (bool)$stmt->fetchColumn();
+    return $cache[$key];
+}
+
 $shareTokenParam = isset($_GET['token']) ? trim((string)$_GET['token']) : '';
 $runIdParam      = isset($_GET['run']) ? (int)$_GET['run'] : 0;
 
@@ -40,7 +62,26 @@ $testId   = (int)$runRow['test_id'];
 $resultId = isset($runRow['result_id']) ? (int)$runRow['result_id'] : 0;
 
 // 只选择需要的字段，避免 SELECT * 加载不必要的数据（特别是 description TEXT 字段可能很大）
-$testStmt = $pdo->prepare("SELECT id, slug, title, subtitle, description, title_color, emoji, tags, scoring_mode, show_secondary_archetype, show_dimension_table FROM tests WHERE id = ? LIMIT 1");
+$hasShowSecondaryCol = result_column_exists($pdo, 'tests', 'show_secondary_archetype');
+$hasShowDimensionCol = result_column_exists($pdo, 'tests', 'show_dimension_table');
+$testSelectFields = [
+    'id',
+    'slug',
+    'title',
+    'subtitle',
+    'description',
+    'title_color',
+    'emoji',
+    'tags',
+    'scoring_mode',
+];
+if ($hasShowSecondaryCol) {
+    $testSelectFields[] = 'show_secondary_archetype';
+}
+if ($hasShowDimensionCol) {
+    $testSelectFields[] = 'show_dimension_table';
+}
+$testStmt = $pdo->prepare("SELECT " . implode(', ', $testSelectFields) . " FROM tests WHERE id = ? LIMIT 1");
 $testStmt->execute([$testId]);
 $finalTest = $testStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -73,8 +114,12 @@ if (strtolower($finalTest['scoring_mode'] ?? Constants::SCORING_MODE_SIMPLE) ===
     }
 }
 
-$showSecondaryArchetype = (int)($finalTest['show_secondary_archetype'] ?? 1) === 1;
-$showDimensionTable = (int)($finalTest['show_dimension_table'] ?? 1) === 1;
+$showSecondaryArchetype = $hasShowSecondaryCol
+    ? (int)($finalTest['show_secondary_archetype'] ?? 1) === 1
+    : true;
+$showDimensionTable = $hasShowDimensionCol
+    ? (int)($finalTest['show_dimension_table'] ?? 1) === 1
+    : true;
 
 $dimensionMeta = [
     'CAT' => ['name' => '猫系', 'emoji' => '🐱', 'color' => '#8b5cf6'],
@@ -106,24 +151,40 @@ if ($hasDimensionScores) {
     arsort($sortedDimensionScores);
 }
 
+$finalResultCode = isset($finalResult['code']) ? trim((string)$finalResult['code']) : '';
 $secondaryArchetype = null;
-if ($showSecondaryArchetype && count($sortedDimensionScores) >= 2) {
-    $dimKeys = array_keys($sortedDimensionScores);
-    $primaryKey = $dimKeys[0];
-    $secondaryKey = $dimKeys[1];
-    $secondaryArchetype = [
-        'primary' => [
-            'key' => $primaryKey,
-            'score' => $sortedDimensionScores[$primaryKey],
-            'meta' => $dimensionMeta[$primaryKey] ?? ['name' => $primaryKey, 'emoji' => '📊', 'color' => '#4f46e5'],
-        ],
-        'secondary' => [
-            'key' => $secondaryKey,
-            'score' => $sortedDimensionScores[$secondaryKey],
-            'meta' => $dimensionMeta[$secondaryKey] ?? ['name' => $secondaryKey, 'emoji' => '📊', 'color' => '#6b7280'],
-        ],
-    ];
+if (
+    $showSecondaryArchetype
+    && $hasDimensionScores
+    && $finalResultCode !== ''
+    && count($sortedDimensionScores) >= 2
+) {
+    $primaryScore = $sortedDimensionScores[$finalResultCode] ?? ($dimensionScores[$finalResultCode] ?? null);
+    if ($primaryScore !== null) {
+        $orderedForSecondary = $sortedDimensionScores;
+        unset($orderedForSecondary[$finalResultCode]);
+        if (!empty($orderedForSecondary)) {
+            $secondaryKey = array_key_first($orderedForSecondary);
+            $secondaryScore = $orderedForSecondary[$secondaryKey];
+            $secondaryArchetype = [
+                'primary' => [
+                    'key' => $finalResultCode,
+                    'score' => $primaryScore,
+                    'meta' => $dimensionMeta[$finalResultCode] ?? ['name' => $finalResultCode, 'emoji' => '📊', 'color' => '#4f46e5'],
+                ],
+                'secondary' => [
+                    'key' => $secondaryKey,
+                    'score' => $secondaryScore,
+                    'meta' => $dimensionMeta[$secondaryKey] ?? ['name' => $secondaryKey, 'emoji' => '📊', 'color' => '#6b7280'],
+                ],
+            ];
+        }
+    }
 }
+
+$finalResultTitle = trim((string)($finalResult['title'] ?? ''));
+$isPrimaryLabelNeeded = $showSecondaryArchetype && $hasDimensionScores;
+$heroTitle = $finalResultTitle !== '' ? $finalResultTitle : '测验结果';
 
 $shareToken = $shareTokenParam;
 if ($shareToken === '' && !empty($runRow['share_token'])) {
@@ -187,7 +248,7 @@ if ($resultTopAd):
             <p class="result-subtitle">
                 来自测验：<?= htmlspecialchars($finalTest['title'] ?? '') ?>
             </p>
-            <h1 class="result-title"><?= htmlspecialchars($finalResult['title'] ?? '测验结果') ?></h1>
+            <h1 class="result-title"><?= htmlspecialchars($heroTitle) ?></h1>
         </header>
     <?php endif; ?>
 
@@ -196,7 +257,11 @@ if ($resultTopAd):
     <?php else: ?>
         <section class="result-body">
             <p class="result-highlight">
-                这代表你在此次测验中，呈现出的核心倾向是：
+                <?php if ($isPrimaryLabelNeeded): ?>
+                    你的主原型是：
+                <?php else: ?>
+                    这代表你在此次测验中，呈现出的核心倾向是：
+                <?php endif; ?>
                 <strong><?= htmlspecialchars($finalResult['title']) ?></strong>
             </p>
             <?php if ($secondaryArchetype): ?>

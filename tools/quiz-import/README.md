@@ -51,7 +51,7 @@ yarn install
 
 2. **`test` 对象**
    - 必填：`slug`（≤80，`[a-z0-9-]`），`title`，`description`，`tags`（≤8 个、唯一且非空），`status`（`draft|published|archived`）。
-   - 可选：`subtitle`、`title_color`（HEX）、`sort_order`（≥0）、`scoring_mode`（默认 `simple`）、`scoring_config`、`display_mode`（默认 `single_page`）、`play_count_beautified`、`emoji`、`show_secondary_archetype`（默认 `true`）、`show_dimension_table`（默认 `true`）。
+- 可选：`subtitle`、`title_color`（HEX）、`sort_order`（≥0）、`scoring_mode`（默认 `simple`）、`scoring_config`、`display_mode`（默认 `single_page`）、`play_count_beautified`、`emoji`、`show_secondary_archetype`（默认 `true`）、`show_dimension_table`（默认 `true`）。导入时这两个布尔值会直连结果页 UI，可一键开启“副原型”卡片与“维度表”分布展示。
    - 若未填写 `emoji`，CLI 会基于显式值、标签映射或 slug 哈希自动填充。
 
 3. **`questions` 数组**
@@ -157,6 +157,8 @@ yarn quiz:import ./payloads/mental_age.json --overwrite
 ```
 
 > **提示**：未加 `--overwrite` 时如 slug 已存在会直接终止。
+
+> **提示**：CLI 同步写入 `tests.show_secondary_archetype` 与 `tests.show_dimension_table`，并在 `dimensions` 计分模式下导入 `scoring_config` 与维度分数映射，因此使用标准 JSON 即可获得“支持副原型／维度表”的完整体验，无需另外手工 SQL。
 
 ## Dry Run
 
