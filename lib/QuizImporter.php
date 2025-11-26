@@ -91,8 +91,13 @@ class QuizImporter
     {
         $test = $payload['test'];
         $tags = $this->normalizeTags($test['tags'] ?? null);
-        $scoringMode = $test['scoring_mode'] ?? 'simple';
-        $scoringConfig = isset($test['scoring_config']) ? json_encode($test['scoring_config'], JSON_UNESCAPED_UNICODE) : null;
+        
+        // 自动识别评分模式（如果未指定或为默认值）
+        $detected = $this->detectScoringMode($payload);
+        $scoringMode = $test['scoring_mode'] ?? $detected['mode'];
+        $scoringConfig = isset($test['scoring_config']) 
+            ? json_encode($test['scoring_config'], JSON_UNESCAPED_UNICODE) 
+            : ($detected['config'] ? json_encode($detected['config'], JSON_UNESCAPED_UNICODE) : null);
         $displayMode = $test['display_mode'] ?? 'single_page';
         $titleColor = $test['title_color'] ?? '#4f46e5';
         $playCountBeautified = isset($test['play_count_beautified']) ? (int)$test['play_count_beautified'] : null;
@@ -333,6 +338,155 @@ class QuizImporter
             unset($option);
         }
         unset($question);
+    }
+
+    /**
+     * 自动识别评分模式
+     * 
+     * 根据 JSON 数据的特征自动推断应该使用哪种评分模式
+     * 
+     * @param array $payload 完整的导入数据
+     * @return array ['mode' => string, 'config' => ?array] 识别的模式和配置
+     */
+    private function detectScoringMode(array $payload): array
+    {
+        $test = $payload['test'] ?? [];
+        $questions = $payload['questions'] ?? [];
+        $results = $payload['results'] ?? [];
+        $existingConfig = $test['scoring_config'] ?? null;
+
+        // 如果已经明确指定了 scoring_mode，且不是 'simple'，则使用指定的模式
+        if (isset($test['scoring_mode']) && $test['scoring_mode'] !== 'simple') {
+            return [
+                'mode' => $test['scoring_mode'],
+                'config' => $existingConfig
+            ];
+        }
+
+        // 1. 检查是否是 dimensions 模式
+        if (is_array($existingConfig)) {
+            if (isset($existingConfig['dimensions']) && isset($existingConfig['weights'])) {
+                return [
+                    'mode' => 'dimensions',
+                    'config' => $existingConfig
+                ];
+            }
+            
+            // 2. 检查是否是 custom 模式的子策略
+            if (isset($existingConfig['strategy'])) {
+                $strategy = $existingConfig['strategy'];
+                if (in_array($strategy, ['vote', 'weighted_sum', 'percentage_threshold', 'percentage'], true)) {
+                    return [
+                        'mode' => 'custom',
+                        'config' => $existingConfig
+                    ];
+                }
+            }
+            
+            // 3. 检查是否是 weighted_sum 模式（通过 question_weights 识别）
+            if (isset($existingConfig['question_weights'])) {
+                return [
+                    'mode' => 'custom',
+                    'config' => array_merge($existingConfig, ['strategy' => 'weighted_sum'])
+                ];
+            }
+            
+            // 4. 检查是否是 percentage_threshold 模式（通过 thresholds 识别）
+            if (isset($existingConfig['thresholds'])) {
+                return [
+                    'mode' => 'custom',
+                    'config' => array_merge($existingConfig, ['strategy' => 'percentage_threshold'])
+                ];
+            }
+        }
+
+        // 5. 检查是否是 vote 模式（投票模式）
+        // 特征：大部分选项都有 map_result_code，且结果通过 code 匹配
+        $totalOptions = 0;
+        $optionsWithMapCode = 0;
+        $resultCodes = [];
+        $hasScoreRanges = false;
+
+        foreach ($results as $result) {
+            $resultCodes[] = strtoupper(trim((string)($result['code'] ?? '')));
+            if (isset($result['min_score']) || isset($result['max_score'])) {
+                $minScore = isset($result['min_score']) ? (float)$result['min_score'] : 0;
+                $maxScore = isset($result['max_score']) ? (float)$result['max_score'] : 0;
+                if ($minScore > 0 || $maxScore > 0) {
+                    $hasScoreRanges = true;
+                }
+            }
+        }
+
+        foreach ($questions as $question) {
+            $options = $question['options'] ?? [];
+            foreach ($options as $option) {
+                $totalOptions++;
+                if (isset($option['map_result_code']) && trim((string)$option['map_result_code']) !== '') {
+                    $optionsWithMapCode++;
+                }
+            }
+        }
+
+        // 如果超过 70% 的选项有 map_result_code，且结果没有分数区间，可能是投票模式
+        if ($totalOptions > 0 && ($optionsWithMapCode / $totalOptions) >= 0.7 && !$hasScoreRanges) {
+            // 验证 map_result_code 是否与结果 code 匹配
+            $matchedCodes = 0;
+            foreach ($questions as $question) {
+                foreach ($question['options'] ?? [] as $option) {
+                    if (isset($option['map_result_code'])) {
+                        $mapCode = strtoupper(trim((string)$option['map_result_code']));
+                        if (in_array($mapCode, $resultCodes, true)) {
+                            $matchedCodes++;
+                        }
+                    }
+                }
+            }
+            
+            // 如果匹配的代码数量足够，识别为投票模式
+            if ($matchedCodes >= $optionsWithMapCode * 0.8) {
+                return [
+                    'mode' => 'custom',
+                    'config' => [
+                        'strategy' => 'vote',
+                        'vote_threshold' => 0,
+                        'tie_breaker' => 'first'
+                    ]
+                ];
+            }
+        }
+
+        // 6. 检查是否是 range 模式
+        // 特征：结果有 min_score/max_score 区间，且有 option_scores 或 score_override
+        if ($hasScoreRanges) {
+            $hasOptionScores = false;
+            if (is_array($existingConfig) && isset($existingConfig['option_scores'])) {
+                $hasOptionScores = true;
+            } else {
+                // 检查是否有 score_override
+                foreach ($questions as $question) {
+                    foreach ($question['options'] ?? [] as $option) {
+                        if (isset($option['score_override']) && is_numeric($option['score_override'])) {
+                            $hasOptionScores = true;
+                            break 2;
+                        }
+                    }
+                }
+            }
+            
+            if ($hasOptionScores) {
+                return [
+                    'mode' => 'range',
+                    'config' => $existingConfig
+                ];
+            }
+        }
+
+        // 7. 默认使用 simple 模式
+        return [
+            'mode' => 'simple',
+            'config' => $existingConfig
+        ];
     }
 }
 

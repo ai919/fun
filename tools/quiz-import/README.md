@@ -68,6 +68,14 @@ yarn install
    - `range`：使用 `scoring_config.option_scores` 或 `score_override` 给选项打分，再通过结果的 `min_score/max_score` 落档。
    - `custom`：工具只负责存储 JSON，业务侧自行解析。
 
+   **✨ 自动识别功能**：如果未指定 `scoring_mode` 或指定为 `simple`，系统会根据 JSON 数据特征自动识别评分模式：
+   - **投票模式** (`custom` + `vote`)：如果超过 70% 的选项有 `map_result_code`，且结果通过 `code` 匹配（无分数区间）
+   - **Dimensions 模式**：如果 `scoring_config` 中有 `dimensions` 和 `weights`
+   - **加权累加模式** (`custom` + `weighted_sum`)：如果 `scoring_config` 中有 `question_weights`
+   - **百分比阈值模式** (`custom` + `percentage_threshold`)：如果 `scoring_config` 中有 `thresholds`
+   - **Range 模式**：如果结果有 `min_score/max_score` 且选项有分数配置
+   - **Simple 模式**：默认情况
+
 6. **质量自检**
    - 跑 `yarn quiz:import payload.json --dry-run`，确认 Schema、slug、emoji、分数段等检查通过。
    - 题目/选项不可留空，标签应贴合主题，避免违规内容。

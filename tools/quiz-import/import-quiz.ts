@@ -157,10 +157,13 @@ async function upsertTest(
 ) {
   const test = payload.test;
   const tags = test.tags.join(',').trim();
-  const scoringMode = test.scoring_mode ?? 'simple';
+  
+  // 自动识别评分模式（如果未指定或为默认值）
+  const detected = detectScoringMode(payload);
+  const scoringMode = test.scoring_mode ?? detected.mode;
   const scoringConfig = test.scoring_config
     ? JSON.stringify(test.scoring_config)
-    : null;
+    : (detected.config ? JSON.stringify(detected.config) : null);
   const displayMode = test.display_mode ?? 'single_page';
   const emoji = test.emoji ?? DEFAULT_EMOJI;
   const showSecondary = test.show_secondary_archetype !== false;
@@ -344,6 +347,7 @@ function logDryRun(
   payload: QuizImportPayload,
   options: ImportOptions
 ) {
+  const detected = detectScoringMode(payload);
   console.log('🧪 Dry run 模式：不会写入数据库。');
   console.log(`   - 操作：${action === 'create' ? '创建新测验' : '覆盖现有测验'}`);
   console.log(`   - slug: ${payload.test.slug}`);
@@ -352,6 +356,164 @@ function logDryRun(
     `   - 结果数: ${payload.results.length}, 题目数: ${payload.questions.length}`
   );
   console.log(`   - overwrite: ${options.overwrite ? '是' : '否'}`);
+  if (!payload.test.scoring_mode || payload.test.scoring_mode === 'simple') {
+    console.log(`   - 自动识别评分模式: ${detected.mode}`);
+  }
+}
+
+/**
+ * 自动识别评分模式
+ * 
+ * 根据 JSON 数据的特征自动推断应该使用哪种评分模式
+ */
+function detectScoringMode(payload: QuizImportPayload): {
+  mode: 'simple' | 'dimensions' | 'range' | 'custom';
+  config: Record<string, unknown> | null;
+} {
+  const test = payload.test;
+  const questions = payload.questions;
+  const results = payload.results;
+  const existingConfig = test.scoring_config ?? null;
+
+  // 如果已经明确指定了 scoring_mode，且不是 'simple'，则使用指定的模式
+  if (test.scoring_mode && test.scoring_mode !== 'simple') {
+    return {
+      mode: test.scoring_mode,
+      config: existingConfig as Record<string, unknown> | null
+    };
+  }
+
+  // 1. 检查是否是 dimensions 模式
+  if (existingConfig && typeof existingConfig === 'object') {
+    const config = existingConfig as Record<string, unknown>;
+    
+    if ('dimensions' in config && 'weights' in config) {
+      return {
+        mode: 'dimensions',
+        config: config
+      };
+    }
+    
+    // 2. 检查是否是 custom 模式的子策略
+    if ('strategy' in config) {
+      const strategy = config.strategy;
+      if (typeof strategy === 'string' && 
+          ['vote', 'weighted_sum', 'percentage_threshold', 'percentage'].includes(strategy)) {
+        return {
+          mode: 'custom',
+          config: config
+        };
+      }
+    }
+    
+    // 3. 检查是否是 weighted_sum 模式（通过 question_weights 识别）
+    if ('question_weights' in config) {
+      return {
+        mode: 'custom',
+        config: { ...config, strategy: 'weighted_sum' }
+      };
+    }
+    
+    // 4. 检查是否是 percentage_threshold 模式（通过 thresholds 识别）
+    if ('thresholds' in config) {
+      return {
+        mode: 'custom',
+        config: { ...config, strategy: 'percentage_threshold' }
+      };
+    }
+  }
+
+  // 5. 检查是否是 vote 模式（投票模式）
+  // 特征：大部分选项都有 map_result_code，且结果通过 code 匹配
+  let totalOptions = 0;
+  let optionsWithMapCode = 0;
+  const resultCodes = results.map(r => r.code.toUpperCase().trim());
+  let hasScoreRanges = false;
+
+  for (const result of results) {
+    if (result.min_score !== undefined || result.max_score !== undefined) {
+      const minScore = result.min_score ?? 0;
+      const maxScore = result.max_score ?? 0;
+      if (minScore > 0 || maxScore > 0) {
+        hasScoreRanges = true;
+      }
+    }
+  }
+
+  for (const question of questions) {
+    for (const option of question.options) {
+      totalOptions++;
+      if (option.map_result_code && option.map_result_code.trim() !== '') {
+        optionsWithMapCode++;
+      }
+    }
+  }
+
+  // 如果超过 70% 的选项有 map_result_code，且结果没有分数区间，可能是投票模式
+  if (totalOptions > 0 && (optionsWithMapCode / totalOptions) >= 0.7 && !hasScoreRanges) {
+    // 验证 map_result_code 是否与结果 code 匹配
+    let matchedCodes = 0;
+    for (const question of questions) {
+      for (const option of question.options) {
+        if (option.map_result_code) {
+          const mapCode = option.map_result_code.toUpperCase().trim();
+          if (resultCodes.includes(mapCode)) {
+            matchedCodes++;
+          }
+        }
+      }
+    }
+    
+    // 如果匹配的代码数量足够，识别为投票模式
+    if (matchedCodes >= optionsWithMapCode * 0.8) {
+      return {
+        mode: 'custom',
+        config: {
+          strategy: 'vote',
+          vote_threshold: 0,
+          tie_breaker: 'first'
+        }
+      };
+    }
+  }
+
+  // 6. 检查是否是 range 模式
+  // 特征：结果有 min_score/max_score 区间，且有 option_scores 或 score_override
+  if (hasScoreRanges) {
+    let hasOptionScores = false;
+    if (existingConfig && typeof existingConfig === 'object') {
+      const config = existingConfig as Record<string, unknown>;
+      if ('option_scores' in config) {
+        hasOptionScores = true;
+      }
+    }
+    
+    if (!hasOptionScores) {
+      // 检查是否有 score_override
+      for (const question of questions) {
+        for (const option of question.options) {
+          if (option.score_override !== undefined && typeof option.score_override === 'number') {
+            hasOptionScores = true;
+            break;
+          }
+        }
+        if (hasOptionScores) break;
+      }
+    }
+    
+    if (hasOptionScores) {
+      return {
+        mode: 'range',
+        config: existingConfig as Record<string, unknown> | null
+      };
+    }
+  }
+
+  // 7. 默认使用 simple 模式
+  return {
+    mode: 'simple',
+    config: existingConfig as Record<string, unknown> | null
+  };
 }
 
 main();
